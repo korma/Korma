@@ -44,13 +44,13 @@
                            :last "granger"})
                   (where {:id 3})
                   (as-sql))
-                "UPDATE user SET last = 'granger', first = 'chris' WHERE id = '3'")))
+                "UPDATE user SET first = 'chris', last = 'granger' WHERE id = 3")))
 
 (deftest update-queries
          (sql-only
            (let [results ["UPDATE user SET first = 'chris'"
-                          "UPDATE user SET first = 'chris' WHERE id = '3'"
-                          "UPDATE user SET last = 'granger', first = 'chris' WHERE id = '3'"]
+                          "UPDATE user SET first = 'chris' WHERE id = 3"
+                          "UPDATE user SET first = 'chris', last = 'granger' WHERE id = 3"]
                  queries [(update user
                                   (fields {:first "chris"}))
                           (update user
@@ -63,4 +63,37 @@
              (doseq [[r q] (map vector results queries)]
                (is (= q r))))))
 
+(deftest delete-function
+         (is (= (-> (delete-query "user")
+                  (where {:id 3})
+                  (as-sql))
+                "DELETE FROM user WHERE id = 3")))
+
+(deftest delete-queries
+         (sql-only
+           (let [results ["DELETE FROM user"
+                          "DELETE FROM user WHERE id = 3"]
+                 queries [(delete user)
+                          (delete user
+                            (where {:id 3}))]]
+             (doseq [[r q] (map vector results queries)]
+               (is (= q r))))))
+
+(deftest insert-function
+         (is (= (-> (insert-query "user")
+                  (values {:first "chris" :last "granger"})
+                  (as-sql))
+                "INSERT INTO user (last, first) VALUES ('granger', 'chris')")))
+
+(deftest insert-queries
+         (sql-only
+           (let [results ["INSERT INTO user (last, first) VALUES ('granger', 'chris')"
+                          "INSERT INTO user (last, first) VALUES ('granger', 'chris'), ('jordan', 'michael')"]
+                 queries [(insert user
+                            (values {:first "chris" :last "granger"}))
+                          (insert user
+                            (values [{:first "chris" :last "granger"}
+                                     {:first "michael" :last "jordan"}]))]]
+             (doseq [[r q] (map vector results queries)]
+               (is (= q r))))))
 
