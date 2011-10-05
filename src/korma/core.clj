@@ -1,5 +1,6 @@
 (ns korma.core
-  (:require [korma.internal.sql :as isql]))
+  (:require [korma.internal.sql :as isql]
+            [korma.db :as db]))
 
 (def ^{:dynamic true} *exec-mode* false)
 
@@ -110,10 +111,9 @@
       (= *exec-mode* :sql) sql
       (= *exec-mode* :dry-run) (do
                                  (println "dry run SQL ::" sql)
-                                 [])
+                                 (db/do-query (-> query :ent :db) sql))
       :else (do
-              ;;exec query
-              []))))
+              (db/do-query (-> query :ent :db) sql)))))
 
 ;;*****************************************************
 ;; Entities
