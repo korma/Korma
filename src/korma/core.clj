@@ -111,7 +111,7 @@
       (= *exec-mode* :sql) sql
       (= *exec-mode* :dry-run) (do
                                  (println "dry run SQL ::" sql)
-                                 (db/do-query (-> query :ent :db) sql))
+                                 [])
       :else (do
               (db/do-query (-> query :ent :db) sql)))))
 
