@@ -27,6 +27,13 @@ _Korma is just getting started, use at your own peril_
   (where {:username "chris"}))
 ;; executes: SELECT * FROM user WHERE username = 'chris'
 
+(select user 
+  (where {:active true})
+  (order :created)
+  (limit 5)
+  (offset 3))
+;; executes: SELECT * FROM user WHERE active = true ORDER BY created DESC LIMIT 5 OFFSET 3
+
 ```
 
 ## License

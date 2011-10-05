@@ -9,7 +9,8 @@
   (cond
     (string? v) (str "'" v "'")
     (number? v) v
-    (coll? v) (pr-str (seq v))))
+    (coll? v) (pr-str (seq v))
+    :else v))
 
 (defn comma [vs]
   (string/join ", " vs))
