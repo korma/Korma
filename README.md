@@ -1,6 +1,6 @@
 # Korma
 
-Delicious SQL for the Clojure world.
+Delicious SQL for Clojure.
 
 ## Usage
 
@@ -15,12 +15,15 @@ Delicious SQL for the Clojure world.
 (defentity user)
 
 (select user)
+;; executes: SELECT * FROM user
 
 (select user
   (fields :username :id))
+;; executes: SELECT username, id FROM user
 
 (select user
   (where {:username "chris"}))
+;; executes: SELECT * FROM user WHERE username = 'chris'
 
 ```
 
