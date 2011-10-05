@@ -20,7 +20,7 @@
                           "SELECT id, username FROM user"
                           "SELECT * FROM user WHERE email = 'hey@hey.com' AND username = 'chris'"
                           "SELECT * FROM user WHERE username = 'chris' ORDER BY created DESC"
-                          "SELECT * FROM user WHERE active = true ORDER BY created DESC LIMIT 5 OFFSET 3"]
+                          "SELECT * FROM user WHERE active = TRUE ORDER BY created DESC LIMIT 5 OFFSET 3"]
                  queries [(select user)
                           (select user
                                   (fields :id :username))

@@ -9,6 +9,8 @@
   (cond
     (string? v) (str "'" v "'")
     (number? v) v
+    (true? v) "TRUE"
+    (false? v) "FALSE"
     (coll? v) (pr-str (seq v))
     :else v))
 
