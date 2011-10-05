@@ -2,6 +2,8 @@
 
 Delicious SQL for Clojure.
 
+_Korma is just getting started, use at your own peril_
+
 ## Usage
 
 ```clojure
