@@ -2,6 +2,34 @@
   (:require [clojure.string :as string]
             [clojure.walk :as walk]))
 
+;;*****************************************************
+;; Str utils
+;;*****************************************************
+
+(defn comma [vs]
+  (string/join ", " vs))
+
+(declare kv-clause)
+
+(defn map->where [m]
+  (string/join " AND " (map kv-clause m)))
+
+(defn str-value [v]
+  (cond
+    (map? v) (map->where v)
+    (keyword? v) (name v)
+    (string? v) (str "'" v "'")
+    (number? v) v
+    (nil? v) "NULL"
+    (true? v) "TRUE"
+    (false? v) "FALSE"
+    (coll? v) (str "(" (comma (map str-value v)) ")")
+    :else v))
+
+;;*****************************************************
+;; Predicates
+;;*****************************************************
+
 (def predicates {'like 'korma.internal.sql/pred-like
                  'and 'korma.internal.sql/pred-and
                  'or 'korma.internal.sql/pred-or
@@ -14,23 +42,28 @@
                  'not= 'korma.internal.sql/pred-not=
                  '= 'korma.internal.sql/pred-=})
 
-;;*****************************************************
-;; Str utils
-;;*****************************************************
+(defn infix [k op v]
+  (str (str-value k) " " op " " (str-value v)))
 
-(defn comma [vs]
-  (string/join ", " vs))
+(defn pred-and [c1 c2] (str "(" (str-value c1) " AND " (str-value c2) ")"))
+(defn pred-or [c1 c2] (str "(" (str-value c1) " OR " (str-value c2) ")"))
+(defn pred-not [v] (str "NOT(" (str-value v) ")"))
 
-(defn str-value [v]
-  (cond
-    (keyword? v) (name v)
-    (string? v) (str "'" v "'")
-    (number? v) v
-    (nil? v) "NULL"
-    (true? v) "TRUE"
-    (false? v) "FALSE"
-    (coll? v) (str "(" (comma (map str-value v)) ")")
-    :else v))
+(defn pred-in [k v] (infix k "IN" v))
+(defn pred-> [k v] (infix k ">" v))
+(defn pred-> [k v] (infix k "<" v))
+(defn pred->= [k v] (infix k ">=" v))
+(defn pref-<= [k v] (infix k "<=" v))
+(defn pred-like [k v] (infix k "LIKE" v))
+
+(defn pred-= [k v] (cond 
+                     (and k v) (infix k "=" v)
+                     k (infix k "IS" v)
+                     v (infix v "IS" k)))
+(defn pred-not= [k v] (cond
+                        (and k v) (infix k "!=" v)
+                        k (infix k "IS NOT" v)
+                        v (infix v "IS NOT" k)))
 
 ;;*****************************************************
 ;; Clauses
@@ -39,11 +72,7 @@
 (defn kv-clause [[k v]]
   (if-not (vector? v)
     (pred-= k v)
-    (let [func (first v)]
-      (func k (second v)))))
-
-(defn map->where [m]
-  (string/join " AND " (map kv-clause m)))
+    ((first v) k (second v))))
 
 (defn join-clause [join-type table sub-table]
   (let [join-type (string/upper-case (name join-type))
@@ -133,29 +162,6 @@
   (if (string? form)
     form
     (walk/postwalk-replace predicates form)))
-
-(defn infix [k op v]
-  (str (str-value k) " " op " " (str-value v)))
-
-(defn pred-and [c1 c2] (str c1 " AND " c2))
-(defn pred-or [c1 c2] (str c1 " OR " c2))
-(defn pred-not [v] (str "NOT(" v ")"))
-
-(defn pred-in [k v] (infix k "IN" v))
-(defn pred-> [k v] (infix k ">" v))
-(defn pred-> [k v] (infix k "<" v))
-(defn pred->= [k v] (infix k ">=" v))
-(defn pref-<= [k v] (infix k "<=" v))
-(defn pred-like [k v] (infix k "LIKE" v))
-
-(defn pred-= [k v] (cond 
-                     (and k v) (infix k "=" v)
-                     k (infix k "IS" v)
-                     v (infix v "IS" k)))
-(defn pred-not= [k v] (cond
-                        (and k v) (infix k "!=" v)
-                        k (infix k "IS NOT" v)
-                        v (infix v "IS NOT" k)))
 
 
 ;;*****************************************************
