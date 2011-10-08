@@ -32,7 +32,18 @@ _Korma is just getting started, use at your own peril_
   (order :created)
   (limit 5)
   (offset 3))
-;; executes: SELECT * FROM user WHERE active = true ORDER BY created DESC LIMIT 5 OFFSET 3
+;; executes: SELECT * FROM user WHERE active = TRUE ORDER BY created DESC LIMIT 5 OFFSET 3
+
+(select user
+  (where (or (= :username "chris")
+             (= :email "chris@chris.com"))))
+;; executes: SELECT * FROM user WHERE username = 'chris' OR email = 'chris@chris.com'
+
+(select user
+  (where {:username [like "chris"]
+          :status "active"
+          :location [not= nil]))
+;; executes SELECT * FROM user WHERE username LIKE 'chris' AND status = 'active' AND location IS NOT NULL
 
 ```
 

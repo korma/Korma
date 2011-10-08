@@ -19,7 +19,7 @@
   (let [q (empty-query ent)]
     (merge q {:type :select
               :fields []
-              :where {}
+              :where []
               :order []
               :group []})))
 
@@ -27,12 +27,12 @@
   (let [q (empty-query ent)]
     (merge q {:type :update
               :fields {}
-              :where {}})))
+              :where []})))
 
 (defn delete-query [ent]
   (let [q (empty-query ent)]
     (merge q {:type :delete
-              :where {}})))
+              :where []})))
 
 (defn insert-query [ent]
   (let [q (empty-query ent)]
@@ -72,8 +72,11 @@
     (update-in query [:fields] merge (first vs))
     (update-in query [:fields] concat vs)))
 
-(defn where [query vs]
-  (update-in query [:where] merge vs))
+(defn where* [query vs]
+  (update-in query [:where] conj vs))
+
+(defmacro where [query form]
+  `(where* ~query ~(isql/parse-where form)))
 
 (defn order [query k & [dir]]
   (update-in query [:order] conj [k (or dir :desc)]))

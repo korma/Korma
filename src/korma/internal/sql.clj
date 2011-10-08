@@ -1,28 +1,49 @@
 (ns korma.internal.sql
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [clojure.walk :as walk]))
+
+(def predicates {'like 'korma.internal.sql/pred-like
+                 'and 'korma.internal.sql/pred-and
+                 'or 'korma.internal.sql/pred-or
+                 'not 'korma.internal.sql/pred-not
+                 'in 'korma.internal.sql/pred-in
+                 '> 'korma.internal.sql/pred->
+                 '< 'korma.internal.sql/pred-<
+                 '>= 'korma.internal.sql/pred->=
+                 '<= 'korma.internal.sql/pred-<=
+                 'not= 'korma.internal.sql/pred-not=
+                 '= 'korma.internal.sql/pred-=})
 
 ;;*****************************************************
 ;; Str utils
 ;;*****************************************************
 
-(defn str-value [v]
-  (cond
-    (string? v) (str "'" v "'")
-    (number? v) v
-    (true? v) "TRUE"
-    (false? v) "FALSE"
-    (coll? v) (pr-str (seq v))
-    :else v))
-
 (defn comma [vs]
   (string/join ", " vs))
+
+(defn str-value [v]
+  (cond
+    (keyword? v) (name v)
+    (string? v) (str "'" v "'")
+    (number? v) v
+    (nil? v) "NULL"
+    (true? v) "TRUE"
+    (false? v) "FALSE"
+    (coll? v) (str "(" (comma (map str-value v)) ")")
+    :else v))
 
 ;;*****************************************************
 ;; Clauses
 ;;*****************************************************
 
 (defn kv-clause [[k v]]
-  (str (name k) " = " (str-value v)))
+  (if-not (vector? v)
+    (pred-= k v)
+    (let [func (first v)]
+      (func k (second v)))))
+
+(defn map->where [m]
+  (string/join " AND " (map kv-clause m)))
 
 (defn join-clause [join-type table sub-table]
   (let [join-type (string/upper-case (name join-type))
@@ -82,7 +103,7 @@
 
 (defn sql-where [[sql query]]
   (if (seq (:where query))
-    (let [clauses (map kv-clause (:where query))
+    (let [clauses (map #(if (map? %) (map->where %) %) (:where query))
           clauses-str (string/join " AND " clauses)
           neue-sql (str " WHERE " clauses-str)]
       [(str sql neue-sql) query])
@@ -103,6 +124,38 @@
         offset-sql (when offset
                      (str " OFFSET " offset))]
     [(str sql limit-sql offset-sql) query]))
+
+;;*****************************************************
+;; Where
+;;*****************************************************
+
+(defn parse-where [form]
+  (if (string? form)
+    form
+    (walk/postwalk-replace predicates form)))
+
+(defn infix [k op v]
+  (str (str-value k) " " op " " (str-value v)))
+
+(defn pred-and [c1 c2] (str c1 " AND " c2))
+(defn pred-or [c1 c2] (str c1 " OR " c2))
+(defn pred-not [v] (str "NOT(" v ")"))
+
+(defn pred-in [k v] (infix k "IN" v))
+(defn pred-> [k v] (infix k ">" v))
+(defn pred-> [k v] (infix k "<" v))
+(defn pred->= [k v] (infix k ">=" v))
+(defn pref-<= [k v] (infix k "<=" v))
+(defn pred-like [k v] (infix k "LIKE" v))
+
+(defn pred-= [k v] (cond 
+                     (and k v) (infix k "=" v)
+                     k (infix k "IS" v)
+                     v (infix v "IS" k)))
+(defn pred-not= [k v] (cond
+                        (and k v) (infix k "!=" v)
+                        k (infix k "IS NOT" v)
+                        v (infix v "IS NOT" k)))
 
 
 ;;*****************************************************
