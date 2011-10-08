@@ -12,15 +12,15 @@
                   (limit 5)
                   (offset 3)
                   (as-sql))
-                "SELECT id, username FROM user WHERE username = 'chris' ORDER BY created DESC LIMIT 5 OFFSET 3")))
+                "SELECT id, username FROM user WHERE (username = 'chris') ORDER BY created DESC LIMIT 5 OFFSET 3")))
 
 (deftest simple-selects
          (sql-only
            (let [results ["SELECT * FROM user"
                           "SELECT id, username FROM user"
-                          "SELECT * FROM user WHERE email = 'hey@hey.com' AND username = 'chris'"
-                          "SELECT * FROM user WHERE username = 'chris' ORDER BY created DESC"
-                          "SELECT * FROM user WHERE active = TRUE ORDER BY created DESC LIMIT 5 OFFSET 3"]
+                          "SELECT * FROM user WHERE (username = 'chris' AND email = 'hey@hey.com')"
+                          "SELECT * FROM user WHERE (username = 'chris') ORDER BY created DESC"
+                          "SELECT * FROM user WHERE (active = TRUE) ORDER BY created DESC LIMIT 5 OFFSET 3"]
                  queries [(select user)
                           (select user
                                   (fields :id :username))
@@ -44,13 +44,13 @@
                            :last "granger"})
                   (where {:id 3})
                   (as-sql))
-                "UPDATE user SET first = 'chris', last = 'granger' WHERE id = 3")))
+                "UPDATE user SET first = 'chris', last = 'granger' WHERE (id = 3)")))
 
 (deftest update-queries
          (sql-only
            (let [results ["UPDATE user SET first = 'chris'"
-                          "UPDATE user SET first = 'chris' WHERE id = 3"
-                          "UPDATE user SET first = 'chris', last = 'granger' WHERE id = 3"]
+                          "UPDATE user SET first = 'chris' WHERE (id = 3)"
+                          "UPDATE user SET first = 'chris', last = 'granger' WHERE (id = 3)"]
                  queries [(update user
                                   (fields {:first "chris"}))
                           (update user
@@ -67,12 +67,12 @@
          (is (= (-> (delete-query "user")
                   (where {:id 3})
                   (as-sql))
-                "DELETE FROM user WHERE id = 3")))
+                "DELETE FROM user WHERE (id = 3)")))
 
 (deftest delete-queries
          (sql-only
            (let [results ["DELETE FROM user"
-                          "DELETE FROM user WHERE id = 3"]
+                          "DELETE FROM user WHERE (id = 3)"]
                  queries [(delete user)
                           (delete user
                             (where {:id 3}))]]

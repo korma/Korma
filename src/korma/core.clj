@@ -76,7 +76,7 @@
   (update-in query [:where] conj vs))
 
 (defmacro where [query form]
-  `(where* ~query ~(isql/parse-where form)))
+  `(where* ~query ~(isql/parse-where `~form)))
 
 (defn order [query k & [dir]]
   (update-in query [:order] conj [k (or dir :desc)]))
