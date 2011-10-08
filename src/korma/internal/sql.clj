@@ -12,7 +12,7 @@
 (declare kv-clause)
 
 (defn map->where [m]
-  (string/join " AND " (map kv-clause m)))
+  (str "(" (string/join " AND " (map kv-clause m)) ")"))
 
 (defn str-value [v]
   (cond
