@@ -45,8 +45,11 @@
 (defn infix [k op v]
   (str (str-value k) " " op " " (str-value v)))
 
-(defn pred-and [c1 c2] (str "(" (str-value c1) " AND " (str-value c2) ")"))
-(defn pred-or [c1 c2] (str "(" (str-value c1) " OR " (str-value c2) ")"))
+(defn group-with [op vs]
+  (str "(" (string/join op (map str-value vs)) ")"))
+
+(defn pred-and [& args] (group-with " AND " args))
+(defn pred-or [& args] (group-with " OR " args))
 (defn pred-not [v] (str "NOT(" (str-value v) ")"))
 
 (defn pred-in [k v] (infix k "IN" v))
