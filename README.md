@@ -52,6 +52,15 @@ _Korma is just getting started, use at your own peril_
 ;; executes: SELECT * FROM user WHERE ((username = 'chris' AND first = 'chris') OR email = 'chris@chris.com)'
 
 
+(defentity address
+ (table-fields :street :city :zip))
+
+(defentity user
+ (has-one address))
+
+(select user
+ (with address))
+;; SELECT address.street, address.city, address.zip FROM user LEFT JOIN address ON user.id = address.user_id
 
 ```
 
