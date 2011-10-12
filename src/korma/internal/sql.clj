@@ -77,10 +77,10 @@
     (pred-= k v)
     ((first v) k (second v))))
 
-(defn join-clause [join-type table sub-table]
+(defn join-clause [join-type table pk fk]
   (let [join-type (string/upper-case (name join-type))
-        join (str " " join-type " JOIN " sub-table " ON ")
-        on-clause (str table "." sub-table "_id = " sub-table ".id")]
+        join (str " " join-type " JOIN " table " ON ")
+        on-clause (str pk " = " fk)]
     (str join on-clause)))
 
 (defn insert-values-clause [vs]
@@ -127,9 +127,8 @@
         [(str sql neue-sql) query]))
 
 (defn sql-joins [[sql query]]
-  (let [sub-ents (-> query :ent :has-one)
-        clauses (for [{:keys [table]} sub-ents]
-                  (join-clause :left (:table query) table))
+  (let [clauses (for [[type table pk fk] (:joins query)]
+                  (join-clause :left table pk fk))
         clauses-str (string/join " " clauses)]
   [(str sql clauses-str) query]))
 

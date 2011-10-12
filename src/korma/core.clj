@@ -86,6 +86,20 @@
                                       [vs]
                                       vs)))
 
+(defn join 
+  ([query table field1 field2]
+   (join query :left table field1 field2))
+  ([query type table field1 field2]
+   (update-in query [:joins] conj [type table field1 field2])))
+
+(defn with [query ent]
+  (let [flds (:fields ent)
+        query (if flds
+                (apply fields query flds)
+                query)
+        rel (get-in query [:ent :rel (:table ent)])]
+    (join query (:table ent) (:pk rel) (:fk rel))))
+
 (defn limit [query v]
   (assoc query :limit v))
 
@@ -123,10 +137,41 @@
 ;;*****************************************************
 
 (defn create-entity [table]
-  {:table table})
+  {:table table
+   :fields []
+   :rel {}}) 
 
-(defn has-one [ent sub-ent]
-  (update-in ent [:has-one] conj sub-ent))
+(defn prefix [ent field]
+  (let [table (if (string? ent)
+                ent
+                (:table ent))]
+    (str table "." (name field))))
+
+(defn create-relation [ent sub-ent type opts]
+  (let [[pk fk] (condp = type
+                  :has-one [(prefix ent :id) (prefix sub-ent (str (:table ent) "_id"))]
+                  :belongs-to [(prefix ent :id) (prefix sub-ent (str (:table ent) "_id"))]
+                  :has-many [(prefix ent :id) (prefix sub-ent (str (:table ent) "_id"))])]
+    (merge {:table (:table sub-ent)
+            :rel-type type
+            :pk pk
+            :fk fk}
+           opts)))
+
+(defn rel [ent sub-ent type opts]
+  (assoc-in ent [:rel (:table sub-ent)] (create-relation ent sub-ent type opts)))
+
+(defn has-one [ent sub-ent & [opts]]
+  (rel ent sub-ent :has-one opts))
+
+(defn has-many [ent sub-ent & [opts]]
+  (rel ent sub-ent :has-many opts))
+
+(defn table-fields [ent & fields]
+  (update-in ent [:fields] concat (map #(prefix ent %) fields)))
+
+(defn table [ent t]
+  (assoc ent :table (name t)))
 
 (defmacro defentity [ent & body]
   `(let [e# (-> (create-entity ~(name ent))
