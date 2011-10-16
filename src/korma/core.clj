@@ -1,6 +1,7 @@
 (ns korma.core
   (:require [korma.internal.sql :as isql]
-            [korma.db :as db]))
+            [korma.db :as db])
+  (:use [korma.internal.sql :only [bind-query]]))
 
 (def ^{:dynamic true} *exec-mode* false)
 
@@ -15,7 +16,7 @@
     {:ent ent
      :table table}))
 
-(defn select-query [ent]
+(defn select* [ent]
   (let [q (empty-query ent)]
     (merge q {:type :select
               :fields []
@@ -23,18 +24,18 @@
               :order []
               :group []})))
 
-(defn update-query [ent]
+(defn update* [ent]
   (let [q (empty-query ent)]
     (merge q {:type :update
               :fields {}
               :where []})))
 
-(defn delete-query [ent]
+(defn delete* [ent]
   (let [q (empty-query ent)]
     (merge q {:type :delete
               :where []})))
 
-(defn insert-query [ent]
+(defn insert* [ent]
   (let [q (empty-query ent)]
     (merge q {:type :insert
               :values []})))
@@ -44,22 +45,22 @@
 ;;*****************************************************
 
 (defmacro select [ent & body]
-  `(let [query# (-> (select-query ~ent)
+  `(let [query# (-> (select* ~ent)
                  ~@body)]
      (exec query#)))
 
 (defmacro update [ent & body]
-  `(let [query# (-> (update-query ~ent)
+  `(let [query# (-> (update* ~ent)
                   ~@body)]
      (exec query#)))
 
 (defmacro delete [ent & body]
-  `(let [query# (-> (delete-query ~ent)
+  `(let [query# (-> (delete* ~ent)
                   ~@body)]
      (exec query#)))
 
 (defmacro insert [ent & body]
-  `(let [query# (-> (insert-query ~ent)
+  `(let [query# (-> (insert* ~ent)
                   ~@body)]
      (exec query#)))
 
@@ -70,13 +71,16 @@
 (defn fields [query & vs]
   (if (= (:type query) :update)
     (update-in query [:fields] merge (first vs))
-    (update-in query [:fields] concat vs)))
+    (update-in query [:fields] concat (map #(isql/prefix (:table query) %) vs))))
 
 (defn where* [query vs]
   (update-in query [:where] conj vs))
 
 (defmacro where [query form]
-  `(where* ~query ~(isql/parse-where `~form)))
+  `(let [q# ~query]
+     (where* q# 
+             (bind-query q#
+               ~(isql/parse-where `~form)))))
 
 (defn order [query k & [dir]]
   (update-in query [:order] conj [k (or dir :desc)]))
@@ -92,13 +96,9 @@
   ([query type table field1 field2]
    (update-in query [:joins] conj [type table field1 field2])))
 
-(defn with [query ent]
-  (let [flds (:fields ent)
-        query (if flds
-                (apply fields query flds)
-                query)
-        rel (get-in query [:ent :rel (:table ent)])]
-    (join query (:table ent) (:pk rel) (:fk rel))))
+(defn post-query [query post]
+  (update-in query [:post-queries] conj post))
+
 
 (defn limit [query v]
   (assoc query :limit v))
@@ -119,18 +119,24 @@
      ~@body))
 
 (defn as-sql [query]
-  (first (isql/->sql query)))
+  (bind-query query (first (isql/->sql query))))
+
+(defn apply-posts [query results]
+  (if-let [posts (:post-queries query)]
+    (let [post-fn (apply comp posts)]
+      (post-fn results))
+    results))
 
 (defn exec [query]
-  (let [[sql] (isql/->sql query)]
+  (let [[sql] (bind-query query (isql/->sql query))]
     (cond
       (:sql query) sql
       (= *exec-mode* :sql) sql
       (= *exec-mode* :dry-run) (do
                                  (println "dry run SQL ::" sql)
-                                 [])
-      :else (do
-              (db/do-query (-> query :ent :db) sql)))))
+                                 (apply-posts query [{:id 1}]))
+      :else (let [results (db/do-query (-> query :ent :db) sql)]
+              (apply-posts query results)))))
 
 ;;*****************************************************
 ;; Entities
@@ -138,20 +144,15 @@
 
 (defn create-entity [table]
   {:table table
+   :pk :id
    :fields []
    :rel {}}) 
 
-(defn prefix [ent field]
-  (let [table (if (string? ent)
-                ent
-                (:table ent))]
-    (str table "." (name field))))
-
 (defn create-relation [ent sub-ent type opts]
   (let [[pk fk] (condp = type
-                  :has-one [(prefix ent :id) (prefix sub-ent (str (:table ent) "_id"))]
-                  :belongs-to [(prefix ent :id) (prefix sub-ent (str (:table ent) "_id"))]
-                  :has-many [(prefix ent :id) (prefix sub-ent (str (:table ent) "_id"))])]
+                  :has-one [(isql/prefix ent (:pk ent)) (isql/prefix sub-ent (str (:table ent) "_id"))]
+                  :belongs-to [(isql/prefix ent (:pk ent)) (isql/prefix sub-ent (str (:table ent) "_id"))]
+                  :has-many [(isql/prefix ent (:pk ent)) (isql/prefix sub-ent (str (:table ent) "_id"))])]
     (merge {:table (:table sub-ent)
             :rel-type type
             :pk pk
@@ -164,16 +165,51 @@
 (defn has-one [ent sub-ent & [opts]]
   (rel ent sub-ent :has-one opts))
 
+(defn belongs-to [ent sub-ent & [opts]]
+  (rel ent sub-ent :belongs-to opts))
+
 (defn has-many [ent sub-ent & [opts]]
   (rel ent sub-ent :has-many opts))
 
-(defn table-fields [ent & fields]
-  (update-in ent [:fields] concat (map #(prefix ent %) fields)))
+(defn entity-fields [ent & fields]
+  (update-in ent [:fields] concat (map #(isql/prefix ent %) fields)))
 
 (defn table [ent t]
   (assoc ent :table (name t)))
+
+(defn pk [ent pk]
+  (assoc ent :pk (name pk)))
 
 (defmacro defentity [ent & body]
   `(let [e# (-> (create-entity ~(name ent))
               ~@body)]
      (def ~ent e#)))
+
+;;*****************************************************
+;; With
+;;*****************************************************
+
+(defn- with-later [rel query ent]
+  (let [fk (:fk rel)
+        pk (get-in query [:ent :pk])
+        table (keyword (:table ent))]
+    (post-query query 
+                (partial map 
+                         #(assoc % table
+                                 (select ent
+                                         (where (str fk " = " (get % pk)))))))))
+
+(defn- with-now [rel query ent]
+  (let [flds (:fields ent)
+        query (if flds
+                (apply fields query flds)
+                query)]
+    (join query (:table ent) (:pk rel) (:fk rel))))
+
+(defn with [query ent]
+  (let [rel (get-in query [:ent :rel (:table ent)])]
+    (cond
+      (not rel) (throw (Exception. (str "No relationship defined for table: " (:table ent))))
+      (#{:has-one :belongs-to} (:rel-type rel)) (with-now rel query ent)
+      :else (with-later rel query ent))))
+

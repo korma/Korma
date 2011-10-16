@@ -3,8 +3,29 @@
             [clojure.walk :as walk]))
 
 ;;*****************************************************
+;; dynamic vars
+;;*****************************************************
+
+(def ^{:dynamic true} *bound-table* nil)
+
+(defmacro bind-query [query & body]
+  `(binding [*bound-table* (:table ~query)]
+     ~@body))
+
+
+;;*****************************************************
 ;; Str utils
 ;;*****************************************************
+
+(defn prefix [ent field]
+  (let [field-name (name field)]
+    ;;check if it's already prefixed
+    (if (= -1 (.indexOf field-name "."))
+      (let [table (if (string? ent)
+                    ent
+                    (:table ent))]
+        (str table "." field-name))
+      field-name)))
 
 (defn comma [vs]
   (string/join ", " vs))
@@ -12,12 +33,14 @@
 (declare kv-clause)
 
 (defn map->where [m]
-  (str "(" (string/join " AND " (map kv-clause m)) ")"))
+  (str "(" (string/join " AND " (map (comp :generated kv-clause) m)) ")"))
 
 (defn str-value [v]
   (cond
-    (map? v) (map->where v)
-    (keyword? v) (name v)
+    (map? v) (or (:generated v) (map->where v))
+    (keyword? v) (if *bound-table*
+                   (prefix *bound-table* v)
+                   (name v))
     (string? v) (str "'" v "'")
     (number? v) v
     (nil? v) "NULL"
@@ -43,10 +66,10 @@
                  '= 'korma.internal.sql/pred-=})
 
 (defn infix [k op v]
-  (str (str-value k) " " op " " (str-value v)))
+  {:generated (str (str-value k) " " op " " (str-value v))})
 
 (defn group-with [op vs]
-  (str "(" (string/join op (map str-value vs)) ")"))
+  {:generated (str "(" (string/join op (map str-value vs)) ")")})
 
 (defn pred-and [& args] (group-with " AND " args))
 (defn pred-or [& args] (group-with " OR " args))
@@ -54,7 +77,7 @@
 
 (defn pred-in [k v] (infix k "IN" v))
 (defn pred-> [k v] (infix k ">" v))
-(defn pred-> [k v] (infix k "<" v))
+(defn pred-< [k v] (infix k "<" v))
 (defn pred->= [k v] (infix k ">=" v))
 (defn pref-<= [k v] (infix k "<=" v))
 (defn pred-like [k v] (infix k "LIKE" v))
@@ -83,9 +106,9 @@
         on-clause (str pk " = " fk)]
     (str join on-clause)))
 
-(defn insert-values-clause [vs]
+(defn insert-values-clause [ks vs]
   (for [v vs]
-    (str "(" (comma (map str-value (vals v))) ")")))
+    (str "(" (comma (map str-value (map #(get v %) ks))) ")")))
 
 ;;*****************************************************
 ;; Query types
@@ -108,9 +131,9 @@
         [neue-sql query]))
 
 (defn sql-insert [query]
-  (let [ins-keys (map name (keys (first (:values query))))
-        keys-clause (comma ins-keys)
-        ins-values (insert-values-clause (:values query))
+  (let [ins-keys (keys (first (:values query)))
+        keys-clause (comma (map name ins-keys))
+        ins-values (insert-values-clause ins-keys (:values query))
         values-clause (comma ins-values)
         neue-sql (str "INSERT INTO " (:table query) " (" keys-clause ") VALUES " values-clause)]
         [neue-sql query]))
@@ -121,7 +144,7 @@
 ;;*****************************************************
 
 (defn sql-set [[sql query]]
-  (let [clauses (map kv-clause (:fields query))
+  (let [clauses (map (comp :generated kv-clause) (:fields query))
         clauses-str (string/join ", " clauses)
         neue-sql (str " SET " clauses-str)]
         [(str sql neue-sql) query]))
@@ -134,7 +157,7 @@
 
 (defn sql-where [[sql query]]
   (if (seq (:where query))
-    (let [clauses (map #(if (map? %) (map->where %) %) (:where query))
+    (let [clauses (map #(if (map? %) (str-value %) %) (:where query))
           clauses-str (string/join " AND " clauses)
           neue-sql (str " WHERE " clauses-str)]
       [(str sql neue-sql) query])
@@ -143,7 +166,7 @@
 (defn sql-order [[sql query]]
   (if (seq (:order query))
     (let [clauses (for [[k dir] (:order query)]
-                    (str (name k) " " (string/upper-case (name dir))))
+                    (str (str-value k) " " (string/upper-case (name dir))))
           clauses-str (string/join ", " clauses)
           neue-sql (str " ORDER BY " clauses-str)]
       [(str sql neue-sql) query])
