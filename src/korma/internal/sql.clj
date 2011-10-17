@@ -30,23 +30,33 @@
 (defn comma [vs]
   (string/join ", " vs))
 
-(declare kv-clause)
+(declare kv-clause str-value)
 
 (defn map->where [m]
   (str "(" (string/join " AND " (map (comp :generated kv-clause) m)) ")"))
 
+(defn field-str [v]
+  (let [fname (if *bound-table*
+                (prefix *bound-table* v)
+                (name v))]
+    fname))
+
+(defn coll-str [v]
+  (str "(" (comma (map str-value v)) ")"))
+
+(defn table-str [v]
+  (str "\"" v "\""))
+
 (defn str-value [v]
   (cond
     (map? v) (or (:generated v) (map->where v))
-    (keyword? v) (if *bound-table*
-                   (prefix *bound-table* v)
-                   (name v))
+    (keyword? v) (field-str v)
     (string? v) (str "'" v "'")
     (number? v) v
     (nil? v) "NULL"
     (true? v) "TRUE"
     (false? v) "FALSE"
-    (coll? v) (str "(" (comma (map str-value v)) ")")
+    (coll? v) (coll-str v)
     :else v))
 
 ;;*****************************************************
@@ -119,15 +129,15 @@
                   ["*"]
                   (map name (:fields query)))
         clauses-str (comma clauses)
-        neue-sql (str "SELECT " clauses-str " FROM " (:table query))]
+        neue-sql (str "SELECT " clauses-str " FROM " (table-str (:table query)))]
         [neue-sql query]))
 
 (defn sql-update [query]
-  (let [neue-sql (str "UPDATE " (:table query))]
+  (let [neue-sql (str "UPDATE " (table-str (:table query)))]
         [neue-sql query]))
 
 (defn sql-delete [query]
-  (let [neue-sql (str "DELETE FROM " (:table query))]
+  (let [neue-sql (str "DELETE FROM " (table-str (:table query)))]
         [neue-sql query]))
 
 (defn sql-insert [query]
@@ -135,7 +145,7 @@
         keys-clause (comma (map name ins-keys))
         ins-values (insert-values-clause ins-keys (:values query))
         values-clause (comma ins-values)
-        neue-sql (str "INSERT INTO " (:table query) " (" keys-clause ") VALUES " values-clause)]
+        neue-sql (str "INSERT INTO " (table-str (:table query)) " (" keys-clause ") VALUES " values-clause)]
         [neue-sql query]))
 
 
@@ -144,10 +154,11 @@
 ;;*****************************************************
 
 (defn sql-set [[sql query]]
-  (let [clauses (map (comp :generated kv-clause) (:fields query))
-        clauses-str (string/join ", " clauses)
-        neue-sql (str " SET " clauses-str)]
-        [(str sql neue-sql) query]))
+  (bind-query {}
+              (let [clauses (map (comp :generated kv-clause) (:fields query))
+                    clauses-str (string/join ", " clauses)
+                    neue-sql (str " SET " clauses-str)]
+                [(str sql neue-sql) query])))
 
 (defn sql-joins [[sql query]]
   (let [clauses (for [[type table pk fk] (:joins query)]

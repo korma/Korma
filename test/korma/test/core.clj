@@ -135,6 +135,13 @@
              (doseq [[r q] (map vector results queries)]
                (is (= q r))))))
 
+(deftest with-many
+         (with-out-str
+           (dry-run 
+             (is (= (select user2
+                            (with email))
+                    [{:id 1 :email [{:id 1}]}])))))
+
 (deftest with-one
          (sql-only
            (is (= (select user2

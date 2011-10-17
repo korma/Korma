@@ -22,7 +22,8 @@
               :fields []
               :where []
               :order []
-              :group []})))
+              :group []
+              :results true})))
 
 (defn update* [ent]
   (let [q (empty-query ent)]
@@ -135,7 +136,7 @@
       (= *exec-mode* :dry-run) (do
                                  (println "dry run SQL ::" sql)
                                  (apply-posts query [{:id 1}]))
-      :else (let [results (db/do-query (-> query :ent :db) sql)]
+      :else (let [results (db/do-query query sql)]
               (apply-posts query results)))))
 
 ;;*****************************************************

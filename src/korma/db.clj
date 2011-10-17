@@ -1,21 +1,44 @@
 (ns korma.db
   "Functions for creating and managing database specifications."
-  (:require [clojure.java.jdbc :as jdbc]))
+  (:require [clojure.java.jdbc :as jdbc]
+            [clojure.java.jdbc.internal :as ijdbc])
+  (:import com.mchange.v2.c3p0.ComboPooledDataSource))
 
-(def _default (atom nil))
+(defonce _default (atom nil))
 
 (defn default-spec 
   "Set the database spec that Korma should use by default when no alternative is specified."
   [spec]
   (reset! _default spec))
 
+(defn connection-pool
+  [spec]
+  (let [excess (or (:excess-timeout spec) (* 30 60))
+        idle (or (:idle-timeout spec) (* 3 60 60))
+        cpds (doto (ComboPooledDataSource.)
+               (.setDriverClass (:classname spec))
+               (.setJdbcUrl (str "jdbc:" (:subprotocol spec) ":" (:subname spec)))
+               (.setUser (:user spec))
+               (.setPassword (:password spec))
+               (.setMaxIdleTimeExcessConnections excess)
+               (.setMaxIdleTime idle))]
+    {:datasource cpds}))
+
+(defn delay-pool [spec]
+  (delay (connection-pool spec)))
+
+(defn get-connection [db]
+  (if-not db
+    (throw (Exception. "No valid DB connection selected."))
+    @db))
+
 (defmacro defdb 
   "Define a database specification. The last evaluated defdb will be used by default
   for all queries where no database is specified by the entity."
   [db-name spec]
   `(do 
-     (def ~db-name ~spec)
-     (default-spec ~spec)))
+     (def ~db-name (delay-pool ~spec))
+     (default-spec ~db-name)))
 
 (defn postgres 
   "Create a database specification for a postgres database. Opts should include keys
@@ -66,11 +89,16 @@
           :subname (str "//" host ":" port ";database=" db ";user=" user ";password=" password)} 
          opts)))
 
-(defn do-query [conn q]
-  (let [cur (or conn @_default)]
+(defn do-query [query sql]
+  (let [conn (when-let[db (:db query)]
+               (get-connection db))
+        cur (or conn (get-connection @_default))
+        results? (:results query)]
     (jdbc/with-connection cur
-      (jdbc/with-query-results rs [q]
-        (vec rs)))))
+                          (if results?
+                            (jdbc/with-query-results rs [sql]
+                                                     (vec rs))
+                            (ijdbc/do-prepared-return-keys* sql nil)))))
 
 (comment
 (defdb db (postgres {:db "db"
