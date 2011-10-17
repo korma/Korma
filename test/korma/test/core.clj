@@ -19,15 +19,15 @@
                   (limit 5)
                   (offset 3)
                   (as-sql))
-                "SELECT user.id, user.username FROM user WHERE (user.username = 'chris') ORDER BY user.created DESC LIMIT 5 OFFSET 3")))
+                "SELECT user.id, user.username FROM \"user\" WHERE (user.username = 'chris') ORDER BY user.created DESC LIMIT 5 OFFSET 3")))
 
 (deftest simple-selects
          (sql-only
-           (let [results ["SELECT * FROM user"
-                          "SELECT user.id, user.username FROM user"
-                          "SELECT * FROM user WHERE (user.username = 'chris' AND user.email = 'hey@hey.com')"
-                          "SELECT * FROM user WHERE (user.username = 'chris') ORDER BY user.created DESC"
-                          "SELECT * FROM user WHERE (user.active = TRUE) ORDER BY user.created DESC LIMIT 5 OFFSET 3"]
+           (let [results ["SELECT * FROM \"user\""
+                          "SELECT user.id, user.username FROM \"user\""
+                          "SELECT * FROM \"user\" WHERE (user.username = 'chris' AND user.email = 'hey@hey.com')"
+                          "SELECT * FROM \"user\" WHERE (user.username = 'chris') ORDER BY user.created DESC"
+                          "SELECT * FROM \"user\" WHERE (user.active = TRUE) ORDER BY user.created DESC LIMIT 5 OFFSET 3"]
                  queries [(select user)
                           (select user
                                   (fields :id :username))
@@ -51,13 +51,13 @@
                            :last "granger"})
                   (where {:id 3})
                   (as-sql))
-                "UPDATE user SET user.first = 'chris', user.last = 'granger' WHERE (user.id = 3)")))
+                "UPDATE \"user\" SET first = 'chris', last = 'granger' WHERE (user.id = 3)")))
 
 (deftest update-queries
          (sql-only
-           (let [results ["UPDATE user SET user.first = 'chris'"
-                          "UPDATE user SET user.first = 'chris' WHERE (user.id = 3)"
-                          "UPDATE user SET user.first = 'chris', user.last = 'granger' WHERE (user.id = 3)"]
+           (let [results ["UPDATE \"user\" SET first = 'chris'"
+                          "UPDATE \"user\" SET first = 'chris' WHERE (user.id = 3)"
+                          "UPDATE \"user\" SET first = 'chris', last = 'granger' WHERE (user.id = 3)"]
                  queries [(update user
                                   (fields {:first "chris"}))
                           (update user
@@ -74,12 +74,12 @@
          (is (= (-> (delete* "user")
                   (where {:id 3})
                   (as-sql))
-                "DELETE FROM user WHERE (user.id = 3)")))
+                "DELETE FROM \"user\" WHERE (user.id = 3)")))
 
 (deftest delete-queries
          (sql-only
-           (let [results ["DELETE FROM user"
-                          "DELETE FROM user WHERE (user.id = 3)"]
+           (let [results ["DELETE FROM \"user\""
+                          "DELETE FROM \"user\" WHERE (user.id = 3)"]
                  queries [(delete user)
                           (delete user
                             (where {:id 3}))]]
@@ -90,12 +90,12 @@
          (is (= (-> (insert* "user")
                   (values {:first "chris" :last "granger"})
                   (as-sql))
-                "INSERT INTO user (last, first) VALUES ('granger', 'chris')")))
+                "INSERT INTO \"user\" (last, first) VALUES ('granger', 'chris')")))
 
 (deftest insert-queries
          (sql-only
-           (let [results ["INSERT INTO user (last, first) VALUES ('granger', 'chris')"
-                          "INSERT INTO user (last, first) VALUES ('granger', 'chris'), ('jordan', 'michael')"]
+           (let [results ["INSERT INTO \"user\" (last, first) VALUES ('granger', 'chris')"
+                          "INSERT INTO \"user\" (last, first) VALUES ('granger', 'chris'), ('jordan', 'michael')"]
                  queries [(insert user
                             (values {:first "chris" :last "granger"}))
                           (insert user
@@ -106,12 +106,12 @@
 
 (deftest complex-where
          (sql-only
-           (let [results ["SELECT * FROM user WHERE (user.name = 'chris' OR user.name = 'john')"
-                          "SELECT * FROM user WHERE ((user.name = 'chris') OR (user.name = 'john'))"
-                          "SELECT * FROM user WHERE ((user.last = 'dreward' AND user.name = 'drew') OR (user.email = 'drew@drew.com') OR user.age > 10)"
-                          "SELECT * FROM user WHERE (user.x < 5 OR (user.y < 3 OR user.z > 4))"
-                          "SELECT * FROM user WHERE (user.name LIKE 'chris')"
-                          "SELECT * FROM user WHERE ((user.name LIKE 'chris') OR user.name LIKE 'john')"]
+           (let [results ["SELECT * FROM \"user\" WHERE (user.name = 'chris' OR user.name = 'john')"
+                          "SELECT * FROM \"user\" WHERE ((user.name = 'chris') OR (user.name = 'john'))"
+                          "SELECT * FROM \"user\" WHERE ((user.last = 'dreward' AND user.name = 'drew') OR (user.email = 'drew@drew.com') OR user.age > 10)"
+                          "SELECT * FROM \"user\" WHERE (user.x < 5 OR (user.y < 3 OR user.z > 4))"
+                          "SELECT * FROM \"user\" WHERE (user.name LIKE 'chris')"
+                          "SELECT * FROM \"user\" WHERE ((user.name LIKE 'chris') OR user.name LIKE 'john')"]
                  queries [(select user
                                   (where (or (= :name "chris")
                                              (= :name "john"))))
@@ -147,4 +147,4 @@
            (is (= (select user2
                           (with address)
                           (fields :address.state :name))
-                  "SELECT address.state, user.name FROM user LEFT JOIN address ON user.id = address.user_id"))))
+                  "SELECT address.state, user.name FROM \"user\" LEFT JOIN address ON user.id = address.user_id"))))
