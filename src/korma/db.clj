@@ -35,7 +35,7 @@
   [db]
   (if-not db
     (throw (Exception. "No valid DB connection selected."))
-    (if (delay? @db)
+    (if (delay? db)
       @db
       db)))
 

@@ -115,7 +115,7 @@
 (defn set-fields
   "Set the fields and values for an update query."
   [query fields-map]
-  (update-in query [:set-fields] merge vs))
+  (update-in query [:set-fields] merge fields-map))
 
 (defn where*
   "Add a where clause to the query. Clause can be either a map or a string, and
@@ -145,7 +145,7 @@
   
   (order query :created :asc)"
   [query field & [dir]]
-  (update-in query [:order] conj [k (or dir :desc)]))
+  (update-in query [:order] conj [field (or dir :desc)]))
 
 (defn values
   "Add records to an insert clause. values can either be a vector of maps or a single
@@ -153,9 +153,9 @@
   
   (values query [{:name \"john\"} {:name \"ed\"}])"
   [query values]
-  (update-in query [:values] concat (if (map? vs)
-                                      [vs]
-                                      vs)))
+  (update-in query [:values] concat (if (map? values)
+                                      [values]
+                                      values)))
 
 (defn join 
   "Add a join clause to a select query, specifying the table name to join and the two fields
@@ -227,9 +227,13 @@
               (apply-posts query results)))))
 
 (defn exec-raw
-  "Execute a raw SQL string, supplying whether results should be returned."
-  [sql-str & [with-results?]]
-    (db/do-query {:results with-results?} sql))
+  "Execute a raw SQL string, supplying whether results should be returned. Optionally
+  provide the connection to execute against as the first object."
+  [conn? & [sql-str with-results?]]
+  (let [[conn? sql-str with-results?] (if (string? conn?)
+                                       [nil conn? sql-str]
+                                       [conn? sql-str with-results?])]
+    (db/do-query {:db conn? :results with-results?} sql-str)))
 
 ;;*****************************************************
 ;; Entities
