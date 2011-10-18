@@ -14,53 +14,53 @@ _Korma is just getting started, use at your own peril_
                      :password "dbpass"}))
 
 (use 'korma.core)
-(defentity user)
+(defentity users)
 
-(select user)
-;; executes: SELECT * FROM user
+(select users)
+;; executes: SELECT * FROM users
 
-(select user
-  (fields :username :id))
-;; executes: SELECT user.username, user.id FROM user
+(select users
+  (fields :usersname :id))
+;; executes: SELECT users.usersname, users.id FROM users
 
-(select user
-  (where {:username "chris"}))
-;; executes: SELECT * FROM user WHERE (user.username = 'chris)'
+(select users
+  (where {:usersname "chris"}))
+;; executes: SELECT * FROM users WHERE (users.usersname = 'chris)'
 
-(select user 
+(select users 
   (where {:active true})
   (order :created)
   (limit 5)
   (offset 3))
-;; executes: SELECT * FROM user WHERE (user.active = TRUE) ORDER BY user.created DESC LIMIT 5 OFFSET 3
+;; executes: SELECT * FROM users WHERE (users.active = TRUE) ORDER BY users.created DESC LIMIT 5 OFFSET 3
 
-(select user
-  (where (or (= :username "chris")
+(select users
+  (where (or (= :usersname "chris")
              (= :email "chris@chris.com"))))
-;; executes: SELECT * FROM user WHERE (user.username = 'chris' OR user.email = 'chris@chris.com')
+;; executes: SELECT * FROM users WHERE (users.usersname = 'chris' OR users.email = 'chris@chris.com')
 
-(select user
-  (where {:username [like "chris"]
+(select users
+  (where {:usersname [like "chris"]
           :status "active"
           :location [not= nil]))
-;; executes SELECT * FROM user WHERE (user.username LIKE 'chris' AND user.status = 'active' AND user.location IS NOT NULL)
+;; executes SELECT * FROM users WHERE (users.usersname LIKE 'chris' AND users.status = 'active' AND users.location IS NOT NULL)
 
-(select user
-  (where (or {:username "chris"
+(select users
+  (where (or {:usersname "chris"
               :first "chris"}
              {:email [like "*@chris.com"]})))
-;; executes: SELECT * FROM user WHERE ((user.username = 'chris' AND user.first = 'chris') OR user.email = 'chris@chris.com)'
+;; executes: SELECT * FROM users WHERE ((users.usersname = 'chris' AND users.first = 'chris') OR users.email = 'chris@chris.com)'
 
 
 (defentity address
  (table-fields :street :city :zip))
 
-(defentity user
+(defentity users
  (has-one address))
 
-(select user
+(select users
  (with address))
-;; SELECT address.street, address.city, address.zip FROM user LEFT JOIN address ON user.id = address.user_id
+;; SELECT address.street, address.city, address.zip FROM users LEFT JOIN address ON users.id = address.users_id
 
 ```
 

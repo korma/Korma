@@ -226,6 +226,11 @@
       :else (let [results (db/do-query query sql)]
               (apply-posts query results)))))
 
+(defn exec-raw
+  "Execute a raw SQL string, supplying whether results should be returned."
+  [sql-str & [with-results?]]
+    (db/do-query {:results with-results?} sql))
+
 ;;*****************************************************
 ;; Entities
 ;;*****************************************************
