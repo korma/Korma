@@ -213,10 +213,30 @@
       (post-fn results))
     results))
 
+(defn- apply-transforms
+  [query results]
+  (if-let [trans (-> query :ent :transforms)]
+    (let [trans-fn (apply comp trans)]
+      (map trans-fn results))
+    results))
+
+(defn- apply-prepares
+  [query]
+  (if-let [preps (-> query :ent :prepares)]
+    (let [preps (apply comp preps)]
+      (condp = (:type query)
+        :insert (let [values (:values query)]
+                  (assoc query :values (map preps values)))
+        :update (let [value (:set-fields query)]
+                  (assoc query :set-fields (preps value)))
+        query))
+    query))
+
 (defn exec
   "Execute a query map and return the results."
   [query]
-  (let [[sql] (bind-query query (isql/->sql query))]
+  (let [query (apply-prepares query)
+        [sql] (bind-query query (isql/->sql query))]
     (cond
       (:sql query) sql
       (= *exec-mode* :sql) sql
@@ -224,7 +244,7 @@
                                  (println "dry run SQL ::" sql)
                                  (apply-posts query [{:id 1}]))
       :else (let [results (db/do-query query sql)]
-              (apply-posts query results)))))
+              (apply-transforms query (apply-posts query results))))))
 
 (defn exec-raw
   "Execute a raw SQL string, supplying whether results should be returned. Optionally
@@ -307,12 +327,12 @@
 (defn transform
   "Add a function to be applied to results coming from the database"
   [ent func]
-  (update-in ent :transforms conj func))
+  (update-in ent [:transforms] conj func))
 
 (defn prepare
   "Add a function to be applied to records/values going into the database"
   [ent func]
-  (update-in ent :prepares conj func))
+  (update-in ent [:prepares] conj func))
 
 (defmacro defentity
   "Define an entity representing a table in the database, applying any modifications in
