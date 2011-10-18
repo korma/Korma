@@ -47,7 +47,7 @@
 
 (deftest update-function
          (is (= (-> (update* "user")
-                  (fields {:first "chris"
+                  (set-fields {:first "chris"
                            :last "granger"})
                   (where {:id 3})
                   (as-sql))
@@ -59,12 +59,12 @@
                           "UPDATE \"user\" SET first = 'chris' WHERE (user.id = 3)"
                           "UPDATE \"user\" SET first = 'chris', last = 'granger' WHERE (user.id = 3)"]
                  queries [(update user
-                                  (fields {:first "chris"}))
+                                  (set-fields {:first "chris"}))
                           (update user
-                                  (fields {:first "chris"})
+                                  (set-fields {:first "chris"})
                                   (where {:id 3}))
                           (update user
-                                  (fields {:first "chris"
+                                  (set-fields {:first "chris"
                                            :last "granger"})
                                   (where {:id 3}))]]
              (doseq [[r q] (map vector results queries)]

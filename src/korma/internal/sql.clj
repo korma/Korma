@@ -155,7 +155,7 @@
 
 (defn sql-set [[sql query]]
   (bind-query {}
-              (let [clauses (map (comp :generated kv-clause) (:fields query))
+              (let [clauses (map (comp :generated kv-clause) (:set-fields query))
                     clauses-str (string/join ", " clauses)
                     neue-sql (str " SET " clauses-str)]
                 [(str sql neue-sql) query])))

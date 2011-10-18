@@ -12,6 +12,7 @@
   (reset! _default spec))
 
 (defn connection-pool
+  "Create a connection pool for the given database spec."
   [spec]
   (let [excess (or (:excess-timeout spec) (* 30 60))
         idle (or (:idle-timeout spec) (* 3 60 60))
@@ -24,13 +25,19 @@
                (.setMaxIdleTime idle))]
     {:datasource cpds}))
 
-(defn delay-pool [spec]
+(defn delay-pool 
+  "Return a delay for creating a connection pool for the given spec."
+  [spec]
   (delay (connection-pool spec)))
 
-(defn get-connection [db]
+(defn get-connection 
+  "Get a connection from the potentially delayed connection object."
+  [db]
   (if-not db
     (throw (Exception. "No valid DB connection selected."))
-    @db))
+    (if (delay? @db)
+      @db
+      db)))
 
 (defmacro defdb 
   "Define a database specification. The last evaluated defdb will be used by default
