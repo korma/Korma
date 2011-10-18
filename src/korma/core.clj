@@ -108,7 +108,7 @@
 ;;*****************************************************
 
 (defn fields
-  "Set the fields to be selected in a standard select query."
+  "Set the fields to be selected in a query."
   [query & vs]
   (update-in query [:fields] concat (map #(isql/prefix (:table query) %) vs)))
 
@@ -244,6 +244,8 @@
   [table]
   {:table table
    :pk :id
+   :transforms '()
+   :prepares '()
    :fields []
    :rel {}}) 
 
@@ -251,9 +253,12 @@
   "Create a relation map describing how two entities are related."
   [ent sub-ent type opts]
   (let [[pk fk] (condp = type
-                  :has-one [(isql/prefix ent (:pk ent)) (isql/prefix sub-ent (str (:table ent) "_id"))]
-                  :belongs-to [(isql/prefix sub-ent (:pk sub-ent)) (isql/prefix ent (str (:table sub-ent) "_id"))]
-                  :has-many [(isql/prefix ent (:pk ent)) (isql/prefix sub-ent (str (:table ent) "_id"))])]
+                  :has-one [(isql/prefix ent (:pk ent)) 
+                            (isql/prefix sub-ent (str (:table ent) "_id"))]
+                  :belongs-to [(isql/prefix sub-ent (:pk sub-ent)) 
+                               (isql/prefix ent (str (:table sub-ent) "_id"))]
+                  :has-many [(isql/prefix ent (:pk ent)) 
+                             (isql/prefix sub-ent (str (:table ent) "_id"))])]
     (merge {:table (:table sub-ent)
             :rel-type type
             :pk pk
@@ -298,6 +303,16 @@
   "Set the primary key used for an entity. :id by default."
   [ent pk]
   (assoc ent :pk (name pk)))
+
+(defn transform
+  "Add a function to be applied to results coming from the database"
+  [ent func]
+  (update-in ent :transforms conj func))
+
+(defn prepare
+  "Add a function to be applied to records/values going into the database"
+  [ent func]
+  (update-in ent :prepares conj func))
 
 (defmacro defentity
   "Define an entity representing a table in the database, applying any modifications in
