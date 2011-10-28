@@ -14,8 +14,10 @@
 ;; Str utils
 ;;*****************************************************
 
-(defn table-alias [query]
-  (or (:alias query) (:table query)))
+(defn table-alias [{:keys [type table alias]}]
+  (if (= :select type)
+    (or alias table)
+    table))
 
 (defn prefix [ent field]
   (let [field-name (name field)]
@@ -148,7 +150,10 @@
                   ["*"]
                   (map name (:fields query)))
         clauses-str (comma clauses)
-        neue-sql (str "SELECT " clauses-str " FROM " (table-str (:table query)))]
+        alias-clause (if (:alias query)
+                       (str " AS " (:alias query))
+                       "")
+        neue-sql (str "SELECT " clauses-str " FROM " (table-str (:table query)) alias-clause)]
     (assoc query :sql-str neue-sql)))
 
 (defn sql-update [query]
