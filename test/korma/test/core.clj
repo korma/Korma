@@ -2,42 +2,42 @@
   (:use [korma.core])
   (:use [clojure.test]))
 
-(defentity user)
+(defentity users)
 (defentity address)
 (defentity email)
 
 (defentity user2
-  (table :user)
+  (table :users)
   (has-one address)
   (has-many email))
 
 (deftest select-function
-         (is (= (-> (select* "user")
+         (is (= (-> (select* "users")
                   (fields :id :username)
                   (where {:username "chris"})
                   (order :created)
                   (limit 5)
                   (offset 3)
                   (as-sql))
-                "SELECT user.id, user.username FROM \"user\" WHERE (user.username = 'chris') ORDER BY user.created DESC LIMIT 5 OFFSET 3")))
+                "SELECT users.id, users.username FROM users WHERE (users.username = ?) ORDER BY users.created DESC LIMIT 5 OFFSET 3")))
 
 (deftest simple-selects
          (sql-only
-           (let [results ["SELECT * FROM \"user\""
-                          "SELECT user.id, user.username FROM \"user\""
-                          "SELECT * FROM \"user\" WHERE (user.username = 'chris' AND user.email = 'hey@hey.com')"
-                          "SELECT * FROM \"user\" WHERE (user.username = 'chris') ORDER BY user.created DESC"
-                          "SELECT * FROM \"user\" WHERE (user.active = TRUE) ORDER BY user.created DESC LIMIT 5 OFFSET 3"]
-                 queries [(select user)
-                          (select user
+           (let [results ["SELECT * FROM users"
+                          "SELECT users.id, users.username FROM users"
+                          "SELECT * FROM users WHERE (users.username = ? AND users.email = ?)"
+                          "SELECT * FROM users WHERE (users.username = ?) ORDER BY users.created DESC"
+                          "SELECT * FROM users WHERE (users.active = TRUE) ORDER BY users.created DESC LIMIT 5 OFFSET 3"]
+                 queries [(select users)
+                          (select users
                                   (fields :id :username))
-                          (select user
+                          (select users
                                   (where {:username "chris"
                                           :email "hey@hey.com"}))
-                          (select user 
+                          (select users
                                   (where {:username "chris"})
                                   (order :created))
-                          (select user 
+                          (select users
                                   (where {:active true})
                                   (order :created)
                                   (limit 5)
@@ -46,24 +46,24 @@
                (is (= q r))))))
 
 (deftest update-function
-         (is (= (-> (update* "user")
+         (is (= (-> (update* "users")
                   (set-fields {:first "chris"
                            :last "granger"})
                   (where {:id 3})
                   (as-sql))
-                "UPDATE \"user\" SET first = 'chris', last = 'granger' WHERE (user.id = 3)")))
+                "UPDATE users SET first = ?, last = ? WHERE (users.id = ?)")))
 
 (deftest update-queries
          (sql-only
-           (let [results ["UPDATE \"user\" SET first = 'chris'"
-                          "UPDATE \"user\" SET first = 'chris' WHERE (user.id = 3)"
-                          "UPDATE \"user\" SET first = 'chris', last = 'granger' WHERE (user.id = 3)"]
-                 queries [(update user
+           (let [results ["UPDATE users SET first = ?"
+                          "UPDATE users SET first = ? WHERE (users.id = ?)"
+                          "UPDATE users SET first = ?, last = ? WHERE (users.id = ?)"]
+                 queries [(update users
                                   (set-fields {:first "chris"}))
-                          (update user
+                          (update users
                                   (set-fields {:first "chris"})
                                   (where {:id 3}))
-                          (update user
+                          (update users
                                   (set-fields {:first "chris"
                                            :last "granger"})
                                   (where {:id 3}))]]
@@ -71,34 +71,34 @@
                (is (= q r))))))
 
 (deftest delete-function
-         (is (= (-> (delete* "user")
+         (is (= (-> (delete* "users")
                   (where {:id 3})
                   (as-sql))
-                "DELETE FROM \"user\" WHERE (user.id = 3)")))
+                "DELETE FROM users WHERE (users.id = ?)")))
 
 (deftest delete-queries
          (sql-only
-           (let [results ["DELETE FROM \"user\""
-                          "DELETE FROM \"user\" WHERE (user.id = 3)"]
-                 queries [(delete user)
-                          (delete user
+           (let [results ["DELETE FROM users"
+                          "DELETE FROM users WHERE (users.id = ?)"]
+                 queries [(delete users)
+                          (delete users
                             (where {:id 3}))]]
              (doseq [[r q] (map vector results queries)]
                (is (= q r))))))
 
 (deftest insert-function
-         (is (= (-> (insert* "user")
+         (is (= (-> (insert* "users")
                   (values {:first "chris" :last "granger"})
                   (as-sql))
-                "INSERT INTO \"user\" (last, first) VALUES ('granger', 'chris')")))
+                "INSERT INTO users (last, first) VALUES (?, ?)")))
 
 (deftest insert-queries
          (sql-only
-           (let [results ["INSERT INTO \"user\" (last, first) VALUES ('granger', 'chris')"
-                          "INSERT INTO \"user\" (last, first) VALUES ('granger', 'chris'), ('jordan', 'michael')"]
-                 queries [(insert user
+           (let [results ["INSERT INTO users (last, first) VALUES (?, ?)"
+                          "INSERT INTO users (last, first) VALUES (?, ?), (?, ?)"]
+                 queries [(insert users
                             (values {:first "chris" :last "granger"}))
-                          (insert user
+                          (insert users
                             (values [{:first "chris" :last "granger"}
                                      {:last "jordan" :first "michael"}]))]]
              (doseq [[r q] (map vector results queries)]
@@ -106,30 +106,30 @@
 
 (deftest complex-where
          (sql-only
-           (let [results ["SELECT * FROM \"user\" WHERE (user.name = 'chris' OR user.name = 'john')"
-                          "SELECT * FROM \"user\" WHERE ((user.name = 'chris') OR (user.name = 'john'))"
-                          "SELECT * FROM \"user\" WHERE ((user.last = 'dreward' AND user.name = 'drew') OR (user.email = 'drew@drew.com') OR user.age > 10)"
-                          "SELECT * FROM \"user\" WHERE (user.x < 5 OR (user.y < 3 OR user.z > 4))"
-                          "SELECT * FROM \"user\" WHERE (user.name LIKE 'chris')"
-                          "SELECT * FROM \"user\" WHERE ((user.name LIKE 'chris') OR user.name LIKE 'john')"]
-                 queries [(select user
+           (let [results ["SELECT * FROM users WHERE (users.name = ? OR users.name = ?)"
+                          "SELECT * FROM users WHERE ((users.name = ?) OR (users.name = ?))"
+                          "SELECT * FROM users WHERE ((users.last = ? AND users.name = ?) OR (users.email = ?) OR users.age > ?)"
+                          "SELECT * FROM users WHERE (users.x < ? OR (users.y < ? OR users.z > ?))"
+                          "SELECT * FROM users WHERE (users.name LIKE ?)"
+                          "SELECT * FROM users WHERE ((users.name LIKE ?) OR users.name LIKE ?)"]
+                 queries [(select users
                                   (where (or (= :name "chris")
                                              (= :name "john"))))
-                          (select user
+                          (select users
                                   (where (or {:name "chris"}
                                              {:name "john"})))
-                          (select user
+                          (select users
                                   (where (or {:name "drew"
                                               :last "dreward"}
                                              {:email "drew@drew.com"}
                                              (> :age 10))))
-                          (select user
+                          (select users
                                   (where (or (< :x 5)
                                              (or (< :y 3)
                                                  (> :z 4)))))
-                          (select user
+                          (select users
                                   (where {:name [like "chris"]}))
-                          (select user
+                          (select users
                                   (where (or {:name [like "chris"]}
                                              (like :name "john"))))]]
              (doseq [[r q] (map vector results queries)]
@@ -147,4 +147,4 @@
            (is (= (select user2
                           (with address)
                           (fields :address.state :name))
-                  "SELECT address.state, user.name FROM \"user\" LEFT JOIN address ON user.id = address.user_id"))))
+                  "SELECT address.state, users.name FROM users LEFT JOIN address ON users.id = address.users_id"))))

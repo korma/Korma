@@ -2,20 +2,20 @@
   (:require [clojure.string :as string]
             [clojure.walk :as walk]))
 
+
 ;;*****************************************************
 ;; dynamic vars
 ;;*****************************************************
 
 (def ^{:dynamic true} *bound-table* nil)
-
-(defmacro bind-query [query & body]
-  `(binding [*bound-table* (:table ~query)]
-     ~@body))
-
+(def ^{:dynamic true} *bound-params* nil)
 
 ;;*****************************************************
 ;; Str utils
 ;;*****************************************************
+
+(defn table-alias [query]
+  (or (:alias query) (:table query)))
 
 (defn prefix [ent field]
   (let [field-name (name field)]
@@ -45,19 +45,38 @@
   (str "(" (comma (map str-value v)) ")"))
 
 (defn table-str [v]
-  (str "\"" v "\""))
+  (str v))
+
+(defn parameterize [v]
+  (when *bound-params*
+    (swap! *bound-params* conj v))
+  "?")
 
 (defn str-value [v]
   (cond
     (map? v) (or (:generated v) (map->where v))
     (keyword? v) (field-str v)
-    (string? v) (str "'" v "'")
-    (number? v) v
     (nil? v) "NULL"
     (true? v) "TRUE"
     (false? v) "FALSE"
     (coll? v) (coll-str v)
-    :else v))
+    :else (parameterize v)))
+
+;;*****************************************************
+;; Binding macros
+;;*****************************************************
+
+(defmacro bind-query [query & body]
+  `(binding [*bound-table* (table-alias ~query)]
+     ~@body))
+
+(defmacro bind-params [& body]
+  `(binding [*bound-params* (atom [])]
+     (let [query# (do ~@body)
+           params# (if (:params query#)
+                     (concat (:params query#) @*bound-params*)
+                     @*bound-params*)]
+       (assoc query# :params params#))))
 
 ;;*****************************************************
 ;; Predicates
@@ -130,15 +149,15 @@
                   (map name (:fields query)))
         clauses-str (comma clauses)
         neue-sql (str "SELECT " clauses-str " FROM " (table-str (:table query)))]
-        [neue-sql query]))
+    (assoc query :sql-str neue-sql)))
 
 (defn sql-update [query]
   (let [neue-sql (str "UPDATE " (table-str (:table query)))]
-        [neue-sql query]))
+    (assoc query :sql-str neue-sql)))
 
 (defn sql-delete [query]
   (let [neue-sql (str "DELETE FROM " (table-str (:table query)))]
-        [neue-sql query]))
+    (assoc query :sql-str neue-sql)))
 
 (defn sql-insert [query]
   (let [ins-keys (keys (first (:values query)))
@@ -146,49 +165,49 @@
         ins-values (insert-values-clause ins-keys (:values query))
         values-clause (comma ins-values)
         neue-sql (str "INSERT INTO " (table-str (:table query)) " (" keys-clause ") VALUES " values-clause)]
-        [neue-sql query]))
+    (assoc query :sql-str neue-sql)))
 
 
 ;;*****************************************************
 ;; Sql parts
 ;;*****************************************************
 
-(defn sql-set [[sql query]]
+(defn sql-set [query]
   (bind-query {}
               (let [clauses (map (comp :generated kv-clause) (:set-fields query))
                     clauses-str (string/join ", " clauses)
                     neue-sql (str " SET " clauses-str)]
-                [(str sql neue-sql) query])))
+    (update-in query [:sql-str] str neue-sql))))
 
-(defn sql-joins [[sql query]]
+(defn sql-joins [query]
   (let [clauses (for [[type table pk fk] (:joins query)]
                   (join-clause :left table pk fk))
         clauses-str (string/join " " clauses)]
-  [(str sql clauses-str) query]))
+    (update-in query [:sql-str] str clauses-str)))
 
-(defn sql-where [[sql query]]
+(defn sql-where [query]
   (if (seq (:where query))
     (let [clauses (map #(if (map? %) (str-value %) %) (:where query))
           clauses-str (string/join " AND " clauses)
           neue-sql (str " WHERE " clauses-str)]
-      [(str sql neue-sql) query])
-    [sql query]))
+      (update-in query [:sql-str] str neue-sql))
+    query))
 
-(defn sql-order [[sql query]]
+(defn sql-order [query]
   (if (seq (:order query))
     (let [clauses (for [[k dir] (:order query)]
                     (str (str-value k) " " (string/upper-case (name dir))))
           clauses-str (string/join ", " clauses)
           neue-sql (str " ORDER BY " clauses-str)]
-      [(str sql neue-sql) query])
-    [sql query]))
+      (update-in query [:sql-str] str neue-sql))
+    query))
 
-(defn sql-limit-offset [[sql {:keys [limit offset] :as query}]]
+(defn sql-limit-offset [{:keys [limit offset] :as query}]
   (let [limit-sql (when limit
                     (str " LIMIT " limit))
         offset-sql (when offset
                      (str " OFFSET " offset))]
-    [(str sql limit-sql offset-sql) query]))
+    (update-in query [:sql-str] str limit-sql offset-sql)))
 
 ;;*****************************************************
 ;; Where
@@ -206,24 +225,28 @@
 
 (defmulti ->sql :type)
 (defmethod ->sql :select [query]
-  (-> query 
-    (sql-select)
-    (sql-joins)
-    (sql-where)
-    (sql-order)
-    (sql-limit-offset)))
+  (bind-params
+    (-> query 
+      (sql-select)
+      (sql-joins)
+      (sql-where)
+      (sql-order)
+      (sql-limit-offset))))
 
 (defmethod ->sql :update [query]
-  (-> query 
-    (sql-update)
-    (sql-set)
-    (sql-where)))
+  (bind-params
+    (-> query 
+      (sql-update)
+      (sql-set)
+      (sql-where))))
 
 (defmethod ->sql :delete [query]
-  (-> query 
-    (sql-delete)
-    (sql-where)))
+  (bind-params
+    (-> query 
+      (sql-delete)
+      (sql-where))))
 
 (defmethod ->sql :insert [query]
-  (-> query 
-    (sql-insert)))
+  (bind-params
+    (-> query 
+      (sql-insert))))

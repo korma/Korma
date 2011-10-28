@@ -96,16 +96,18 @@
           :subname (str "//" host ":" port ";database=" db ";user=" user ";password=" password)} 
          opts)))
 
-(defn do-query [query sql]
+(defn do-query [query]
   (let [conn (when-let[db (:db query)]
                (get-connection db))
         cur (or conn (get-connection @_default))
-        results? (:results query)]
+        results? (:results query)
+        sql (:sql-str query)
+        params (:params query)]
     (jdbc/with-connection cur
                           (if results?
-                            (jdbc/with-query-results rs [sql]
+                            (jdbc/with-query-results rs (apply vector sql params)
                                                      (vec rs))
-                            (ijdbc/do-prepared-return-keys* sql nil)))))
+                            (ijdbc/do-prepared-return-keys* sql params)))))
 
 (comment
 (defdb db (postgres {:db "db"

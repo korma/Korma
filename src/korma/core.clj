@@ -1,7 +1,7 @@
 (ns korma.core
   (:require [korma.internal.sql :as isql]
             [korma.db :as db])
-  (:use [korma.internal.sql :only [bind-query]]))
+  (:use [korma.internal.sql :only [bind-query bind-params]]))
 
 (def ^{:dynamic true} *exec-mode* false)
 
@@ -10,11 +10,12 @@
 ;;*****************************************************
 
 (defn- empty-query [ent]
-  (let [[ent table] (if (string? ent)
-                      [{} ent]
-                      [ent (:table ent)])]
+  (let [[ent table alias] (if (string? ent)
+                      [{} ent nil]
+                      [ent (:table ent) (:alias ent)])]
     {:ent ent
-     :table table}))
+     :table table
+     :alias alias}))
 
 (defn select* 
   "Create an empty select query. Ent can either be an entity defined by defentity,
@@ -129,15 +130,16 @@
   e.g. (where query (or (= :hits 1) (> :hits 5)))
 
   Available predicates: and, or, =, not=, <, >, <=, >=, in, like, not
-  
+
   Where can also take a map at any point and will create a clause that compares keys
   to values. The value can be a vector with one of the above predicate functions 
   describing how the key is related to the value: (where query {:name [like \"chris\"})"
   [query form]
   `(let [q# ~query]
-     (where* q# 
-             (bind-query q#
-               ~(isql/parse-where `~form)))))
+     (bind-params
+       (where* q# 
+               (bind-query q#
+                           ~(isql/parse-where `~form))))))
 
 (defn order
   "Add an ORDER BY clause to a select query. field should be a keyword of the field name, dir
@@ -204,7 +206,7 @@
 (defn as-sql
   "Force a query to return a string of SQL when (exec) is called."
   [query]
-  (bind-query query (first (isql/->sql query))))
+  (bind-query query (:sql-str (isql/->sql query))))
 
 (defn- apply-posts
   [query results]
@@ -236,14 +238,16 @@
   "Execute a query map and return the results."
   [query]
   (let [query (apply-prepares query)
-        [sql] (bind-query query (isql/->sql query))]
+        query (bind-query query (isql/->sql query))
+        sql (:sql-str query)
+        params (:params query)]
     (cond
       (:sql query) sql
       (= *exec-mode* :sql) sql
       (= *exec-mode* :dry-run) (do
-                                 (println "dry run SQL ::" sql)
+                                 (println "dry run SQL ::" sql "::" (vec params))
                                  (apply-posts query [{:id 1}]))
-      :else (let [results (db/do-query query sql)]
+      :else (let [results (db/do-query query)]
               (apply-transforms query (apply-posts query results))))))
 
 (defn exec-raw
@@ -314,10 +318,13 @@
   (update-in ent [:fields] concat (map #(isql/prefix ent %) fields)))
 
 (defn table
-  "Set the name of the table to be used for the entity. This is the name of
-  the symbol by default."
-  [ent t]
-  (assoc ent :table (name t)))
+  "Set the name of the table and an optional alias to be used for the entity. 
+  By default the table is the name of entity's symbol."
+  [ent t & [alias]]
+  (let [ent (assoc ent :table (name t))]
+    (if alias
+      (assoc ent :alias (name alias))
+      ent)))
 
 (defn pk
   "Set the primary key used for an entity. :id by default."
