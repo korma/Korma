@@ -11,6 +11,9 @@
   (has-one address)
   (has-many email))
 
+(defentity users-alias
+  (table :users :u))
+
 (deftest select-function
          (is (= (-> (select* "users")
                   (fields :id :username)
@@ -24,11 +27,13 @@
 (deftest simple-selects
          (sql-only
            (let [results ["SELECT * FROM users"
+                          "SELECT * FROM users AS u"
                           "SELECT users.id, users.username FROM users"
                           "SELECT * FROM users WHERE (users.username = ? AND users.email = ?)"
                           "SELECT * FROM users WHERE (users.username = ?) ORDER BY users.created DESC"
                           "SELECT * FROM users WHERE (users.active = TRUE) ORDER BY users.created DESC LIMIT 5 OFFSET 3"]
                  queries [(select users)
+                          (select users-alias)
                           (select users
                                   (fields :id :username))
                           (select users
