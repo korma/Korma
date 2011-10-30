@@ -210,21 +210,21 @@
 
 (defn- apply-posts
   [query results]
-  (if-let [posts (:post-queries query)]
+  (if-let [posts (seq (:post-queries query))]
     (let [post-fn (apply comp posts)]
       (post-fn results))
     results))
 
 (defn- apply-transforms
   [query results]
-  (if-let [trans (-> query :ent :transforms)]
+  (if-let [trans (seq (-> query :ent :transforms))]
     (let [trans-fn (apply comp trans)]
       (map trans-fn results))
     results))
 
 (defn- apply-prepares
   [query]
-  (if-let [preps (-> query :ent :prepares)]
+  (if-let [preps (seq (-> query :ent :prepares))]
     (let [preps (apply comp preps)]
       (condp = (:type query)
         :insert (let [values (:values query)]
@@ -251,13 +251,18 @@
               (apply-transforms query (apply-posts query results))))))
 
 (defn exec-raw
-  "Execute a raw SQL string, supplying whether results should be returned. Optionally
-  provide the connection to execute against as the first object."
-  [conn? & [sql-str with-results?]]
-  (let [[conn? sql-str with-results?] (if (string? conn?)
-                                       [nil conn? sql-str]
-                                       [conn? sql-str with-results?])]
-    (db/do-query {:db conn? :results with-results?} sql-str)))
+  "Execute a raw SQL string, supplying whether results should be returned. `sql` can either be
+  a string or a vector of the sql string and its params. You can also optionally
+  provide the connection to execute against as the first parameter.
+  
+  (exec-raw [\"SELECT * FROM users WHERE age > ?\" [5]] true)"
+  [conn? & [sql with-results?]]
+  (let [sql-vec (fn [v] (if (vector? v) v [v nil]))
+        [conn? [sql-str params] with-results?] (if (or (string? conn?)
+                                                       (vector? conn?))
+                                                 [nil (sql-vec conn?) sql]
+                                                 [conn? (sql-vec sql) with-results?])]
+    (db/do-query {:db conn? :results with-results? :sql-str sql-str :params params})))
 
 ;;*****************************************************
 ;; Entities
