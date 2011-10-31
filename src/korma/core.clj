@@ -245,7 +245,7 @@
       (:sql query) sql
       (= *exec-mode* :sql) sql
       (= *exec-mode* :dry-run) (do
-                                 (println "dry run SQL ::" sql "::" (vec params))
+                                 (println "dry run ::" sql "::" (vec params))
                                  (apply-posts query [{:id 1}]))
       :else (let [results (db/do-query query)]
               (apply-transforms query (apply-posts query results))))))

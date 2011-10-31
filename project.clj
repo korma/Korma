@@ -8,4 +8,5 @@
                                                         com.sun.jdmk/jmxtools
                                                         com.sun.jmx/jmxri]]
                  [org.clojure/java.jdbc "0.1.0"]]
-            :dev-dependencies [[org.clojars.rayne/autodoc "0.8.0-SNAPSHOT"]])
+  :autodoc {:name "Korma" :page-title "Korma Docs"}
+  :dev-dependencies [[org.clojars.rayne/autodoc "0.8.0-SNAPSHOT"]])
