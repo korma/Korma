@@ -44,7 +44,7 @@
   for all queries where no database is specified by the entity."
   [db-name spec]
   `(do 
-     (def ~db-name (delay-pool ~spec))
+     (defonce ~db-name (delay-pool ~spec))
      (default-spec ~db-name)))
 
 (defn postgres 

@@ -8,6 +8,7 @@
 ;;*****************************************************
 
 (def ^{:dynamic true} *bound-table* nil)
+(def ^{:dynamic true} *bound-aliases* #{})
 (def ^{:dynamic true} *bound-params* nil)
 
 ;;*****************************************************
@@ -22,7 +23,10 @@
 (defn prefix [ent field]
   (let [field-name (name field)]
     ;;check if it's already prefixed
-    (if (= -1 (.indexOf field-name "."))
+    (if (and (keyword? field)
+             (not (*bound-aliases* field))
+             (= -1 (.indexOf field-name "*"))
+             (= -1 (.indexOf field-name ".")))
       (let [table (if (string? ent)
                     ent
                     (:table ent))]
@@ -38,10 +42,14 @@
   (str "(" (string/join " AND " (map (comp :generated kv-clause) m)) ")"))
 
 (defn field-str [v]
-  (let [fname (if *bound-table*
-                (prefix *bound-table* v)
-                (name v))]
-    fname))
+  (let [[fname alias] (if (vector? v)
+                        v
+                        [v nil])
+        fname (if *bound-table*
+                (prefix *bound-table* fname)
+                (name fname))
+        alias-str (when alias (str " AS " (name alias)))]
+    (str fname alias-str)))
 
 (defn coll-str [v]
   (str "(" (comma (map str-value v)) ")"))
@@ -69,7 +77,8 @@
 ;;*****************************************************
 
 (defmacro bind-query [query & body]
-  `(binding [*bound-table* (table-alias ~query)]
+  `(binding [*bound-table* (table-alias ~query)
+             *bound-aliases* (or (:aliases ~query) #{})]
      ~@body))
 
 (defmacro bind-params [& body]
@@ -123,6 +132,27 @@
                         v (infix v "IS NOT" k)))
 
 ;;*****************************************************
+;; Aggregates
+;;*****************************************************
+
+(def aggregates {'count 'korma.internal.sql/agg-count
+                 'sum 'korma.internal.sql/agg-sum})
+
+(defn sql-func [op v]
+  (let [field (if (keyword? v)
+                (field-str v)
+                v)]
+  (str op "(" (str-value v) ")")))
+
+(defn agg-count [v] (sql-func "COUNT" v))
+(defn agg-sum [v] (sql-func "SUM" v))
+
+(defn parse-aggregate [form]
+  (if (string? form)
+    form
+    (walk/postwalk-replace aggregates form)))
+
+;;*****************************************************
 ;; Clauses
 ;;*****************************************************
 
@@ -148,7 +178,7 @@
 (defn sql-select [query]
   (let [clauses (if-not (seq (:fields query))
                   ["*"]
-                  (map name (:fields query)))
+                  (map field-str (:fields query)))
         clauses-str (comma clauses)
         alias-clause (if (:alias query)
                        (str " AS " (:alias query))
@@ -187,7 +217,7 @@
 (defn sql-joins [query]
   (let [clauses (for [[type table pk fk] (:joins query)]
                   (join-clause :left table pk fk))
-        clauses-str (string/join " " clauses)]
+        clauses-str (string/join "" clauses)]
     (update-in query [:sql-str] str clauses-str)))
 
 (defn sql-where [query]
@@ -204,6 +234,14 @@
                     (str (str-value k) " " (string/upper-case (name dir))))
           clauses-str (string/join ", " clauses)
           neue-sql (str " ORDER BY " clauses-str)]
+      (update-in query [:sql-str] str neue-sql))
+    query))
+
+(defn sql-group [query]
+  (if (seq (:group query))
+    (let [clauses (map field-str (:group query))
+          clauses-str (string/join ", " clauses)
+          neue-sql (str " GROUP BY " clauses-str)]
       (update-in query [:sql-str] str neue-sql))
     query))
 
@@ -235,6 +273,7 @@
       (sql-select)
       (sql-joins)
       (sql-where)
+      (sql-group)
       (sql-order)
       (sql-limit-offset))))
 

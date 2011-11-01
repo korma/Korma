@@ -1,5 +1,6 @@
 (ns korma.core
   (:require [korma.internal.sql :as isql]
+            [clojure.set :as set]
             [korma.db :as db])
   (:use [korma.internal.sql :only [bind-query bind-params]]))
 
@@ -26,6 +27,7 @@
               :fields []
               :where []
               :order []
+              :aliases #{}
               :group []
               :results true})))
 
@@ -110,8 +112,15 @@
 
 (defn fields
   "Set the fields to be selected in a query."
-  [query & vs]
-  (update-in query [:fields] concat (map #(isql/prefix (:table query) %) vs)))
+  [query & vs] 
+  (let [prefixed (map #(if-not (coll? %)
+                         (isql/prefix (:table query) %)
+                         %)
+                      vs)
+        aliases (set (map second (filter coll? prefixed)))]
+    (-> query
+    (update-in [:aliases] set/union aliases)
+    (update-in [:fields] concat prefixed))))
 
 (defn set-fields
   "Set the fields and values for an update query."
@@ -184,6 +193,24 @@
   "Add an offset clause to a select query."
   [query v]
   (assoc query :offset v))
+
+(defn group
+  "Add a group-by clause to a select query"
+  [query field]
+  (update-in query [:group] conj (isql/prefix (:table query) field)))
+
+(defmacro aggregate
+  "Use a SQL aggregator function, aliasing the results, and optionally grouping by
+  a field:
+  
+  (select users 
+    (aggregate (count :*) :cnt :status))"
+  [query agg alias & [group-by]]
+  `(bind-query ~query
+               (let [res# (fields ~query [~(isql/parse-aggregate agg) ~alias])]
+                 (if ~group-by
+                   (group res# ~group-by)
+                   res#))))
 
 ;;*****************************************************
 ;; Query exec
@@ -283,11 +310,11 @@
   [ent sub-ent type opts]
   (let [[pk fk] (condp = type
                   :has-one [(isql/prefix ent (:pk ent)) 
-                            (isql/prefix sub-ent (str (:table ent) "_id"))]
+                            (isql/prefix sub-ent (keyword (str (:table ent) "_id")))]
                   :belongs-to [(isql/prefix sub-ent (:pk sub-ent)) 
-                               (isql/prefix ent (str (:table sub-ent) "_id"))]
+                               (isql/prefix ent (keyword (str (:table sub-ent) "_id")))]
                   :has-many [(isql/prefix ent (:pk ent)) 
-                             (isql/prefix sub-ent (str (:table ent) "_id"))])]
+                             (isql/prefix sub-ent (keyword (str (:table ent) "_id")))])]
     (merge {:table (:table sub-ent)
             :rel-type type
             :pk pk
@@ -334,7 +361,7 @@
 (defn pk
   "Set the primary key used for an entity. :id by default."
   [ent pk]
-  (assoc ent :pk (name pk)))
+  (assoc ent :pk (keyword pk)))
 
 (defn transform
   "Add a function to be applied to results coming from the database"
@@ -375,6 +402,13 @@
                 query)]
     (join query (:table ent) (:pk rel) (:fk rel))))
 
+(defn- single-with [query ent]
+  (let [rel (get-in query [:ent :rel (:table ent)])]
+    (cond
+      (not rel) (throw (Exception. (str "No relationship defined for table: " (:table ent))))
+      (#{:has-one :belongs-to} (:rel-type rel)) (with-now rel query ent)
+      :else (with-later rel query ent))))
+
 (defn with
   "Add a related entity to the given select query. If the entity has a relationship
   type of :belongs-to or :has-one, the requested fields will be returned directly in
@@ -385,10 +419,5 @@
   (defentity user (has-many email))
   (select user
     (with email) => [{:name \"chris\" :email [{email: \"c@c.com\"}]} ..."
-  [query ent]
-  (let [rel (get-in query [:ent :rel (:table ent)])]
-    (cond
-      (not rel) (throw (Exception. (str "No relationship defined for table: " (:table ent))))
-      (#{:has-one :belongs-to} (:rel-type rel)) (with-now rel query ent)
-      :else (with-later rel query ent))))
-
+  [query & ents]
+  (reduce single-with query ents))
