@@ -11,11 +11,12 @@
 ;;*****************************************************
 
 (defn- empty-query [ent]
-  (let [[ent table alias] (if (string? ent)
-                      [{} ent nil]
-                      [ent (:table ent) (:alias ent)])]
+  (let [[ent table alias db] (if (string? ent)
+                               [{} ent nil nil]
+                               [ent (:table ent) (:alias ent) (:db ent)])]
     {:ent ent
      :table table
+     :db db
      :alias alias}))
 
 (defn select* 
@@ -204,7 +205,9 @@
   a field:
   
   (select users 
-    (aggregate (count :*) :cnt :status))"
+    (aggregate (count :*) :cnt :status))
+  
+  Aggregates available: count, sum, avg, min, max, first, last"
   [query agg alias & [group-by]]
   `(bind-query ~query
                (let [res# (fields ~query [~(isql/parse-aggregate agg) ~alias])]
@@ -300,6 +303,7 @@
   [table]
   {:table table
    :pk :id
+   :db nil
    :transforms '()
    :prepares '()
    :fields []
@@ -372,6 +376,11 @@
   "Set the primary key used for an entity. :id by default."
   [ent pk]
   (assoc ent :pk (keyword pk)))
+
+(defn database
+  "Set the database connection to be used for this entity."
+  [ent db]
+  (assoc ent :db db))
 
 (defn transform
   "Add a function to be applied to results coming from the database"
