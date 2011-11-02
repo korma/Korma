@@ -108,10 +108,3 @@
                             (jdbc/with-query-results rs (apply vector sql params)
                                                      (vec rs))
                             (ijdbc/do-prepared-return-keys* sql params)))))
-
-(comment
-(defdb db (postgres {:db "db"
-                     :user "chris"
-                     :password "dbpass"}))
-  )
-
