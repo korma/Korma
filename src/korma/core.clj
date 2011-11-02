@@ -312,6 +312,7 @@
                   :has-many [(isql/prefix ent (:pk ent)) 
                              (isql/prefix sub-ent (keyword (str (:table ent) "_id")))])]
     (merge {:table (:table sub-ent)
+            :alias (:alias sub-ent)
             :rel-type type
             :pk pk
             :fk fk}
@@ -384,7 +385,7 @@
 (defn- with-later [rel query ent]
   (let [fk (:fk rel)
         pk (get-in query [:ent :pk])
-        table (keyword (:table ent))]
+        table (keyword (isql/table-alias ent))]
     (post-query query 
                 (partial map 
                          #(assoc % table
@@ -395,8 +396,11 @@
   (let [flds (:fields ent)
         query (if flds
                 (apply fields query flds)
-                query)]
-    (join query (:table ent) (:pk rel) (:fk rel))))
+                query)
+        table (if (:alias rel)
+                [(:table ent) (:alias ent)]
+                (:table ent))]
+    (join query table (:pk rel) (:fk rel))))
 
 (defn- single-with [query ent]
   (let [rel (get-in query [:ent :rel (:table ent)])]

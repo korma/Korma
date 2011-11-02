@@ -16,9 +16,7 @@
 ;;*****************************************************
 
 (defn table-alias [{:keys [type table alias]}]
-  (if (= :select type)
-    (or alias table)
-    table))
+  (or alias table))
 
 (defn prefix [ent field]
   (let [field-name (name field)]
@@ -29,7 +27,7 @@
              (= -1 (.indexOf field-name ".")))
       (let [table (if (string? ent)
                     ent
-                    (:table ent))]
+                    (table-alias ent))]
         (str table "." field-name))
       field-name)))
 
@@ -77,7 +75,9 @@
 ;;*****************************************************
 
 (defmacro bind-query [query & body]
-  `(binding [*bound-table* (table-alias ~query)
+  `(binding [*bound-table* (if (= :select (:type ~query))
+                             (table-alias ~query)
+                             (:table ~query))
              *bound-aliases* (or (:aliases ~query) #{})]
      ~@body))
 
@@ -171,8 +171,14 @@
     (pred-= k v)
     ((first v) k (second v))))
 
+(defn alias-clause [alias]
+  (str " AS " alias))
+
 (defn join-clause [join-type table pk fk]
   (let [join-type (string/upper-case (name join-type))
+        table (if (coll? table)
+                (str (first table) (alias-clause (second table)))
+                table)
         join (str " " join-type " JOIN " table " ON ")
         on-clause (str (field-str pk) " = " (field-str fk))]
     (str join on-clause)))
@@ -190,10 +196,8 @@
                   ["*"]
                   (map field-str (:fields query)))
         clauses-str (comma clauses)
-        alias-clause (if (:alias query)
-                       (str " AS " (:alias query))
-                       "")
-        neue-sql (str "SELECT " clauses-str " FROM " (table-str (:table query)) alias-clause)]
+        alias (when (:alias query) (alias-clause (:alias query)))
+        neue-sql (str "SELECT " clauses-str " FROM " (table-str (:table query)) alias)]
     (assoc query :sql-str neue-sql)))
 
 (defn sql-update [query]
