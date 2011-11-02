@@ -97,7 +97,8 @@
 
 (defmacro insert 
   "Creates an insert query, applies any modifying functions in the body and then
-  executes it. `ent` is either a string or an entity created by defentity.
+  executes it. `ent` is either a string or an entity created by defentity. Inserts
+  return the last inserted id.
   
   ex: (insert user 
         (values [{:name \"chris\"} {:name \"john\"}]))"
@@ -111,7 +112,10 @@
 ;;*****************************************************
 
 (defn fields
-  "Set the fields to be selected in a query."
+  "Set the fields to be selected in a query. Fields can either be a keyword
+  or a vector of two keywords [field alias]:
+  
+  (fields query :name [:firstname :first])"
   [query & vs] 
   (let [aliases (set (map second (filter coll? vs)))]
     (-> query
@@ -323,20 +327,29 @@
   (assoc-in ent [:rel (:table sub-ent)] (create-relation ent sub-ent type opts)))
 
 (defn has-one
-  "Add a has-one relationship for the given entity."
+  "Add a has-one relationship for the given entity. It is assumed that the foreign key
+  is on the sub-entity with the format table_id: user.id = address.user_id
+  Opts can include a key for :fk to explicitly set the foreign key.
+  
+  (has-one users address {:fk :addressID})"
   [ent sub-ent & [opts]]
   (rel ent sub-ent :has-one opts))
 
 (defn belongs-to
-  "Add a belongs-to relationship for the given entity."
+  "Add a belongs-to relationship for the given entity. It is assumed that the foreign key
+  is on the current entity with the format sub-ent-table_id: email.user_id = user.id.
+  Opts can include a key for :fk to explicitly set the foreign key.
+  
+  (belongs-to users email {:fk :emailID})"
   [ent sub-ent & [opts]]
   (rel ent sub-ent :belongs-to opts))
 
 (defn has-many
   "Add a has-many relation for the given entity. It is assumed that the foreign key
-  is on the sub-entity with the format table_id:
+  is on the sub-entity with the format table_id: user.id = email.user_id
+  Opts can include a key for :fk to explicitly set the foreign key.
   
-  user.id = email.user_id"
+  (has-many users email {:fk :emailID})"
   [ent sub-ent & [opts]]
   (rel ent sub-ent :has-many opts))
 
