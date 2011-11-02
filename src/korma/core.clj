@@ -113,14 +113,10 @@
 (defn fields
   "Set the fields to be selected in a query."
   [query & vs] 
-  (let [prefixed (map #(if-not (coll? %)
-                         (isql/prefix (:table query) %)
-                         %)
-                      vs)
-        aliases (set (map second (filter coll? prefixed)))]
+  (let [aliases (set (map second (filter coll? vs)))]
     (-> query
     (update-in [:aliases] set/union aliases)
-    (update-in [:fields] concat prefixed))))
+    (update-in [:fields] concat vs))))
 
 (defn set-fields
   "Set the fields and values for an update query."
@@ -197,7 +193,7 @@
 (defn group
   "Add a group-by clause to a select query"
   [query field]
-  (update-in query [:group] conj (isql/prefix (:table query) field)))
+  (update-in query [:group] conj field))
 
 (defmacro aggregate
   "Use a SQL aggregator function, aliasing the results, and optionally grouping by

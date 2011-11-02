@@ -1,4 +1,4 @@
-(defproject korma "0.1.1"
+(defproject korma "0.1.2"
   :description "Delicious SQL for Clojure"
   :dependencies [[org.clojure/clojure "[1.2.1],[1.3.0]"]
                  [postgresql "8.4-701.jdbc4"]

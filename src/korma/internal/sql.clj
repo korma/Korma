@@ -136,16 +136,26 @@
 ;;*****************************************************
 
 (def aggregates {'count 'korma.internal.sql/agg-count
+                 'min 'korma.internal.sql/agg-min
+                 'max 'korma.internal.sql/agg-max
+                 'first 'korma.internal.sql/agg-first
+                 'last 'korma.internal.sql/agg-last
+                 'avg 'korma.internal.sql/agg-avg
                  'sum 'korma.internal.sql/agg-sum})
 
 (defn sql-func [op v]
   (let [field (if (keyword? v)
                 (field-str v)
                 v)]
-  (str op "(" (str-value v) ")")))
+  (str op "(" field ")")))
 
 (defn agg-count [v] (sql-func "COUNT" v))
 (defn agg-sum [v] (sql-func "SUM" v))
+(defn agg-avg [v] (sql-func "AVG" v))
+(defn agg-min [v] (sql-func "MIN" v))
+(defn agg-max [v] (sql-func "MAX" v))
+(defn agg-first [v] (sql-func "FIRST" v))
+(defn agg-last [v] (sql-func "LAST" v))
 
 (defn parse-aggregate [form]
   (if (string? form)
@@ -164,7 +174,7 @@
 (defn join-clause [join-type table pk fk]
   (let [join-type (string/upper-case (name join-type))
         join (str " " join-type " JOIN " table " ON ")
-        on-clause (str pk " = " fk)]
+        on-clause (str (field-str pk) " = " (field-str fk))]
     (str join on-clause)))
 
 (defn insert-values-clause [ks vs]
