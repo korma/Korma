@@ -1,10 +1,18 @@
 # Korma
 
-Delicious SQL for Clojure.
+Tasty SQL for Clojure.
 
-_Korma is just getting started, use at your own peril_
+## Getting started
 
-## Usage
+Simply add Korma as a dependency to your lein/cake project:
+
+```clojure
+[korma "0.2.0"]
+```
+
+For docs and real usage, check out http://sqlkorma.com
+
+## Examples of generated queries:
 
 ```clojure
 
