@@ -26,6 +26,7 @@
   (let [q (empty-query ent)]
     (merge q {:type :select
               :fields []
+              :joins []
               :where []
               :order []
               :aliases #{}
@@ -197,8 +198,8 @@
 
 (defn group
   "Add a group-by clause to a select query"
-  [query field]
-  (update-in query [:group] conj field))
+  [query & fields]
+  (update-in query [:group] concat fields))
 
 (defmacro aggregate
   "Use a SQL aggregator function, aliasing the results, and optionally grouping by

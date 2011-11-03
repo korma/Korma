@@ -18,8 +18,21 @@
 (defn table-alias [{:keys [type table alias]}]
   (or alias table))
 
-(defn prefix [ent field]
+(defn quote-str [s]
+  (str "\"" s "\""))
+
+(defn field-identifier [field]
   (let [field-name (name field)]
+    (if (or (string? field)
+            (not (re-seq #"[\sA-Z-#\$\^\&\@\!]" field-name)))
+      field-name
+      (let [parts (string/split field-name #"\.")]
+        (if-not (next parts)
+          (quote-str field-name)
+          (string/join "." (conj (vec (butlast parts)) (quote-str (last parts)))))))))
+
+(defn prefix [ent field]
+  (let [field-name (field-identifier field)]
     ;;check if it's already prefixed
     (if (and (keyword? field)
              (not (*bound-aliases* field))
@@ -53,7 +66,11 @@
   (str "(" (comma (map str-value v)) ")"))
 
 (defn table-str [v]
-  (str v))
+  (cond
+    (string? v) v
+    (map? v) (:table v)
+    :else (name v)))
+
 
 (defn parameterize [v]
   (when *bound-params*
@@ -172,13 +189,21 @@
     ((first v) k (second v))))
 
 (defn alias-clause [alias]
-  (str " AS " alias))
+  (when alias
+    (str " AS " (name alias))))
+
+(defn from-table [v]
+  (cond
+    (string? v) (table-str v)
+    (vector? v) (let [[table alias] v]
+                  (str (table-str table) (alias-clause alias)))
+    (map? v) (let [{:keys [table alias]} v]
+               (str (table-str table) (alias-clause alias)))
+    :else (table-str v)))
 
 (defn join-clause [join-type table pk fk]
   (let [join-type (string/upper-case (name join-type))
-        table (if (coll? table)
-                (str (first table) (alias-clause (second table)))
-                table)
+        table (from-table table)
         join (str " " join-type " JOIN " table " ON ")
         on-clause (str (field-str pk) " = " (field-str fk))]
     (str join on-clause)))
@@ -196,16 +221,16 @@
                   ["*"]
                   (map field-str (:fields query)))
         clauses-str (comma clauses)
-        alias (when (:alias query) (alias-clause (:alias query)))
-        neue-sql (str "SELECT " clauses-str " FROM " (table-str (:table query)) alias)]
+        table (from-table query)
+        neue-sql (str "SELECT " clauses-str " FROM " table)]
     (assoc query :sql-str neue-sql)))
 
 (defn sql-update [query]
-  (let [neue-sql (str "UPDATE " (table-str (:table query)))]
+  (let [neue-sql (str "UPDATE " (table-str query))]
     (assoc query :sql-str neue-sql)))
 
 (defn sql-delete [query]
-  (let [neue-sql (str "DELETE FROM " (table-str (:table query)))]
+  (let [neue-sql (str "DELETE FROM " (table-str query))]
     (assoc query :sql-str neue-sql)))
 
 (defn sql-insert [query]
@@ -213,7 +238,7 @@
         keys-clause (comma (map name ins-keys))
         ins-values (insert-values-clause ins-keys (:values query))
         values-clause (comma ins-values)
-        neue-sql (str "INSERT INTO " (table-str (:table query)) " (" keys-clause ") VALUES " values-clause)]
+        neue-sql (str "INSERT INTO " (table-str query) " (" keys-clause ") VALUES " values-clause)]
     (assoc query :sql-str neue-sql)))
 
 

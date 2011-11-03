@@ -153,3 +153,22 @@
                           (with address)
                           (fields :address.state :name))
                   "SELECT address.state, users.name FROM users LEFT JOIN address ON users.id = address.users_id"))))
+
+(deftest join-order
+         (sql-only
+           (is (= (select users 
+                    (join :user2 :users.id :user2.users_id)
+                    (join :user3 :users.id :user3.users_id))
+                  "SELECT * FROM users LEFT JOIN user2 ON users.id = user2.users_id LEFT JOIN user3 ON users.id = user3.users_id"))))
+
+(deftest aggregate-group
+         (sql-only
+           (is (= (select users (group :id :name))
+                  "SELECT * FROM users GROUP BY users.id, users.name"))
+           (is (= (select users (aggregate (count :*) :cnt :id))
+                  "SELECT COUNT(*) AS cnt FROM users GROUP BY users.id"))))
+
+(deftest quoting
+         (sql-only
+           (is (= (select users (fields :testField :t!))
+                  "SELECT users.\"testField\", users.\"t!\" FROM users"))))

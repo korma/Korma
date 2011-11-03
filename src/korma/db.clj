@@ -103,8 +103,14 @@
         results? (:results query)
         sql (:sql-str query)
         params (:params query)]
-    (jdbc/with-connection cur
-                          (if results?
-                            (jdbc/with-query-results rs (apply vector sql params)
-                                                     (vec rs))
-                            (ijdbc/do-prepared-return-keys* sql params)))))
+    (try 
+      (jdbc/with-naming-strategy {:keyword identity :identifier :identity}
+        (jdbc/with-connection cur
+          (if results?
+            (jdbc/with-query-results rs (apply vector sql params)
+                                    (vec rs))
+            (ijdbc/do-prepared-return-keys* sql params))))
+      (catch Exception e
+        (println "Failure to execute query with SQL:")
+        (println sql " :: " params)
+        (jdbc/print-sql-exception e)))))
