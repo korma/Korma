@@ -1,0 +1,668 @@
+<html>
+  <head>
+    <title>korma.core - Korma nil API documentation</title>
+    <link href="static/favicon.png" rel="icon" />
+    <link href="static/favicon.png" rel="shortcut icon" />
+    <link media="all" type="text/css" href="static/clojure.css" rel="stylesheet" />
+    <link media="all" type="text/css" href="static/wiki.css" rel="stylesheet" />
+    <link media="all" type="text/css" href="static/internal.css" rel="stylesheet" />
+    <!-- TODO: are we using these (from clojure.org)? If so, add the files -->
+    <script src="file/view/code_highlighter.js" type="text/javascript"></script>
+    <script src="file/view/clojure.js" type="text/javascript"></script>
+    <style>.menuWrapper{height: 36px;}</style>
+    <!--[if lte IE 6]>
+    <link rel="stylesheet" href="http://www.wikispaces.com/_/2009051601/s/internal_ie.css" type="text/css" />
+    <![endif]-->
+  </head>
+<!--
+This document was auto-generated from the source by the clojure autodoc system.
+To report errors or ask questions about the overall documentation structure, formatting,
+etc., contact Tom Faulhaber (google mail name: tomfaulhaber).
+For errors in the documentation of a particular namespace, contact the author of that
+namespace.
+-->
+  <body>
+    <div id="AllContentContainer">
+      <div id="Header">
+	<a id="Logo" href="index.html"><img alt="Clojure" height="100" width="100" src="static/clojure-icon.gif" /></a>
+	<h1><a title="page header title" id="page-header" href="index.html">Korma Docs</a></h1>
+      </div>
+      <div id="leftcolumn"><div style="text-align: center;"></div>
+<div class="menu">
+  <div class="WikiCustomNav WikiElement wiki">
+    <span class="toc-header"><span id="project-name">Korma</span> <span id="version"></span> API</span><br />
+    <ul>
+      <li><a class="wiki_link" href="index.html">Overview</a></li>
+      <li><a class="wiki_link" href="api-index.html">API Index</a></li>
+    </ul>
+    <span class="toc-header">Namespaces</span>
+    <ul id="left-sidebar-list">
+      <li><a href="korma.core-api.html" class="wiki_link">korma.core</a></li><li><a href="korma.db-api.html" class="wiki_link">korma.db</a></li><li><a href="korma.internal.sql-api.html" class="wiki_link">korma.internal.sql</a></li>
+    </ul>
+    
+    <a href="http://clojure.org" class="wiki_link">Clojure Home</a>
+  </div>
+</div>
+</div>
+      <div id="rightcolumn">
+	<div id="Content">
+	  <div class="contentBox"><div class="innerContentBox">
+              <div id="content_view" class="wiki wikiPage">
+                <div id="right-sidebar"><div id="toc">
+  <h1 class="nopad">Table of Contents</h1>
+  <div style="margin-left: 1em;" class="toc-section">
+    <a href="#toc0">Overview</a>
+    <div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/aggregate">aggregate</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/as-sql">as-sql</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/belongs-to">belongs-to</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/create-entity">create-entity</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/create-relation">create-relation</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/database">database</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/defentity">defentity</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/delete">delete</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/delete*">delete*</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/dry-run">dry-run</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/entity-fields">entity-fields</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/exec">exec</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/exec-raw">exec-raw</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/fields">fields</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/group">group</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/has-many">has-many</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/has-one">has-one</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/insert">insert</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/insert*">insert*</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/join">join</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/limit">limit</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/offset">offset</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/order">order</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/pk">pk</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/post-query">post-query</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/prepare">prepare</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/select">select</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/select*">select*</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/set-fields">set-fields</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/sql-only">sql-only</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/table">table</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/transform">transform</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/update">update</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/update*">update*</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/values">values</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/where">where</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/where*">where*</a>
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a href="#korma.core/with">with</a>
+    </div>
+    <br />
+  </div>
+</div>
+</div>
+                <div id="content-tag"><h1 id="overview">API for <span id="namespace-name">korma.core</span>
+  - <span id="header-project">Korma</span> <span id="header-version"></span> (<span id="header-status"></span>)
+  </h1>
+
+<br />Usage:
+<pre>
+(ns your-namespace
+  (:require <span id="long-name">korma.core</span>))
+</pre><pre>
+</pre><h2>Overview</h2>
+<pre id="namespace-docstr"></pre>
+
+
+<br />
+<h2>Public Variables and Functions</h2>
+<div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/aggregate">aggregate</h2>
+  <span id="var-type">macro</span><br />
+  <pre id="var-usage">Usage: (aggregate query agg alias &amp; [group-by])
+</pre>
+  <pre id="var-docstr">Use a SQL aggregator function, aliasing the results, and optionally grouping by
+a field:
+
+(select users 
+  (aggregate (count :*) :cnt :status))
+
+Aggregates available: count, sum, avg, min, max, first, last</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/as-sql">as-sql</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (as-sql query)
+</pre>
+  <pre id="var-docstr">Force a query to return a string of SQL when (exec) is called.</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/belongs-to">belongs-to</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (belongs-to ent sub-ent &amp; [opts])
+</pre>
+  <pre id="var-docstr">Add a belongs-to relationship for the given entity. It is assumed that the foreign key
+is on the current entity with the format sub-ent-table_id: email.user_id = user.id.
+Opts can include a key for :fk to explicitly set the foreign key.
+
+(belongs-to users email {:fk :emailID})</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/create-entity">create-entity</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (create-entity table)
+</pre>
+  <pre id="var-docstr">Create an entity representing a table in a database.</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/create-relation">create-relation</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (create-relation ent sub-ent type opts)
+</pre>
+  <pre id="var-docstr">Create a relation map describing how two entities are related.</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/database">database</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (database ent db)
+</pre>
+  <pre id="var-docstr">Set the database connection to be used for this entity.</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/defentity">defentity</h2>
+  <span id="var-type">macro</span><br />
+  <pre id="var-usage">Usage: (defentity ent &amp; body)
+</pre>
+  <pre id="var-docstr">Define an entity representing a table in the database, applying any modifications in
+the body.</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/delete">delete</h2>
+  <span id="var-type">macro</span><br />
+  <pre id="var-usage">Usage: (delete ent &amp; body)
+</pre>
+  <pre id="var-docstr">Creates a delete query, applies any modifying functions in the body and then
+executes it. `ent` is either a string or an entity created by defentity.
+
+ex: (delete user 
+      (where {:id 7}))</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/delete*">delete*</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (delete* ent)
+</pre>
+  <pre id="var-docstr">Create an empty delete query. Ent can either be an entity defined by defentity,
+or a string of the table name</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/dry-run">dry-run</h2>
+  <span id="var-type">macro</span><br />
+  <pre id="var-usage">Usage: (dry-run &amp; body)
+</pre>
+  <pre id="var-docstr">Wrap around a set of queries to print to the console all SQL that would 
+be run and return dummy values instead of executing them.</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/entity-fields">entity-fields</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (entity-fields ent &amp; fields)
+</pre>
+  <pre id="var-docstr">Set the fields to be retrieved by default in select queries for the
+entity.</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/exec">exec</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (exec query)
+</pre>
+  <pre id="var-docstr">Execute a query map and return the results.</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/exec-raw">exec-raw</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (exec-raw conn? &amp; [sql with-results?])
+</pre>
+  <pre id="var-docstr">Execute a raw SQL string, supplying whether results should be returned. `sql` can either be
+a string or a vector of the sql string and its params. You can also optionally
+provide the connection to execute against as the first parameter.
+
+(exec-raw ["SELECT * FROM users WHERE age &gt; ?" [5]] true)</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/fields">fields</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (fields query &amp; vs)
+</pre>
+  <pre id="var-docstr">Set the fields to be selected in a query. Fields can either be a keyword
+or a vector of two keywords [field alias]:
+
+(fields query :name [:firstname :first])</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/group">group</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (group query field)
+</pre>
+  <pre id="var-docstr">Add a group-by clause to a select query</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/has-many">has-many</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (has-many ent sub-ent &amp; [opts])
+</pre>
+  <pre id="var-docstr">Add a has-many relation for the given entity. It is assumed that the foreign key
+is on the sub-entity with the format table_id: user.id = email.user_id
+Opts can include a key for :fk to explicitly set the foreign key.
+
+(has-many users email {:fk :emailID})</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/has-one">has-one</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (has-one ent sub-ent &amp; [opts])
+</pre>
+  <pre id="var-docstr">Add a has-one relationship for the given entity. It is assumed that the foreign key
+is on the sub-entity with the format table_id: user.id = address.user_id
+Opts can include a key for :fk to explicitly set the foreign key.
+
+(has-one users address {:fk :addressID})</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/insert">insert</h2>
+  <span id="var-type">macro</span><br />
+  <pre id="var-usage">Usage: (insert ent &amp; body)
+</pre>
+  <pre id="var-docstr">Creates an insert query, applies any modifying functions in the body and then
+executes it. `ent` is either a string or an entity created by defentity. Inserts
+return the last inserted id.
+
+ex: (insert user 
+      (values [{:name "chris"} {:name "john"}]))</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/insert*">insert*</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (insert* ent)
+</pre>
+  <pre id="var-docstr">Create an empty insert query. Ent can either be an entity defined by defentity,
+or a string of the table name</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/join">join</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (join query table field1 field2)
+       (join query type table field1 field2)
+</pre>
+  <pre id="var-docstr">Add a join clause to a select query, specifying the table name to join and the two fields
+to predicate the join on.
+
+(join query :right :address :address.users_id :users.id)</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/limit">limit</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (limit query v)
+</pre>
+  <pre id="var-docstr">Add a limit clause to a select query.</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/offset">offset</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (offset query v)
+</pre>
+  <pre id="var-docstr">Add an offset clause to a select query.</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/order">order</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (order query field &amp; [dir])
+</pre>
+  <pre id="var-docstr">Add an ORDER BY clause to a select query. field should be a keyword of the field name, dir
+is DESC by default.
+
+(order query :created :asc)</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/pk">pk</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (pk ent pk)
+</pre>
+  <pre id="var-docstr">Set the primary key used for an entity. :id by default.</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/post-query">post-query</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (post-query query post)
+</pre>
+  <pre id="var-docstr">Add a function representing a query that should be executed for each result in a select.
+This is done lazily over the result set.</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/prepare">prepare</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (prepare ent func)
+</pre>
+  <pre id="var-docstr">Add a function to be applied to records/values going into the database</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/select">select</h2>
+  <span id="var-type">macro</span><br />
+  <pre id="var-usage">Usage: (select ent &amp; body)
+</pre>
+  <pre id="var-docstr">Creates a select query, applies any modifying functions in the body and then
+executes it. `ent` is either a string or an entity created by defentity.
+
+ex: (select user 
+      (fields :name :email)
+      (where {:id 2}))</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/select*">select*</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (select* ent)
+</pre>
+  <pre id="var-docstr">Create an empty select query. Ent can either be an entity defined by defentity,
+or a string of the table name</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/set-fields">set-fields</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (set-fields query fields-map)
+</pre>
+  <pre id="var-docstr">Set the fields and values for an update query.</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/sql-only">sql-only</h2>
+  <span id="var-type">macro</span><br />
+  <pre id="var-usage">Usage: (sql-only &amp; body)
+</pre>
+  <pre id="var-docstr">Wrap around a set of queries so that instead of executing, each will return a string of the SQL 
+that would be used.</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/table">table</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (table ent t &amp; [alias])
+</pre>
+  <pre id="var-docstr">Set the name of the table and an optional alias to be used for the entity. 
+By default the table is the name of entity's symbol.</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/transform">transform</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (transform ent func)
+</pre>
+  <pre id="var-docstr">Add a function to be applied to results coming from the database</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/update">update</h2>
+  <span id="var-type">macro</span><br />
+  <pre id="var-usage">Usage: (update ent &amp; body)
+</pre>
+  <pre id="var-docstr">Creates an update query, applies any modifying functions in the body and then
+executes it. `ent` is either a string or an entity created by defentity.
+
+ex: (update user 
+      (set-fields {:name "chris"}) 
+      (where {:id 4}))</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/update*">update*</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (update* ent)
+</pre>
+  <pre id="var-docstr">Create an empty update query. Ent can either be an entity defined by defentity,
+or a string of the table name.</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/values">values</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (values query values)
+</pre>
+  <pre id="var-docstr">Add records to an insert clause. values can either be a vector of maps or a single
+map.
+
+(values query [{:name "john"} {:name "ed"}])</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/where">where</h2>
+  <span id="var-type">macro</span><br />
+  <pre id="var-usage">Usage: (where query form)
+</pre>
+  <pre id="var-docstr">Add a where clause to the query, expressing the clause in clojure expressions
+with keywords used to reference fields.
+e.g. (where query (or (= :hits 1) (&gt; :hits 5)))
+
+Available predicates: and, or, =, not=, &lt;, &gt;, &lt;=, &gt;=, in, like, not
+
+Where can also take a map at any point and will create a clause that compares keys
+to values. The value can be a vector with one of the above predicate functions 
+describing how the key is related to the value: (where query {:name [like "chris"})</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/where*">where*</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (where* query clause)
+</pre>
+  <pre id="var-docstr">Add a where clause to the query. Clause can be either a map or a string, and
+will be AND'ed to the other clauses.</pre>
+  
+  
+  
+</div><div id="var-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core/with">with</h2>
+  <span id="var-type">function</span><br />
+  <pre id="var-usage">Usage: (with query &amp; ents)
+</pre>
+  <pre id="var-docstr">Add a related entity to the given select query. If the entity has a relationship
+type of :belongs-to or :has-one, the requested fields will be returned directly in
+the result map. If the entity is a :has-many, a second query will be executed lazily
+and a key of the entity name will be assoc'd with a vector of the results.
+
+(defentity email (entity-fields :email))
+(defentity user (has-many email))
+(select user
+  (with email) =&gt; [{:name "chris" :email [{email: "c@c.com"}]} ...</pre>
+  
+  
+  
+</div>
+
+
+</div>
+              </div>
+            </div>
+          </div>
+	</div>
+	<div id="foot">
+	  <div style="text-align: center;" id="copyright">No copyright info </div>
+	</div>
+      </div>
+      <div id="DesignedBy">Logo &amp; site design by <a title="Visit Tom Hickey's website." href="http://www.tomhickey.com">Tom Hickey</a>.<br />
+      Clojure auto-documentation system by Tom Faulhaber.</div>
+    </div>
+    <!-- /AllContentContainer -->
+  </body>
+
+</html>

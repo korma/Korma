@@ -7,7 +7,7 @@ Tasty SQL for Clojure.
 Simply add Korma as a dependency to your lein/cake project:
 
 ```clojure
-[korma "0.2.0"]
+[korma "0.2.1"]
 ```
 
 For docs and real usage, check out http://sqlkorma.com

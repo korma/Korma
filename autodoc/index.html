@@ -1,0 +1,127 @@
+<html>
+  <head>
+    <title>Overview - Korma nil API documentation</title>
+    <link href="static/favicon.png" rel="icon" />
+    <link href="static/favicon.png" rel="shortcut icon" />
+    <link media="all" type="text/css" href="static/clojure.css" rel="stylesheet" />
+    <link media="all" type="text/css" href="static/wiki.css" rel="stylesheet" />
+    <link media="all" type="text/css" href="static/internal.css" rel="stylesheet" />
+    <!-- TODO: are we using these (from clojure.org)? If so, add the files -->
+    <script src="file/view/code_highlighter.js" type="text/javascript"></script>
+    <script src="file/view/clojure.js" type="text/javascript"></script>
+    <style>.menuWrapper{height: 36px;}</style>
+    <!--[if lte IE 6]>
+    <link rel="stylesheet" href="http://www.wikispaces.com/_/2009051601/s/internal_ie.css" type="text/css" />
+    <![endif]-->
+  </head>
+<!--
+This document was auto-generated from the source by the clojure autodoc system.
+To report errors or ask questions about the overall documentation structure, formatting,
+etc., contact Tom Faulhaber (google mail name: tomfaulhaber).
+For errors in the documentation of a particular namespace, contact the author of that
+namespace.
+-->
+  <body>
+    <div id="AllContentContainer">
+      <div id="Header">
+	<a id="Logo" href="index.html"><img alt="Clojure" height="100" width="100" src="static/clojure-icon.gif" /></a>
+	<h1><a title="page header title" id="page-header" href="index.html">Korma Docs</a></h1>
+      </div>
+      <div id="leftcolumn"><div style="text-align: center;"></div>
+<div class="menu">
+  <div class="WikiCustomNav WikiElement wiki">
+    <span class="toc-header"><span id="project-name">Korma</span> <span id="version"></span> API</span><br />
+    <ul>
+      <li><a class="wiki_link" href="index.html">Overview</a></li>
+      <li><a class="wiki_link" href="api-index.html">API Index</a></li>
+    </ul>
+    <span class="toc-header">Namespaces</span>
+    <ul id="left-sidebar-list">
+      <li><a href="korma.core-api.html" class="wiki_link">korma.core</a></li><li><a href="korma.db-api.html" class="wiki_link">korma.db</a></li><li><a href="korma.internal.sql-api.html" class="wiki_link">korma.internal.sql</a></li>
+    </ul>
+    
+    <a href="http://clojure.org" class="wiki_link">Clojure Home</a>
+  </div>
+</div>
+</div>
+      <div id="rightcolumn">
+	<div id="Content">
+	  <div class="contentBox"><div class="innerContentBox">
+              <div id="content_view" class="wiki wikiPage">
+                <div id="right-sidebar"><div id="toc">
+  <h1 class="nopad">Table of Contents</h1>
+  <div style="margin-left: 1em;" class="toc-section">
+    <a href="#korma.core">korma.core</a>
+    
+    <br />
+  </div><div style="margin-left: 1em;" class="toc-section">
+    <a href="#korma.db">korma.db</a>
+    
+    <br />
+  </div><div style="margin-left: 1em;" class="toc-section">
+    <a href="#korma.internal.sql">korma.internal.sql</a>
+    
+    <br />
+  </div>
+</div>
+</div>
+                <div id="content-tag"><h1 id="toc0">API Overview - <span id="header-project">Korma</span> <span id="header-version"></span> (<span id="header-status"></span>)</h1>
+<br />
+<div id="project-description">Delicious SQL for Clojure</div>
+<br />
+<div id="namespace-entry">
+  <br />
+  <hr />
+  <h2 id="korma.core">korma.core</h2>
+  
+  <a href="korma.core-api.html" id="api-link">Detailed API documentation</a><br />
+  <pre id="namespace-docstr"></pre>
+  
+  
+  
+  Public variables and functions:
+  <span id="var-link"><a href="korma.core-api.html#korma.core/aggregate" id="var-tag">aggregate</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/as-sql" id="var-tag">as-sql</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/belongs-to" id="var-tag">belongs-to</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/create-entity" id="var-tag">create-entity</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/create-relation" id="var-tag">create-relation</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/database" id="var-tag">database</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/defentity" id="var-tag">defentity</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/delete" id="var-tag">delete</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/delete*" id="var-tag">delete*</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/dry-run" id="var-tag">dry-run</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/entity-fields" id="var-tag">entity-fields</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/exec" id="var-tag">exec</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/exec-raw" id="var-tag">exec-raw</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/fields" id="var-tag">fields</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/group" id="var-tag">group</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/has-many" id="var-tag">has-many</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/has-one" id="var-tag">has-one</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/insert" id="var-tag">insert</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/insert*" id="var-tag">insert*</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/join" id="var-tag">join</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/limit" id="var-tag">limit</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/offset" id="var-tag">offset</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/order" id="var-tag">order</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/pk" id="var-tag">pk</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/post-query" id="var-tag">post-query</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/prepare" id="var-tag">prepare</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/select" id="var-tag">select</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/select*" id="var-tag">select*</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/set-fields" id="var-tag">set-fields</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/sql-only" id="var-tag">sql-only</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/table" id="var-tag">table</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/transform" id="var-tag">transform</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/update" id="var-tag">update</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/update*" id="var-tag">update*</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/values" id="var-tag">values</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/where" id="var-tag">where</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/where*" id="var-tag">where*</a> </span><span id="var-link"><a href="korma.core-api.html#korma.core/with" id="var-tag">with</a> </span><br />
+  
+</div><div id="namespace-entry">
+  <br />
+  <hr />
+  <h2 id="korma.db">korma.db</h2>
+  
+  <a href="korma.db-api.html" id="api-link">Detailed API documentation</a><br />
+  <pre id="namespace-docstr">Functions for creating and managing database specifications.</pre>
+  
+  
+  
+  Public variables and functions:
+  <span id="var-link"><a href="korma.db-api.html#korma.db/connection-pool" id="var-tag">connection-pool</a> </span><span id="var-link"><a href="korma.db-api.html#korma.db/default-spec" id="var-tag">default-spec</a> </span><span id="var-link"><a href="korma.db-api.html#korma.db/defdb" id="var-tag">defdb</a> </span><span id="var-link"><a href="korma.db-api.html#korma.db/delay-pool" id="var-tag">delay-pool</a> </span><span id="var-link"><a href="korma.db-api.html#korma.db/get-connection" id="var-tag">get-connection</a> </span><span id="var-link"><a href="korma.db-api.html#korma.db/mssql" id="var-tag">mssql</a> </span><span id="var-link"><a href="korma.db-api.html#korma.db/mysql" id="var-tag">mysql</a> </span><span id="var-link"><a href="korma.db-api.html#korma.db/oracle" id="var-tag">oracle</a> </span><span id="var-link"><a href="korma.db-api.html#korma.db/postgres" id="var-tag">postgres</a> </span><br />
+  
+</div><div id="namespace-entry">
+  <br />
+  <hr />
+  <h2 id="korma.internal.sql">korma.internal.sql</h2>
+  
+  <a href="korma.internal.sql-api.html" id="api-link">Detailed API documentation</a><br />
+  <pre id="namespace-docstr"></pre>
+  
+  
+  
+  Public variables and functions:
+  <br />
+  
+</div>
+</div>
+              </div>
+            </div>
+          </div>
+	</div>
+	<div id="foot">
+	  <div style="text-align: center;" id="copyright">No copyright info </div>
+	</div>
+      </div>
+      <div id="DesignedBy">Logo &amp; site design by <a title="Visit Tom Hickey's website." href="http://www.tomhickey.com">Tom Hickey</a>.<br />
+      Clojure auto-documentation system by Tom Faulhaber.</div>
+    </div>
+    <!-- /AllContentContainer -->
+  </body>
+
+</html>
