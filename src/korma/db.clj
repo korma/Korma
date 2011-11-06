@@ -6,8 +6,9 @@
 
 (defonce _default (atom nil))
 
-(defn default-spec 
-  "Set the database spec that Korma should use by default when no alternative is specified."
+(defn default-connection
+  "Set the database connection that Korma should use by default when no 
+  alternative is specified."
   [spec]
   (reset! _default spec))
 
@@ -45,7 +46,7 @@
   [db-name spec]
   `(do 
      (defonce ~db-name (delay-pool ~spec))
-     (default-spec ~db-name)))
+     (default-connection ~db-name)))
 
 (defn postgres 
   "Create a database specification for a postgres database. Opts should include keys
