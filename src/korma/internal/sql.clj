@@ -52,15 +52,23 @@
 (defn map->where [m]
   (str "(" (string/join " AND " (map (comp :generated kv-clause) m)) ")"))
 
+(defn map-val [{:keys [func generated args] :as v}]
+  (cond
+    func (let [vs (comma (map str-value args))]
+           (format func vs))
+    generated generated
+    :else (map->where v)))
+
 (defn field-str [v]
-  (let [[fname alias] (if (vector? v)
-                        v
-                        [v nil])
-        fname (if *bound-table*
-                (prefix *bound-table* fname)
-                (name fname))
-        alias-str (when alias (str " AS " (name alias)))]
-    (str fname alias-str)))
+    (let [[fname alias] (if (vector? v)
+                          v
+                          [v nil])
+          fname (cond
+                  (map? fname) (map-val fname)
+                  *bound-table* (prefix *bound-table* fname)
+                  :else (name fname))
+          alias-str (when alias (str " AS " (name alias)))]
+      (str fname alias-str)))
 
 (defn coll-str [v]
   (str "(" (comma (map str-value v)) ")"))
@@ -71,7 +79,6 @@
     (map? v) (:table v)
     :else (name v)))
 
-
 (defn parameterize [v]
   (when *bound-params*
     (swap! *bound-params* conj v))
@@ -79,7 +86,7 @@
 
 (defn str-value [v]
   (cond
-    (map? v) (or (:generated v) (map->where v))
+    (map? v) (map-val v)
     (keyword? v) (field-str v)
     (nil? v) "NULL"
     (true? v) "TRUE"
@@ -136,7 +143,7 @@
 (defn pred-> [k v] (infix k ">" v))
 (defn pred-< [k v] (infix k "<" v))
 (defn pred->= [k v] (infix k ">=" v))
-(defn pref-<= [k v] (infix k "<=" v))
+(defn pred-<= [k v] (infix k "<=" v))
 (defn pred-like [k v] (infix k "LIKE" v))
 
 (defn pred-= [k v] (cond 
@@ -160,11 +167,8 @@
                  'avg 'korma.internal.sql/agg-avg
                  'sum 'korma.internal.sql/agg-sum})
 
-(defn sql-func [op v]
-  (let [field (if (keyword? v)
-                (field-str v)
-                v)]
-  (str op "(" field ")")))
+(defn sql-func [op & vs]
+  {:func (str (string/upper-case op) "(%s)") :args vs})
 
 (defn agg-count [v] (sql-func "COUNT" v))
 (defn agg-sum [v] (sql-func "SUM" v))

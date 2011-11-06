@@ -121,8 +121,8 @@
   [query & vs] 
   (let [aliases (set (map second (filter coll? vs)))]
     (-> query
-    (update-in [:aliases] set/union aliases)
-    (update-in [:fields] concat vs))))
+        (update-in [:aliases] set/union aliases)
+        (update-in [:fields] concat vs))))
 
 (defn set-fields
   "Set the fields and values for an update query."
@@ -215,6 +215,22 @@
                  (if ~group-by
                    (group res# ~group-by)
                    res#))))
+
+;;*****************************************************
+;; Other sql
+;;*****************************************************
+
+(defn sqlfn* 
+  "Call an arbitrary SQL function by providing the name of the function
+  and its params"  
+  [fn-name & params]
+  (apply isql/sql-func (name fn-name) params))
+
+(defmacro sqlfn 
+  "Call an arbitrary SQL function by providing func as a symbol or keyword
+  and its params"
+  [func & params]
+  `(sqlfn* (quote ~func) ~@params))
 
 ;;*****************************************************
 ;; Query exec
