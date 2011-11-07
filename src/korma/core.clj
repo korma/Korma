@@ -343,36 +343,45 @@
             :fk fk}
            opts)))
 
-(defn- rel
+(defn rel
   [ent sub-ent type opts]
-  (assoc-in ent [:rel (:table sub-ent)] (create-relation ent sub-ent type opts)))
+  (let [var-name (-> sub-ent meta :name)
+        cur-ns *ns*]
+    (assoc-in ent [:rel (name var-name)]
+              (delay 
+                (let [resolved (ns-resolve cur-ns var-name)
+                      sub-ent (when resolved
+                                (deref sub-ent))]
+                  (when-not (map? sub-ent)
+                    (throw (Exception. (format "Entity used in relationship does not exist: %s" (name var-name)))))
+                  (create-relation ent sub-ent type opts))))))
 
-(defn has-one
+(defmacro has-one
   "Add a has-one relationship for the given entity. It is assumed that the foreign key
   is on the sub-entity with the format table_id: user.id = address.user_id
   Opts can include a key for :fk to explicitly set the foreign key.
   
   (has-one users address {:fk :addressID})"
   [ent sub-ent & [opts]]
-  (rel ent sub-ent :has-one opts))
+  `(rel ~ent (var ~sub-ent) :has-one ~opts))
 
-(defn belongs-to
+(defmacro belongs-to
   "Add a belongs-to relationship for the given entity. It is assumed that the foreign key
   is on the current entity with the format sub-ent-table_id: email.user_id = user.id.
   Opts can include a key for :fk to explicitly set the foreign key.
   
   (belongs-to users email {:fk :emailID})"
   [ent sub-ent & [opts]]
-  (rel ent sub-ent :belongs-to opts))
+  `(rel ~ent (var ~sub-ent) :belongs-to ~opts))
 
-(defn has-many
+(defmacro has-many
   "Add a has-many relation for the given entity. It is assumed that the foreign key
   is on the sub-entity with the format table_id: user.id = email.user_id
   Opts can include a key for :fk to explicitly set the foreign key.
   
   (has-many users email {:fk :emailID})"
   [ent sub-ent & [opts]]
-  (rel ent sub-ent :has-many opts))
+  `(rel ~ent (var ~sub-ent) :has-many ~opts))
 
 (defn entity-fields
   "Set the fields to be retrieved by default in select queries for the
@@ -441,14 +450,14 @@
                 (:table ent))]
     (join query table (:pk rel) (:fk rel))))
 
-(defn- single-with [query ent]
-  (let [rel (get-in query [:ent :rel (:table ent)])]
+(defn with* [query [ent-name ent]]
+  (let [rel (force (get-in query [:ent :rel ent-name]))]
     (cond
       (not rel) (throw (Exception. (str "No relationship defined for table: " (:table ent))))
       (#{:has-one :belongs-to} (:rel-type rel)) (with-now rel query ent)
       :else (with-later rel query ent))))
 
-(defn with
+(defmacro with
   "Add a related entity to the given select query. If the entity has a relationship
   type of :belongs-to or :has-one, the requested fields will be returned directly in
   the result map. If the entity is a :has-many, a second query will be executed lazily
@@ -457,6 +466,7 @@
   (defentity email (entity-fields :email))
   (defentity user (has-many email))
   (select user
-    (with email) => [{:name \"chris\" :email [{email: \"c@c.com\"}]} ..."
+  (with email) => [{:name \"chris\" :email [{email: \"c@c.com\"}]} ..."
   [query & ents]
-  (reduce single-with query ents))
+  (let [ents-with-names (map (juxt name identity) ents)]
+    `(reduce with* ~query ~(vec ents-with-names))))

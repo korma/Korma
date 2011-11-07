@@ -97,6 +97,23 @@
           :subname (str "//" host ":" port ";database=" db ";user=" user ";password=" password)} 
          opts)))
 
+(defn sqlite3
+  "Create a database specification for a SQLite3 database. Opts should include a key
+  for :db which is the path to the database file."
+  [{:keys [db] :as opts}]
+  (let [db (or (:db opts) "sqlite.db")]
+    (merge {:classname "org.sqlite.JDBC" ; must be in classpath
+            :subprotocol "sqlite"
+            :subname db} 
+           opts)))
+
+(defn handle-exception [e sql params]
+  (println "Failure to execute query with SQL:")
+  (println sql " :: " params)
+  (cond
+    (instance? java.sql.SQLException e) (jdbc/print-sql-exception e)
+    :else (.printStackTrace e)))
+
 (defn do-query [query]
   (let [conn (when-let[db (:db query)]
                (get-connection db))
@@ -107,11 +124,8 @@
     (try 
       (jdbc/with-naming-strategy {:keyword identity :identifier :identity}
         (jdbc/with-connection cur
-          (if results?
-            (jdbc/with-query-results rs (apply vector sql params)
-                                    (vec rs))
-            (ijdbc/do-prepared-return-keys* sql params))))
-      (catch Exception e
-        (println "Failure to execute query with SQL:")
-        (println sql " :: " params)
-        (jdbc/print-sql-exception e)))))
+                              (if results?
+                                (jdbc/with-query-results rs (apply vector sql params)
+                                                        (vec rs))
+                                (ijdbc/do-prepared-return-keys* sql params))))
+      (catch Exception e (handle-exception e sql params)))))
