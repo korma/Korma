@@ -190,7 +190,12 @@
 (defn kv-clause [[k v]]
   (if-not (vector? v)
     (pred-= k v)
-    ((first v) k (second v))))
+    (let [[func value] v
+          pred? (predicates func)
+          func (if pred?
+                 (resolve pred?) 
+                 func)]
+      (func k value))))
 
 (defn alias-clause [alias]
   (when alias
