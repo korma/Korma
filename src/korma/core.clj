@@ -293,7 +293,9 @@
       (= *exec-mode* :sql) sql
       (= *exec-mode* :dry-run) (do
                                  (println "dry run ::" sql "::" (vec params))
-                                 (apply-posts query [{:id 1}]))
+                                 (let [results (apply-posts query [{:id 1}])]
+                                   (first results)
+                                   results))
       :else (let [results (db/do-query query)]
               (apply-transforms query (apply-posts query results))))))
 
@@ -329,13 +331,18 @@
 (defn create-relation
   "Create a relation map describing how two entities are related."
   [ent sub-ent type opts]
-  (let [[pk fk] (condp = type
+  (let [[pk fk foreign-ent] (condp = type
                   :has-one [(isql/prefix ent (:pk ent)) 
-                            (isql/prefix sub-ent (keyword (str (:table ent) "_id")))]
+                            (isql/prefix sub-ent (keyword (str (:table ent) "_id")))
+                            sub-ent]
                   :belongs-to [(isql/prefix sub-ent (:pk sub-ent)) 
-                               (isql/prefix ent (keyword (str (:table sub-ent) "_id")))]
+                               (isql/prefix ent (keyword (str (:table sub-ent) "_id")))
+                               ent]
                   :has-many [(isql/prefix ent (:pk ent)) 
-                             (isql/prefix sub-ent (keyword (str (:table ent) "_id")))])]
+                             (isql/prefix sub-ent (keyword (str (:table ent) "_id")))
+                             sub-ent])
+        opts (when (:fk opts)
+               {:fk (isql/prefix foreign-ent (:fk opts))})]
     (merge {:table (:table sub-ent)
             :alias (:alias sub-ent)
             :rel-type type
