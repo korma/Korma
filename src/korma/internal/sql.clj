@@ -250,7 +250,6 @@
         neue-sql (str "INSERT INTO " (table-str query) " (" keys-clause ") VALUES " values-clause)]
     (assoc query :sql-str neue-sql)))
 
-
 ;;*****************************************************
 ;; Sql parts
 ;;*****************************************************
