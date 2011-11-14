@@ -22,14 +22,15 @@
   (str "\"" s "\""))
 
 (defn field-identifier [field]
-  (let [field-name (name field)]
-    (if (or (string? field)
-            (not (re-seq #"[\sA-Z-#\$\^\&\@\!]" field-name)))
-      field-name
-      (let [parts (string/split field-name #"\.")]
-        (if-not (next parts)
-          (quote-str field-name)
-          (string/join "." (conj (vec (butlast parts)) (quote-str (last parts)))))))))
+  (cond
+    (nil? field) nil
+    (string? field) field
+    (= :* field) (name field)
+    :else (let [field-name (name field)
+                parts (string/split field-name #"\.")]
+            (if-not (next parts)
+              (quote-str field-name)
+              (string/join "." (map quote-str parts))))))
 
 (defn prefix [ent field]
   (let [field-name (field-identifier field)]
@@ -41,7 +42,7 @@
       (let [table (if (string? ent)
                     ent
                     (table-alias ent))]
-        (str table "." field-name))
+        (str (quote-str table) "." field-name))
       field-name)))
 
 (defn comma [vs]
@@ -59,6 +60,10 @@
     generated generated
     :else (map->where v)))
 
+(defn alias-clause [alias]
+  (when alias
+    (str " AS " (quote-str (name alias)))))
+
 (defn field-str [v]
     (let [[fname alias] (if (vector? v)
                           v
@@ -67,17 +72,18 @@
                   (map? fname) (map-val fname)
                   *bound-table* (prefix *bound-table* fname)
                   :else (name fname))
-          alias-str (when alias (str " AS " (name alias)))]
+          alias-str (alias-clause alias)]
       (str fname alias-str)))
 
 (defn coll-str [v]
   (str "(" (comma (map str-value v)) ")"))
 
 (defn table-str [v]
-  (cond
-    (string? v) v
-    (map? v) (:table v)
-    :else (name v)))
+  (let [tstr (cond
+               (string? v) v
+               (map? v) (:table v)
+               :else (name v))]
+    (quote-str tstr)))
 
 (defn parameterize [v]
   (when *bound-params*
@@ -197,10 +203,6 @@
                  func)]
       (func k value))))
 
-(defn alias-clause [alias]
-  (when alias
-    (str " AS " (name alias))))
-
 (defn from-table [v]
   (cond
     (string? v) (table-str v)
@@ -244,7 +246,7 @@
 
 (defn sql-insert [query]
   (let [ins-keys (keys (first (:values query)))
-        keys-clause (comma (map name ins-keys))
+        keys-clause (comma (map field-identifier ins-keys))
         ins-values (insert-values-clause ins-keys (:values query))
         values-clause (comma ins-values)
         neue-sql (str "INSERT INTO " (table-str query) " (" keys-clause ") VALUES " values-clause)]
@@ -256,7 +258,8 @@
 
 (defn sql-set [query]
   (bind-query {}
-              (let [clauses (map (comp :generated kv-clause) (:set-fields query))
+              (let [fields (for [[k v] (:set-fields query)] [{:generated (field-identifier k)} v])
+                    clauses (map (comp :generated kv-clause) fields)
                     clauses-str (string/join ", " clauses)
                     neue-sql (str " SET " clauses-str)]
     (update-in query [:sql-str] str neue-sql))))
