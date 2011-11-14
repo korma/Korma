@@ -5,6 +5,7 @@
   (:use [korma.internal.sql :only [bind-query bind-params]]))
 
 (def ^{:dynamic true} *exec-mode* false)
+(declare get-rel)
 
 ;;*****************************************************
 ;; Query types
@@ -174,7 +175,12 @@
   "Add a join clause to a select query, specifying the table name to join and the two fields
   to predicate the join on.
   
-  (join query :right :address :address.users_id :users.id)"
+  (join query addresses)
+  (join query addresses :addres.users_id :users.id)
+  (join query :right addresses :address.users_id :users.id)"
+  ([query ent]
+   (let [{:keys [pk fk]} (get-rel (:ent query) ent)]
+     (join query ent pk fk)))
   ([query table field1 field2]
    (join query :left table field1 field2))
   ([query type table field1 field2]
@@ -321,6 +327,7 @@
   "Create an entity representing a table in a database."
   [table]
   {:table table
+   :name table
    :pk :id
    :db nil
    :transforms '()
@@ -362,6 +369,12 @@
                   (when-not (map? sub-ent)
                     (throw (Exception. (format "Entity used in relationship does not exist: %s" (name var-name)))))
                   (create-relation ent sub-ent type opts))))))
+
+(defn get-rel [ent sub-ent]
+  (let [sub-name (if (map? sub-ent)
+                   (:name sub-ent)
+                   sub-ent)]
+    (get-in ent [:rel sub-name])))
 
 (defmacro has-one
   "Add a has-one relationship for the given entity. It is assumed that the foreign key

@@ -179,3 +179,9 @@
                     (fields [(sqlfn now) :now] (sqlfn max :blah) (sqlfn avg (sqlfn sum 3 4) (sqlfn sum 4 5)))
                     (where {:time [>= (sqlfn now)]}))
                   "SELECT NOW() AS \"now\", MAX(\"users\".\"blah\"), AVG(SUM(?, ?), SUM(?, ?)) FROM \"users\" WHERE (\"users\".\"time\" >= NOW())"))))
+
+(deftest join-ent-directly
+         (sql-only
+           (is (= (select users2
+                          (join address))
+                  "SELECT * FROM \"users2\" LEFT JOIN \"address\" ON"))))
