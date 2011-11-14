@@ -374,7 +374,7 @@
   (let [sub-name (if (map? sub-ent)
                    (:name sub-ent)
                    sub-ent)]
-    (get-in ent [:rel sub-name])))
+    (force (get-in ent [:rel sub-name]))))
 
 (defmacro has-one
   "Add a has-one relationship for the given entity. It is assumed that the foreign key

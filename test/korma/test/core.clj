@@ -182,6 +182,6 @@
 
 (deftest join-ent-directly
          (sql-only
-           (is (= (select users2
+           (is (= (select user2
                           (join address))
-                  "SELECT * FROM \"users2\" LEFT JOIN \"address\" ON"))))
+                  "SELECT * FROM \"users\" LEFT JOIN \"address\" ON \"users\".\"id\" = \"address\".\"users_id\""))))
