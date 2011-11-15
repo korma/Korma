@@ -56,8 +56,8 @@ For docs and real usage, check out http://sqlkorma.com
 (select users
   (where (or {:usersname "chris"
               :first "chris"}
-             {:email [like "*@chris.com"]})))
-;; executes: SELECT * FROM users WHERE ((users.usersname = 'chris' AND users.first = 'chris') OR users.email = 'chris@chris.com)'
+             {:email [like "%@chris.com"]})))
+;; executes: SELECT * FROM users WHERE ((users.usersname = 'chris' AND users.first = 'chris') OR users.email LIKE '%@chris.com)'
 
 
 (defentity address
