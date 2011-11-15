@@ -92,7 +92,7 @@
         user (or user "dbuser")
         password (or password "dbpassword")
         db (or (:db opts) "")]
-  (merge {:classname "com.microsoft.jdbc.sqlserver.SQLServerDriver" ; must be in classpath
+  (merge {:classname "com.microsoft.sqlserver.jdbc.SQLServerDriver" ; must be in classpath
           :subprotocol "sqlserver"
           :subname (str "//" host ":" port ";database=" db ";user=" user ";password=" password)} 
          opts)))
