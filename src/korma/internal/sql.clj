@@ -15,6 +15,8 @@
 ;; Str utils
 ;;*****************************************************
 
+(declare kv-clause str-value map-val)
+
 (defn table-alias [{:keys [type table alias]}]
   (or alias table))
 
@@ -23,7 +25,7 @@
 
 (defn field-identifier [field]
   (cond
-    (nil? field) nil
+    (map? field) (map-val field)
     (string? field) field
     (= :* field) (name field)
     :else (let [field-name (name field)
@@ -37,7 +39,6 @@
     ;;check if it's already prefixed
     (if (and (keyword? field)
              (not (*bound-aliases* field))
-             (= -1 (.indexOf field-name "*"))
              (= -1 (.indexOf field-name ".")))
       (let [table (if (string? ent)
                     ent
@@ -47,8 +48,6 @@
 
 (defn comma [vs]
   (string/join ", " vs))
-
-(declare kv-clause str-value)
 
 (defn map->where [m]
   (str "(" (string/join " AND " (map (comp :generated kv-clause) m)) ")"))
@@ -71,7 +70,7 @@
           fname (cond
                   (map? fname) (map-val fname)
                   *bound-table* (prefix *bound-table* fname)
-                  :else (name fname))
+                  :else (field-identifier fname))
           alias-str (alias-clause alias)]
       (str fname alias-str)))
 
@@ -229,7 +228,7 @@
 
 (defn sql-select [query]
   (let [clauses (if-not (seq (:fields query))
-                  ["*"]
+                  [(field-str :*)]
                   (map field-str (:fields query)))
         clauses-str (comma clauses)
         table (from-table query)

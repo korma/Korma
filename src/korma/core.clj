@@ -114,6 +114,10 @@
 ;; Query parts
 ;;*****************************************************
 
+
+(defn- add-aliases [query as]
+  (update-in query [:aliases] set/union as))
+
 (defn fields
   "Set the fields to be selected in a query. Fields can either be a keyword
   or a vector of two keywords [field alias]:
@@ -122,7 +126,7 @@
   [query & vs] 
   (let [aliases (set (map second (filter coll? vs)))]
     (-> query
-        (update-in [:aliases] set/union aliases)
+        (add-aliases aliases)
         (update-in [:fields] concat vs))))
 
 (defn set-fields
@@ -151,7 +155,7 @@
      (bind-params
        (where* q# 
                (bind-query q#
-                           ~(isql/parse-where `~form))))))
+                           (isql/str-value ~(isql/parse-where `~form)))))))
 
 (defn order
   "Add an ORDER BY clause to a select query. field should be a keyword of the field name, dir
@@ -216,11 +220,12 @@
   
   Aggregates available: count, sum, avg, min, max, first, last"
   [query agg alias & [group-by]]
-  `(bind-query ~query
-               (let [res# (fields ~query [~(isql/parse-aggregate agg) ~alias])]
+  `(let [q# ~query]
+     (bind-query q#
+               (let [res# (fields q# [~(isql/parse-aggregate agg) ~alias])]
                  (if ~group-by
                    (group res# ~group-by)
-                   res#))))
+                   res#)))))
 
 ;;*****************************************************
 ;; Other sql
@@ -450,32 +455,65 @@
 ;; With
 ;;*****************************************************
 
-(defn- with-later [rel query ent]
-  (let [fk (:fk rel)
+(defn- force-prefix [ent fields]
+  (for [field fields]
+    (if (vector? field)
+      [{:generated (isql/prefix ent (first field))} (second field)]
+      (isql/prefix ent field))))
+
+(defn merge-part [query neue k]
+  (update-in query [k] #(if-let [vs (k neue)]
+                          (vec (concat % vs))
+                          %)))
+
+(defn- merge-query [query neue]
+  (let [merged (reduce #(merge-part % neue %2)
+                       query
+                       [:fields :group :order :where :params :joins :post-queries])]
+    (-> merged
+        (add-aliases (:aliases neue)))))
+
+(defn- add-where-context [query]
+  (let [results (map #(if (and (map? %)
+                               (not (:generated %)))
+                        (into {} (force-prefix (:ent query) %))
+                        %)
+                     (:where query))]
+    (assoc query :where (vec results))))
+
+(defn- sub-query [query sub-ent func]
+  (let [neue (func (select* sub-ent))
+        neue (-> neue
+                 (update-in [:fields] #(force-prefix sub-ent %))
+                 (update-in [:order] #(force-prefix sub-ent %))
+                 (update-in [:group] #(force-prefix sub-ent %))
+                 (add-where-context))]
+    (merge-query query neue)))
+
+(defn- with-later [rel query ent func]
+  (let [fk {:generated (:fk rel)}
         pk (get-in query [:ent :pk])
         table (keyword (isql/table-alias ent))]
     (post-query query 
                 (partial map 
                          #(assoc % table
                                  (select ent
-                                         (where (str fk " = " (get % pk)))))))))
+                                         (func)
+                                         (where {fk (get % pk)})))))))
 
-(defn- with-now [rel query ent]
-  (let [flds (:fields ent)
-        query (if flds
-                (apply fields query flds)
-                query)
-        table (if (:alias rel)
+(defn- with-now [rel query ent func]
+  (let [table (if (:alias rel)
                 [(:table ent) (:alias ent)]
-                (:table ent))]
-    (join query table (:pk rel) (:fk rel))))
+                (:table ent))
+        query (join query table (:pk rel) (:fk rel))]
+    (sub-query query ent func)))
 
-(defn with* [query [ent-name ent]]
-  (let [rel (force (get-in query [:ent :rel ent-name]))]
+(defn with* [query sub-ent func]
+  (let [rel (get-rel (:ent query) sub-ent)]
     (cond
-      (not rel) (throw (Exception. (str "No relationship defined for table: " (:table ent))))
-      (#{:has-one :belongs-to} (:rel-type rel)) (with-now rel query ent)
-      :else (with-later rel query ent))))
+      (not rel) (throw (Exception. (str "No relationship defined for table: " (:table sub-ent))))
+      (#{:has-one :belongs-to} (:rel-type rel)) (with-now rel query sub-ent func)
+      :else (with-later rel query sub-ent func))))
 
 (defmacro with
   "Add a related entity to the given select query. If the entity has a relationship
@@ -487,6 +525,7 @@
   (defentity user (has-many email))
   (select user
   (with email) => [{:name \"chris\" :email [{email: \"c@c.com\"}]} ..."
-  [query & ents]
-  (let [ents-with-names (map (juxt name identity) ents)]
-    `(reduce with* ~query ~(vec ents-with-names))))
+  [query ent & body]
+  `(with* ~query ~ent (fn [q#]
+                        (-> q#
+                            ~@body))))
