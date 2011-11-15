@@ -17,6 +17,9 @@
 
 (declare kv-clause str-value map-val)
 
+(defn generated [s]
+  {:generated s})
+
 (defn table-alias [{:keys [type table alias]}]
   (or alias table))
 
@@ -135,10 +138,10 @@
                  '= 'korma.internal.sql/pred-=})
 
 (defn infix [k op v]
-  {:generated (str (str-value k) " " op " " (str-value v))})
+  (generated (str (str-value k) " " op " " (str-value v))))
 
 (defn group-with [op vs]
-  {:generated (str "(" (string/join op (map str-value vs)) ")")})
+  (generated (str "(" (string/join op (map str-value vs)) ")")))
 
 (defn pred-and [& args] (group-with " AND " args))
 (defn pred-or [& args] (group-with " OR " args))
@@ -257,7 +260,7 @@
 
 (defn sql-set [query]
   (bind-query {}
-              (let [fields (for [[k v] (:set-fields query)] [{:generated (field-identifier k)} v])
+              (let [fields (for [[k v] (:set-fields query)] [(generated (field-identifier k)) v])
                     clauses (map (comp :generated kv-clause) fields)
                     clauses-str (string/join ", " clauses)
                     neue-sql (str " SET " clauses-str)]

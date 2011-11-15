@@ -458,7 +458,7 @@
 (defn- force-prefix [ent fields]
   (for [field fields]
     (if (vector? field)
-      [{:generated (isql/prefix ent (first field))} (second field)]
+      [(isql/generated (isql/prefix ent (first field))) (second field)]
       (isql/prefix ent field))))
 
 (defn merge-part [query neue k]
@@ -491,7 +491,7 @@
     (merge-query query neue)))
 
 (defn- with-later [rel query ent func]
-  (let [fk {:generated (:fk rel)}
+  (let [fk (isql/generated (:fk rel))
         pk (get-in query [:ent :pk])
         table (keyword (isql/table-alias ent))]
     (post-query query 
