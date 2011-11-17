@@ -27,6 +27,7 @@
   (let [q (empty-query ent)]
     (merge q {:type :select
               :fields []
+              :modifiers []
               :joins []
               :where []
               :order []
@@ -242,6 +243,12 @@
   and its params"
   [func & params]
   `(sqlfn* (quote ~func) ~@params))
+
+(defn modifier [query & modifiers]
+  (update-in query [:modifiers] conj (apply str modifiers)))
+
+(def raw isql/generated)
+(def set-delimiters isql/set-delimiters)
 
 ;;*****************************************************
 ;; Query exec

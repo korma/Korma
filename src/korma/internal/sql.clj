@@ -12,6 +12,21 @@
 (def ^{:dynamic true} *bound-params* nil)
 
 ;;*****************************************************
+;; delimiters
+;;*****************************************************
+
+(def delimiter-char (atom ["\"" "\""]))
+
+(defn set-delimiters [& cs]
+  (let [[begin end] cs
+        end (or end begin)]
+    (reset! delimiter-char [begin end])))
+
+(defn delimit-str [s]
+  (let [[begin end] @delimiter-char]
+    (str begin s end)))
+
+;;*****************************************************
 ;; Str utils
 ;;*****************************************************
 
@@ -23,8 +38,6 @@
 (defn table-alias [{:keys [type table alias]}]
   (or alias table))
 
-(defn quote-str [s]
-  (str "\"" s "\""))
 
 (defn field-identifier [field]
   (cond
@@ -34,8 +47,8 @@
     :else (let [field-name (name field)
                 parts (string/split field-name #"\.")]
             (if-not (next parts)
-              (quote-str field-name)
-              (string/join "." (map quote-str parts))))))
+              (delimit-str field-name)
+              (string/join "." (map delimit-str parts))))))
 
 (defn prefix [ent field]
   (let [field-name (field-identifier field)]
@@ -46,7 +59,7 @@
       (let [table (if (string? ent)
                     ent
                     (table-alias ent))]
-        (str (quote-str table) "." field-name))
+        (str (delimit-str table) "." field-name))
       field-name)))
 
 (defn comma [vs]
@@ -64,7 +77,7 @@
 
 (defn alias-clause [alias]
   (when alias
-    (str " AS " (quote-str (name alias)))))
+    (str " AS " (delimit-str (name alias)))))
 
 (defn field-str [v]
     (let [[fname alias] (if (vector? v)
@@ -85,7 +98,7 @@
                (string? v) v
                (map? v) (:table v)
                :else (name v))]
-    (quote-str tstr)))
+    (delimit-str tstr)))
 
 (defn parameterize [v]
   (when *bound-params*
@@ -233,9 +246,11 @@
   (let [clauses (if-not (seq (:fields query))
                   [(field-str :*)]
                   (map field-str (:fields query)))
+        modifiers-clause (when (seq (:modifiers query))
+                           (apply str (cons (:modifiers query) " ")))
         clauses-str (comma clauses)
         table (from-table query)
-        neue-sql (str "SELECT " clauses-str " FROM " table)]
+        neue-sql (str "SELECT " modifiers-clause clauses-str " FROM " table)]
     (assoc query :sql-str neue-sql)))
 
 (defn sql-update [query]
@@ -268,7 +283,7 @@
 
 (defn sql-joins [query]
   (let [clauses (for [[type table pk fk] (:joins query)]
-                  (join-clause :left table pk fk))
+                  (join-clause type table pk fk))
         clauses-str (string/join "" clauses)]
     (update-in query [:sql-str] str clauses-str)))
 

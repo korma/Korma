@@ -215,3 +215,20 @@
                         (with email
                               (where (like :email "%@gmail.com"))))))
                 "dry run :: SELECT \"users\".* FROM \"users\" :: []\ndry run :: SELECT \"email\".* FROM \"email\" WHERE \"email\".\"email\" LIKE ? AND (\"email\".\"users_id\" = ?) :: [%@gmail.com 1]\n")))
+
+(deftest modifiers
+         (sql-only
+           (is (= (select user2 (modifier "TOP 5")))
+               "SELECT TOP 5 \"users\".* FROM \"users\"")))
+
+(deftest delimiters
+         (set-delimiters "`")
+         (sql-only
+           (is (= (select user2)
+                  "SELECT `users`.* FROM `users`")))
+         (set-delimiters "\""))
+
+(deftest raws
+         (sql-only
+           (is (= (select user2 (where {(raw "ROWNUM") [>= 5]})))
+               "SELECT \"users\".* FROM \"users\" WHERE ROWNUM >= ?")))
