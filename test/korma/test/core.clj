@@ -35,7 +35,7 @@
                 (select users)
                 "SELECT \"users\".* FROM \"users\""
                 (select users-alias)
-                "SELECT \"u\".* FROM \"users\" AS \"u\""
+                "SELECT \"u\".* FROM \"users\" \"u\""
                 (select users
                         (fields :id :username))
                 "SELECT \"users\".\"id\", \"users\".\"username\" FROM \"users\""
@@ -166,7 +166,7 @@
            (is (= (select users (group :id :name))
                   "SELECT \"users\".* FROM \"users\" GROUP BY \"users\".\"id\", \"users\".\"name\""))
            (is (= (select users (aggregate (count :*) :cnt :id))
-                  "SELECT COUNT(\"users\".*) AS \"cnt\" FROM \"users\" GROUP BY \"users\".\"id\""))))
+                  "SELECT COUNT(\"users\".*) \"cnt\" FROM \"users\" GROUP BY \"users\".\"id\""))))
 
 (deftest quoting
          (sql-only
@@ -178,7 +178,7 @@
            (is (= (select users 
                     (fields [(sqlfn now) :now] (sqlfn max :blah) (sqlfn avg (sqlfn sum 3 4) (sqlfn sum 4 5)))
                     (where {:time [>= (sqlfn now)]}))
-                  "SELECT NOW() AS \"now\", MAX(\"users\".\"blah\"), AVG(SUM(?, ?), SUM(?, ?)) FROM \"users\" WHERE (\"users\".\"time\" >= NOW())"))))
+                  "SELECT NOW() \"now\", MAX(\"users\".\"blah\"), AVG(SUM(?, ?), SUM(?, ?)) FROM \"users\" WHERE (\"users\".\"time\" >= NOW())"))))
 
 (deftest join-ent-directly
          (sql-only
