@@ -115,7 +115,6 @@
 ;; Query parts
 ;;*****************************************************
 
-
 (defn- add-aliases [query as]
   (update-in query [:aliases] set/union as))
 
@@ -153,10 +152,10 @@
   describing how the key is related to the value: (where query {:name [like \"chris\"})"
   [query form]
   `(let [q# ~query]
-     (bind-params
-       (where* q# 
+     (where* q# 
+             (isql/pred-map
                (bind-query q#
-                           (isql/str-value ~(isql/parse-where `~form)))))))
+                           ~(isql/parse-where `~form))))))
 
 (defn order
   "Add an ORDER BY clause to a select query. field should be a keyword of the field name, dir
@@ -268,6 +267,12 @@
   `(binding [*exec-mode* :dry-run]
      ~@body))
 
+(defmacro query-only
+  "Wrap around a set of queries to force them to return their query objects."
+  [& body]
+  `(binding [*exec-mode* :query]
+     ~@body))
+
 (defn as-sql
   "Force a query to return a string of SQL when (exec) is called."
   [query]
@@ -309,6 +314,7 @@
     (cond
       (:sql query) sql
       (= *exec-mode* :sql) sql
+      (= *exec-mode* :query) query
       (= *exec-mode* :dry-run) (do
                                  (println "dry run ::" sql "::" (vec params))
                                  (let [pk (-> query :ent :pk)
@@ -481,21 +487,14 @@
     (-> merged
         (add-aliases (:aliases neue)))))
 
-(defn- add-where-context [query]
-  (let [results (map #(if (and (map? %)
-                               (not (:generated %)))
-                        (into {} (force-prefix (:ent query) %))
-                        %)
-                     (:where query))]
-    (assoc query :where (vec results))))
-
 (defn- sub-query [query sub-ent func]
-  (let [neue (func (select* sub-ent))
+  (let [neue (select* sub-ent)
+        neue (bind-query neue (func neue))
         neue (-> neue
                  (update-in [:fields] #(force-prefix sub-ent %))
                  (update-in [:order] #(force-prefix sub-ent %))
-                 (update-in [:group] #(force-prefix sub-ent %))
-                 (add-where-context))]
+                 (update-in [:group] #(force-prefix sub-ent %)))]
+    (println neue)
     (merge-query query neue)))
 
 (defn- with-later [rel query ent func]

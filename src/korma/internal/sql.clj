@@ -30,10 +30,16 @@
 ;; Str utils
 ;;*****************************************************
 
-(declare kv-clause str-value map-val)
+(declare kv-result kv-clause str-value map-val)
 
 (defn generated [s]
-  {:generated s})
+  {::generated s})
+
+(defn is-generated? [m]
+  (or (::pred m)
+      (::func m)
+      (::args m)
+      (::generated m)))
 
 (defn table-alias [{:keys [type table alias]}]
   (or alias table))
@@ -62,18 +68,29 @@
         (str (delimit-str table) "." field-name))
       field-name)))
 
+(defn try-prefix [v]
+  (if (and (keyword? v)
+           *bound-table*)
+    (generated (prefix *bound-table* v))
+    v))
+
 (defn comma [vs]
   (string/join ", " vs))
 
 (defn map->where [m]
-  (str "(" (string/join " AND " (map (comp :generated kv-clause) m)) ")"))
+  (str "(" (string/join " AND " (map kv-clause m)) ")"))
 
-(defn map-val [{:keys [func generated args] :as v}]
-  (cond
-    func (let [vs (comma (map str-value args))]
-           (format func vs))
-    generated generated
-    :else (map->where v)))
+(defn map-val [v]
+  (let [func (::func v)
+        generated (::generated v)
+        args (::args v)
+        pred (::pred v)]
+    (cond
+      generated generated
+      pred (apply pred args)
+      func (let [vs (comma (map str-value args))]
+             (format func vs))
+      :else (map->where v))))
 
 (defn alias-clause [alias]
   (when alias
@@ -150,15 +167,23 @@
                  'not= 'korma.internal.sql/pred-not=
                  '= 'korma.internal.sql/pred-=})
 
+(declare pred-map)
+
+(defn do-infix [k op v]
+  (str (str-value k) " " op " " (str-value v)))
+
+(defn do-group [op vs]
+  (str "(" (string/join op (map str-value vs)) ")"))
+
 (defn infix [k op v]
-  (generated (str (str-value k) " " op " " (str-value v))))
+  {::pred do-infix ::args [(try-prefix k) op (try-prefix v)]})
 
 (defn group-with [op vs]
-  (generated (str "(" (string/join op (map str-value vs)) ")")))
+  {::pred do-group ::args [op (doall (map pred-map vs))]})
 
 (defn pred-and [& args] (group-with " AND " args))
 (defn pred-or [& args] (group-with " OR " args))
-(defn pred-not [v] (str "NOT(" (str-value v) ")"))
+(defn pred-not [v] {::func "NOT(%s)" :args v})
 
 (defn pred-in [k v] (infix k "IN" v))
 (defn pred-> [k v] (infix k ">" v))
@@ -176,6 +201,12 @@
                         k (infix k "IS NOT" v)
                         v (infix v "IS NOT" k)))
 
+(defn pred-map [m]
+  (if (and (map? m)
+           (not (is-generated? m)))
+    (apply pred-and (doall (map kv-result m)))
+   m))
+
 ;;*****************************************************
 ;; Aggregates
 ;;*****************************************************
@@ -189,7 +220,7 @@
                  'sum 'korma.internal.sql/agg-sum})
 
 (defn sql-func [op & vs]
-  {:func (str (string/upper-case op) "(%s)") :args vs})
+  {::func (str (string/upper-case op) "(%s)") ::args (map try-prefix vs)})
 
 (defn agg-count [v] (sql-func "COUNT" v))
 (defn agg-sum [v] (sql-func "SUM" v))
@@ -208,7 +239,7 @@
 ;; Clauses
 ;;*****************************************************
 
-(defn kv-clause [[k v]]
+(defn kv-result [[k v]]
   (if-not (vector? v)
     (pred-= k v)
     (let [[func value] v
@@ -217,6 +248,9 @@
                  (resolve pred?) 
                  func)]
       (func k value))))
+
+(defn kv-clause [pair]
+    (map-val (kv-result pair)))
 
 (defn from-table [v]
   (cond
@@ -275,8 +309,8 @@
 
 (defn sql-set [query]
   (bind-query {}
-              (let [fields (for [[k v] (:set-fields query)] [(generated (field-identifier k)) v])
-                    clauses (map (comp :generated kv-clause) fields)
+              (let [fields (for [[k v] (:set-fields query)] [(generated (field-identifier k)) (generated (str-value v))])
+                    clauses (map kv-clause fields)
                     clauses-str (string/join ", " clauses)
                     neue-sql (str " SET " clauses-str)]
     (update-in query [:sql-str] str neue-sql))))
@@ -289,7 +323,8 @@
 
 (defn sql-where [query]
   (if (seq (:where query))
-    (let [clauses (map #(if (map? %) (str-value %) %) (:where query))
+    (let [clauses (map #(if (map? %) (map-val %) %)
+                       (:where query))
           clauses-str (string/join " AND " clauses)
           neue-sql (str " WHERE " clauses-str)]
       (update-in query [:sql-str] str neue-sql))
@@ -327,7 +362,6 @@
   (if (string? form)
     form
     (walk/postwalk-replace predicates form)))
-
 
 ;;*****************************************************
 ;; To sql
