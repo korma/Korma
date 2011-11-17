@@ -16,6 +16,8 @@
 (defentity users-alias
   (table :users :u))
 
+(defentity blah (pk :cool) (has-many users))
+
 (deftest select-function
          (is (= (-> (select* "users")
                   (fields :id :username)
@@ -232,3 +234,11 @@
          (sql-only
            (is (= (select user2 (where {(raw "ROWNUM") [>= 5]})))
                "SELECT \"users\".* FROM \"users\" WHERE ROWNUM >= ?")))
+
+(deftest pk-dry-run
+         (let [result (with-out-str
+                        (dry-run
+                          (select blah (with users))))]
+
+           (is (= result
+                  "dry run :: SELECT \"blah\".* FROM \"blah\" :: []\ndry run :: SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"blah_id\" = ?) :: [1]\n"))))

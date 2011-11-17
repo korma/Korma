@@ -311,7 +311,8 @@
       (= *exec-mode* :sql) sql
       (= *exec-mode* :dry-run) (do
                                  (println "dry run ::" sql "::" (vec params))
-                                 (let [results (apply-posts query [{:id 1}])]
+                                 (let [pk (-> query :ent :pk)
+                                       results (apply-posts query [{pk 1}])]
                                    (first results)
                                    results))
       :else (let [results (db/do-query query)]
