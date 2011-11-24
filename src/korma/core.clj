@@ -11,9 +11,14 @@
 ;; Query types
 ;;*****************************************************
 
+(defn- check-ent [ent]
+  (when-not (or (string? ent)
+                (map? ent))
+    (throw (Exception. (str "Invalid entity provided for the query: " ent)))))
+
 (defn- empty-query [ent]
   (let [[ent table alias db] (if (string? ent)
-                               [{} ent nil nil]
+                               [{:table ent} ent nil nil]
                                [ent (:table ent) (:alias ent) (:db ent)])]
     {:ent ent
      :table table
@@ -27,6 +32,7 @@
   (let [q (empty-query ent)]
     (merge q {:type :select
               :fields []
+              :from [(:ent q)]
               :modifiers []
               :joins []
               :where []
@@ -133,6 +139,11 @@
   "Set the fields and values for an update query."
   [query fields-map]
   (update-in query [:set-fields] merge fields-map))
+
+(defn from
+  "Add tables to the from clause."
+  [query table]
+  (update-in query [:from] conj table))
 
 (defn where*
   "Add a where clause to the query. Clause can be either a map or a string, and
@@ -242,6 +253,9 @@
   and its params"
   [func & params]
   `(sqlfn* (quote ~func) ~@params))
+
+(defmacro subselect [& parts]
+  `(isql/sub-query (query-only (select ~@parts))))
 
 (defn modifier [query & modifiers]
   (update-in query [:modifiers] conj (apply str modifiers)))
@@ -494,7 +508,6 @@
                  (update-in [:fields] #(force-prefix sub-ent %))
                  (update-in [:order] #(force-prefix sub-ent %))
                  (update-in [:group] #(force-prefix sub-ent %)))]
-    (println neue)
     (merge-query query neue)))
 
 (defn- with-later [rel query ent func]

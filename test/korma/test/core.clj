@@ -244,3 +244,32 @@
 
            (is (= result
                   "dry run :: SELECT \"blah\".* FROM \"blah\" :: []\ndry run :: SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"blah_id\" = ?) :: [1]\n"))))
+
+(deftest subselects
+         (are [query result] (= query result)
+              (sql-only
+                (select users
+                        (where {:id [in (subselect users
+                                                    (where {:age [> 5]}))]})))
+              "SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"id\" IN (SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"age\" > ?)))"
+
+              (sql-only
+                (select users
+                        (from [(subselect users
+                                           (where {:age [> 5]})) :u2])))
+              "SELECT \"users\".* FROM \"users\", (SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"age\" > ?)) \"u2\""
+
+              (sql-only
+                (select users
+                        (fields :* [(subselect users
+                                                (where {:age [> 5]})) :u2])))
+              "SELECT \"users\".*, (SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"age\" > ?)) \"u2\" FROM \"users\""
+
+              (query-only
+                (:params
+                  (select users
+                          (where {:logins [> 10]})
+                          (where {:id [in (subselect users
+                                                      (where {:age [> 5]}))]})
+                          (where {:email [like "%@gmail.com"]}))))
+              [10 5 "%@gmail.com"]))

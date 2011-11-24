@@ -35,10 +35,13 @@
 (defn generated [s]
   {::generated s})
 
+(defn sub-query [s]
+  {::sub s})
+
 (defn is-generated? [m]
   (or (::pred m)
       (::func m)
-      (::args m)
+      (::sub m)
       (::generated m)))
 
 (defn table-alias [{:keys [type table alias]}]
@@ -84,12 +87,16 @@
   (let [func (::func v)
         generated (::generated v)
         args (::args v)
+        sub (::sub v)
         pred (::pred v)]
     (cond
       generated generated
       pred (apply pred args)
       func (let [vs (comma (map str-value args))]
              (format func vs))
+      sub (do
+            (swap! *bound-params* #(vec (concat % (:params sub))))
+            (str "(" (:sql-str sub) ")"))
       :else (map->where v))))
 
 (defn alias-clause [alias]
@@ -256,9 +263,11 @@
   (cond
     (string? v) (table-str v)
     (vector? v) (let [[table alias] v]
-                  (str (table-str table) (alias-clause alias)))
-    (map? v) (let [{:keys [table alias]} v]
-               (str (table-str table) (alias-clause alias)))
+                  (str (from-table table) (alias-clause alias)))
+    (map? v) (if (:table v)
+               (let [{:keys [table alias]} v]
+                 (str (table-str table) (alias-clause alias)))
+               (map-val v))
     :else (table-str v)))
 
 (defn join-clause [join-type table pk fk]
@@ -283,8 +292,8 @@
         modifiers-clause (when (seq (:modifiers query))
                            (apply str (cons (:modifiers query) " ")))
         clauses-str (comma clauses)
-        table (from-table query)
-        neue-sql (str "SELECT " modifiers-clause clauses-str " FROM " table)]
+        tables (comma (map from-table (:from query)))
+        neue-sql (str "SELECT " modifiers-clause clauses-str " FROM " tables)]
     (assoc query :sql-str neue-sql)))
 
 (defn sql-update [query]
