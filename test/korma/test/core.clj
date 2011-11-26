@@ -1,6 +1,15 @@
 (ns korma.test.core
-  (:use [korma.core])
+  (:require [clojure.string :as string])
+  (:use [korma.core]
+        [korma.db]
+        [korma.config])
   (:use [clojure.test]))
+
+(defdb test-db-opts (postgres {:db "korma" :user "korma" :password "kormapass" :delimiters "" :naming {:fields string/upper-case}}))
+(defdb test-db (postgres {:db "korma" :user "korma" :password "kormapass"}))
+
+(defentity delims
+           (database test-db-opts))
 
 (defentity users)
 (defentity state)
@@ -231,6 +240,11 @@
            (is (= (select user2)
                   "SELECT `users`.* FROM `users`")))
          (set-delimiters "\""))
+
+(deftest naming-delim-options
+         (sql-only
+           (is (= (select delims)
+                  "SELECT DELIMS.* FROM DELIMS"))))
 
 (deftest raws
          (sql-only

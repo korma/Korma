@@ -1,5 +1,6 @@
 (ns korma.internal.sql
   (:require [clojure.string :as string]
+            [korma.config :as conf]
             [clojure.walk :as walk]))
 
 
@@ -10,21 +11,17 @@
 (def ^{:dynamic true} *bound-table* nil)
 (def ^{:dynamic true} *bound-aliases* #{})
 (def ^{:dynamic true} *bound-params* nil)
+(def ^{:dynamic true} *bound-options* nil)
 
 ;;*****************************************************
 ;; delimiters
 ;;*****************************************************
 
-(def delimiter-char (atom ["\"" "\""]))
-
-(defn set-delimiters [& cs]
-  (let [[begin end] cs
-        end (or end begin)]
-    (reset! delimiter-char [begin end])))
-
 (defn delimit-str [s]
-  (let [[begin end] @delimiter-char]
-    (str begin s end)))
+  (let [{:keys [naming delimiters]} (or *bound-options* @conf/options)
+        [begin end] delimiters
+        ->field (:fields naming)]
+    (str begin (->field s) end)))
 
 ;;*****************************************************
 ;; Str utils
@@ -147,7 +144,8 @@
   `(binding [*bound-table* (if (= :select (:type ~query))
                              (table-alias ~query)
                              (:table ~query))
-             *bound-aliases* (or (:aliases ~query) #{})]
+             *bound-aliases* (or (:aliases ~query) #{})
+             *bound-options* (or (:options ~query) @conf/options)]
      ~@body))
 
 (defmacro bind-params [& body]

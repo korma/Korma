@@ -1,16 +1,22 @@
 (ns korma.db
   "Functions for creating and managing database specifications."
   (:require [clojure.java.jdbc :as jdbc]
-            [clojure.java.jdbc.internal :as ijdbc])
+            [clojure.java.jdbc.internal :as ijdbc]
+            [korma.config :as conf])
   (:import com.mchange.v2.c3p0.ComboPooledDataSource))
 
 (defonce _default (atom nil))
 
+(defn ->strategy [{:keys [keys fields]}]
+  {:keyword keys
+   :identifier fields})
+
 (defn default-connection
   "Set the database connection that Korma should use by default when no 
   alternative is specified."
-  [spec]
-  (reset! _default spec))
+  [conn]
+  (conf/merge-defaults (:options conn))
+  (reset! _default conn))
 
 (defn connection-pool
   "Create a connection pool for the given database spec."
@@ -34,18 +40,22 @@
 (defn get-connection 
   "Get a connection from the potentially delayed connection object."
   [db]
-  (if-not db
-    (throw (Exception. "No valid DB connection selected."))
-    (if (delay? db)
-      @db
-      db)))
+  (let [db (if (map? db)
+             (:pool db)
+             db)]
+    (if-not db
+      (throw (Exception. "No valid DB connection selected."))
+      (if (delay? db)
+        @db
+        db))))
 
 (defmacro defdb 
   "Define a database specification. The last evaluated defdb will be used by default
   for all queries where no database is specified by the entity."
   [db-name spec]
-  `(do 
-     (defonce ~db-name (delay-pool ~spec))
+  `(let [spec# ~spec]
+     (defonce ~db-name {:pool (delay-pool spec#)
+                        :options (conf/extract-options spec#)})
      (default-connection ~db-name)))
 
 (defn postgres 
@@ -118,11 +128,12 @@
   (let [conn (when-let[db (:db query)]
                (get-connection db))
         cur (or conn (get-connection @_default))
+        opts (or (:options query) @conf/options)
         results? (:results query)
         sql (:sql-str query)
         params (:params query)]
     (try 
-      (jdbc/with-naming-strategy {:keyword identity :identifier :identity}
+      (jdbc/with-naming-strategy (->strategy (:naming opts))
         (jdbc/with-connection cur
                               (if results?
                                 (jdbc/with-query-results rs (apply vector sql params)

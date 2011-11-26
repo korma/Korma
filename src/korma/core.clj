@@ -17,12 +17,14 @@
     (throw (Exception. (str "Invalid entity provided for the query: " ent)))))
 
 (defn- empty-query [ent]
-  (let [[ent table alias db] (if (string? ent)
-                               [{:table ent} ent nil nil]
-                               [ent (:table ent) (:alias ent) (:db ent)])]
+  (let [[ent table alias db opts] (if (string? ent)
+                                    [{:table ent} ent nil nil nil]
+                                    [ent (:table ent) (:alias ent) 
+                                     (:db ent) (get-in ent [:db :options])])]
     {:ent ent
      :table table
      :db db
+     :options opts
      :alias alias}))
 
 (defn select* 
@@ -261,7 +263,6 @@
   (update-in query [:modifiers] conj (apply str modifiers)))
 
 (def raw isql/generated)
-(def set-delimiters isql/set-delimiters)
 
 ;;*****************************************************
 ;; Query exec
@@ -301,10 +302,12 @@
 
 (defn- apply-transforms
   [query results]
-  (if-let [trans (seq (-> query :ent :transforms))]
-    (let [trans-fn (apply comp trans)]
-      (map trans-fn results))
-    results))
+  (if (not= (:type query) :select)
+    results
+    (if-let [trans (seq (-> query :ent :transforms))]
+      (let [trans-fn (apply comp trans)]
+        (map trans-fn results))
+      results)))
 
 (defn- apply-prepares
   [query]
