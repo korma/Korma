@@ -1,8 +1,8 @@
-(ns korma.internal.sql
+(ns korma.sql.engine
   (:require [clojure.string :as string]
+            [korma.sql.utils :as utils]
             [korma.config :as conf]
             [clojure.walk :as walk]))
-
 
 ;;*****************************************************
 ;; dynamic vars
@@ -27,23 +27,35 @@
 ;; Str utils
 ;;*****************************************************
 
-(declare kv-result kv-clause str-value map-val)
+(declare pred-map str-value)
 
-(defn generated [s]
-  {::generated s})
+(defn str-values [vs]
+  (map str-value vs))
 
-(defn sub-query [s]
-  {::sub s})
+(defn comma-values [vs]
+  (utils/comma (str-values vs)))
 
-(defn is-generated? [m]
-  (or (::pred m)
-      (::func m)
-      (::sub m)
-      (::generated m)))
+(defn wrap-values [vs]
+  (utils/wrap (comma-values vs)))
+
+(defn map-val [v]
+  (let [func (utils/func? v)
+        generated (utils/generated? v)
+        args (utils/args? v)
+        sub (utils/sub-query? v)
+        pred (utils/pred? v)]
+    (cond
+      generated generated
+      pred (apply pred args)
+      func (let [vs (comma-values args)]
+             (format func vs))
+      sub (do
+            (swap! *bound-params* #(vec (concat % (:params sub))))
+            (utils/wrap (:sql-str sub)))
+      :else (pred-map v))))
 
 (defn table-alias [{:keys [type table alias]}]
   (or alias table))
-
 
 (defn field-identifier [field]
   (cond
@@ -71,30 +83,8 @@
 (defn try-prefix [v]
   (if (and (keyword? v)
            *bound-table*)
-    (generated (prefix *bound-table* v))
+    (utils/generated (prefix *bound-table* v))
     v))
-
-(defn comma [vs]
-  (string/join ", " vs))
-
-(defn map->where [m]
-  (str "(" (string/join " AND " (map kv-clause m)) ")"))
-
-(defn map-val [v]
-  (let [func (::func v)
-        generated (::generated v)
-        args (::args v)
-        sub (::sub v)
-        pred (::pred v)]
-    (cond
-      generated generated
-      pred (apply pred args)
-      func (let [vs (comma (map str-value args))]
-             (format func vs))
-      sub (do
-            (swap! *bound-params* #(vec (concat % (:params sub))))
-            (str "(" (:sql-str sub) ")"))
-      :else (map->where v))))
 
 (defn alias-clause [alias]
   (when alias
@@ -112,7 +102,7 @@
       (str fname alias-str)))
 
 (defn coll-str [v]
-  (str "(" (comma (map str-value v)) ")"))
+  (wrap-values v))
 
 (defn table-str [v]
   (let [tstr (cond
@@ -137,7 +127,7 @@
     :else (parameterize v)))
 
 ;;*****************************************************
-;; Binding macros
+;; Bindings
 ;;*****************************************************
 
 (defmacro bind-query [query & body]
@@ -155,85 +145,82 @@
                      (concat (:params query#) @*bound-params*)
                      @*bound-params*)]
        (assoc query# :params params#))))
-
 ;;*****************************************************
 ;; Predicates
 ;;*****************************************************
 
-(def predicates {'like 'korma.internal.sql/pred-like
-                 'and 'korma.internal.sql/pred-and
-                 'or 'korma.internal.sql/pred-or
-                 'not 'korma.internal.sql/pred-not
-                 'in 'korma.internal.sql/pred-in
-                 '> 'korma.internal.sql/pred->
-                 '< 'korma.internal.sql/pred-<
-                 '>= 'korma.internal.sql/pred->=
-                 '<= 'korma.internal.sql/pred-<=
-                 'not= 'korma.internal.sql/pred-not=
-                 '= 'korma.internal.sql/pred-=})
+(def predicates {'like 'korma.sql.fns/pred-like
+                 'and 'korma.sql.fns/pred-and
+                 'or 'korma.sql.fns/pred-or
+                 'not 'korma.sql.fns/pred-not
+                 'in 'korma.sql.fns/pred-in
+                 '> 'korma.sql.fns/pred->
+                 '< 'korma.sql.fns/pred-<
+                 '>= 'korma.sql.fns/pred->=
+                 '<= 'korma.sql.fns/pred-<=
+                 'not= 'korma.sql.fns/pred-not=
+                 '= 'korma.sql.fns/pred-=})
 
-(declare pred-map)
 
 (defn do-infix [k op v]
-  (str (str-value k) " " op " " (str-value v)))
+  (utils/space [(str-value k) op (str-value v)]))
 
 (defn do-group [op vs]
-  (str "(" (string/join op (map str-value vs)) ")"))
+  (utils/wrap (string/join op (str-values vs))))
+
+(defn do-wrapper [op v]
+  (str op (utils/wrap (str-value v))))
 
 (defn infix [k op v]
-  {::pred do-infix ::args [(try-prefix k) op (try-prefix v)]})
+  (utils/pred do-infix [(try-prefix k) op (try-prefix v)]))
 
 (defn group-with [op vs]
-  {::pred do-group ::args [op (doall (map pred-map vs))]})
+  (utils/pred do-group [op (doall (map pred-map vs))]))
+
+(defn wrapper [op v]
+  (utils/pred do-wrapper [op v]))
 
 (defn pred-and [& args] (group-with " AND " args))
-(defn pred-or [& args] (group-with " OR " args))
-(defn pred-not [v] {::func "NOT(%s)" :args v})
-
-(defn pred-in [k v] (infix k "IN" v))
-(defn pred-> [k v] (infix k ">" v))
-(defn pred-< [k v] (infix k "<" v))
-(defn pred->= [k v] (infix k ">=" v))
-(defn pred-<= [k v] (infix k "<=" v))
-(defn pred-like [k v] (infix k "LIKE" v))
-
 (defn pred-= [k v] (cond 
                      (and k v) (infix k "=" v)
                      k (infix k "IS" v)
                      v (infix v "IS" k)))
-(defn pred-not= [k v] (cond
-                        (and k v) (infix k "!=" v)
-                        k (infix k "IS NOT" v)
-                        v (infix v "IS NOT" k)))
+
+(defn pred-vec [[k v]]
+  (let [[func value] (if (vector? v)
+                       v
+                       [pred-= v])
+        pred? (predicates func)
+        func (if pred?
+               (resolve pred?) 
+               func)]
+    (func k value)))
 
 (defn pred-map [m]
   (if (and (map? m)
-           (not (is-generated? m)))
-    (apply pred-and (doall (map kv-result m)))
+           (not (utils/special-map? m)))
+    (apply pred-and (doall (map pred-vec m)))
    m))
+
+(defn parse-where [form]
+  (if (string? form)
+    form
+    (walk/postwalk-replace predicates form)))
 
 ;;*****************************************************
 ;; Aggregates
 ;;*****************************************************
 
-(def aggregates {'count 'korma.internal.sql/agg-count
-                 'min 'korma.internal.sql/agg-min
-                 'max 'korma.internal.sql/agg-max
-                 'first 'korma.internal.sql/agg-first
-                 'last 'korma.internal.sql/agg-last
-                 'avg 'korma.internal.sql/agg-avg
-                 'sum 'korma.internal.sql/agg-sum})
+(def aggregates {'count 'korma.sql.fns/agg-count
+                 'min 'korma.sql.fns/agg-min
+                 'max 'korma.sql.fns/agg-max
+                 'first 'korma.sql.fns/agg-first
+                 'last 'korma.sql.fns/agg-last
+                 'avg 'korma.sql.fns/agg-avg
+                 'sum 'korma.sql.fns/agg-sum})
 
 (defn sql-func [op & vs]
-  {::func (str (string/upper-case op) "(%s)") ::args (map try-prefix vs)})
-
-(defn agg-count [v] (sql-func "COUNT" v))
-(defn agg-sum [v] (sql-func "SUM" v))
-(defn agg-avg [v] (sql-func "AVG" v))
-(defn agg-min [v] (sql-func "MIN" v))
-(defn agg-max [v] (sql-func "MAX" v))
-(defn agg-first [v] (sql-func "FIRST" v))
-(defn agg-last [v] (sql-func "LAST" v))
+  (utils/func (str (string/upper-case op) "(%s)") (map try-prefix vs)))
 
 (defn parse-aggregate [form]
   (if (string? form)
@@ -244,18 +231,8 @@
 ;; Clauses
 ;;*****************************************************
 
-(defn kv-result [[k v]]
-  (if-not (vector? v)
-    (pred-= k v)
-    (let [[func value] v
-          pred? (predicates func)
-          func (if pred?
-                 (resolve pred?) 
-                 func)]
-      (func k value))))
-
 (defn kv-clause [pair]
-    (map-val (kv-result pair)))
+    (map-val (pred-vec pair)))
 
 (defn from-table [v]
   (cond
@@ -277,7 +254,20 @@
 
 (defn insert-values-clause [ks vs]
   (for [v vs]
-    (str "(" (comma (map str-value (map #(get v %) ks))) ")")))
+    (wrap-values (map #(get v %) ks))))
+
+(defn column-clause [{:keys [type col attrs] :as column}]
+  (let [field (delimit-str (name col))
+        field-type (cond 
+                     (vector? type) (do-wrapper (name (first type)) (second type))
+                     (map? type) (map-val type)
+                     :else (name type))
+        attr-clause (utils/space (for [v attrs] 
+                                   (if (keyword? v) 
+                                     (name v)
+                                     (str-value v))))
+        clause (utils/space [field field-type attr-clause])]
+    clause))
 
 ;;*****************************************************
 ;; Query types
@@ -289,8 +279,8 @@
                   (map field-str (:fields query)))
         modifiers-clause (when (seq (:modifiers query))
                            (apply str (cons (:modifiers query) " ")))
-        clauses-str (comma clauses)
-        tables (comma (map from-table (:from query)))
+        clauses-str (utils/comma clauses)
+        tables (utils/comma (map from-table (:from query)))
         neue-sql (str "SELECT " modifiers-clause clauses-str " FROM " tables)]
     (assoc query :sql-str neue-sql)))
 
@@ -304,10 +294,18 @@
 
 (defn sql-insert [query]
   (let [ins-keys (keys (first (:values query)))
-        keys-clause (comma (map field-identifier ins-keys))
+        keys-clause (utils/comma (map field-identifier ins-keys))
         ins-values (insert-values-clause ins-keys (:values query))
-        values-clause (comma ins-values)
-        neue-sql (str "INSERT INTO " (table-str query) " (" keys-clause ") VALUES " values-clause)]
+        values-clause (utils/comma ins-values)
+        neue-sql (str "INSERT INTO " (table-str query) " " (utils/wrap keys-clause) " VALUES " values-clause)]
+    (assoc query :sql-str neue-sql)))
+
+(defn sql-create [query]
+  (let [neue-sql (str "CREATE TABLE " (table-str query) " ")]
+    (assoc query :sql-str neue-sql)))
+
+(defn sql-drop [query]
+  (let [neue-sql (str "DROP TABLE " (table-str query))]
     (assoc query :sql-str neue-sql)))
 
 ;;*****************************************************
@@ -316,16 +314,16 @@
 
 (defn sql-set [query]
   (bind-query {}
-              (let [fields (for [[k v] (:set-fields query)] [(generated (field-identifier k)) (generated (str-value v))])
+              (let [fields (for [[k v] (:set-fields query)] [(utils/generated (field-identifier k)) (utils/generated (str-value v))])
                     clauses (map kv-clause fields)
-                    clauses-str (string/join ", " clauses)
+                    clauses-str (utils/comma clauses)
                     neue-sql (str " SET " clauses-str)]
     (update-in query [:sql-str] str neue-sql))))
 
 (defn sql-joins [query]
   (let [clauses (for [[type table pk fk] (:joins query)]
                   (join-clause type table pk fk))
-        clauses-str (string/join "" clauses)]
+        clauses-str (apply str clauses)]
     (update-in query [:sql-str] str clauses-str)))
 
 (defn sql-where [query]
@@ -341,7 +339,7 @@
   (if (seq (:order query))
     (let [clauses (for [[k dir] (:order query)]
                     (str (str-value k) " " (string/upper-case (name dir))))
-          clauses-str (string/join ", " clauses)
+          clauses-str (utils/comma clauses)
           neue-sql (str " ORDER BY " clauses-str)]
       (update-in query [:sql-str] str neue-sql))
     query))
@@ -349,7 +347,7 @@
 (defn sql-group [query]
   (if (seq (:group query))
     (let [clauses (map field-str (:group query))
-          clauses-str (string/join ", " clauses)
+          clauses-str (utils/comma clauses)
           neue-sql (str " GROUP BY " clauses-str)]
       (update-in query [:sql-str] str neue-sql))
     query))
@@ -361,14 +359,10 @@
                      (str " OFFSET " offset))]
     (update-in query [:sql-str] str limit-sql offset-sql)))
 
-;;*****************************************************
-;; Where
-;;*****************************************************
-
-(defn parse-where [form]
-  (if (string? form)
-    form
-    (walk/postwalk-replace predicates form)))
+(defn sql-columns [query]
+  (let [clauses (map column-clause (:columns query))
+        clauses-str (utils/wrap-all clauses)]
+    (update-in query [:sql-str] str clauses-str)))
 
 ;;*****************************************************
 ;; To sql
@@ -402,3 +396,21 @@
   (bind-params
     (-> query 
       (sql-insert))))
+
+(defmethod ->sql :create [query]
+  (bind-params
+    (-> query
+        (sql-create)
+        (sql-columns))))
+
+(defmethod ->sql :alter [query]
+  (bind-params
+    (-> query
+        )))
+
+(defmethod ->sql :drop [query]
+  (bind-params
+    (-> query
+        (sql-drop))))
+
+

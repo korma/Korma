@@ -1,8 +1,10 @@
 (ns korma.core
-  (:require [korma.internal.sql :as isql]
+  (:require [korma.sql.engine :as eng]
+            [korma.sql.fns :as sfns]
+            [korma.sql.utils :as utils]
             [clojure.set :as set]
             [korma.db :as db])
-  (:use [korma.internal.sql :only [bind-query bind-params]]))
+  (:use [korma.sql.engine :only [bind-query bind-params]]))
 
 (def ^{:dynamic true} *exec-mode* false)
 (declare get-rel)
@@ -16,7 +18,7 @@
                 (map? ent))
     (throw (Exception. (str "Invalid entity provided for the query: " ent)))))
 
-(defn- empty-query [ent]
+(defn empty-query [ent]
   (let [[ent table alias db opts] (if (string? ent)
                                     [{:table ent} ent nil nil nil]
                                     [ent (:table ent) (:alias ent) 
@@ -41,7 +43,7 @@
               :order []
               :aliases #{}
               :group []
-              :results true})))
+              :results :results})))
 
 (defn update* 
   "Create an empty update query. Ent can either be an entity defined by defentity,
@@ -50,7 +52,8 @@
   (let [q (empty-query ent)]
     (merge q {:type :update
               :fields {}
-              :where []})))
+              :where []
+              :results :keys})))
 
 (defn delete* 
   "Create an empty delete query. Ent can either be an entity defined by defentity,
@@ -58,7 +61,8 @@
   [ent]
   (let [q (empty-query ent)]
     (merge q {:type :delete
-              :where []})))
+              :where []
+              :results :keys})))
 
 (defn insert* 
   "Create an empty insert query. Ent can either be an entity defined by defentity,
@@ -66,7 +70,8 @@
   [ent]
   (let [q (empty-query ent)]
     (merge q {:type :insert
-              :values []})))
+              :values []
+              :results :keys})))
 
 ;;*****************************************************
 ;; Query macros
@@ -166,9 +171,9 @@
   [query form]
   `(let [q# ~query]
      (where* q# 
-             (isql/pred-map
+             (eng/pred-map
                (bind-query q#
-                           ~(isql/parse-where `~form))))))
+                           ~(eng/parse-where `~form))))))
 
 (defn order
   "Add an ORDER BY clause to a select query. field should be a keyword of the field name, dir
@@ -235,7 +240,7 @@
   [query agg alias & [group-by]]
   `(let [q# ~query]
      (bind-query q#
-               (let [res# (fields q# [~(isql/parse-aggregate agg) ~alias])]
+               (let [res# (fields q# [~(eng/parse-aggregate agg) ~alias])]
                  (if ~group-by
                    (group res# ~group-by)
                    res#)))))
@@ -248,7 +253,7 @@
   "Call an arbitrary SQL function by providing the name of the function
   and its params"  
   [fn-name & params]
-  (apply isql/sql-func (name fn-name) params))
+  (apply eng/sql-func (name fn-name) params))
 
 (defmacro sqlfn 
   "Call an arbitrary SQL function by providing func as a symbol or keyword
@@ -257,12 +262,12 @@
   `(sqlfn* (quote ~func) ~@params))
 
 (defmacro subselect [& parts]
-  `(isql/sub-query (query-only (select ~@parts))))
+  `(utils/sub-query (query-only (select ~@parts))))
 
 (defn modifier [query & modifiers]
   (update-in query [:modifiers] conj (apply str modifiers)))
 
-(def raw isql/generated)
+(def raw utils/generated)
 
 ;;*****************************************************
 ;; Query exec
@@ -291,7 +296,7 @@
 (defn as-sql
   "Force a query to return a string of SQL when (exec) is called."
   [query]
-  (bind-query query (:sql-str (isql/->sql query))))
+  (bind-query query (:sql-str (eng/->sql query))))
 
 (defn- apply-posts
   [query results]
@@ -325,7 +330,7 @@
   "Execute a query map and return the results."
   [query]
   (let [query (apply-prepares query)
-        query (bind-query query (isql/->sql query))
+        query (bind-query query (eng/->sql query))
         sql (:sql-str query)
         params (:params query)]
     (cond
@@ -375,17 +380,17 @@
   "Create a relation map describing how two entities are related."
   [ent sub-ent type opts]
   (let [[pk fk foreign-ent] (condp = type
-                  :has-one [(isql/prefix ent (:pk ent)) 
-                            (isql/prefix sub-ent (keyword (str (:table ent) "_id")))
+                  :has-one [(eng/prefix ent (:pk ent)) 
+                            (eng/prefix sub-ent (keyword (str (:table ent) "_id")))
                             sub-ent]
-                  :belongs-to [(isql/prefix sub-ent (:pk sub-ent)) 
-                               (isql/prefix ent (keyword (str (:table sub-ent) "_id")))
+                  :belongs-to [(eng/prefix sub-ent (:pk sub-ent)) 
+                               (eng/prefix ent (keyword (str (:table sub-ent) "_id")))
                                ent]
-                  :has-many [(isql/prefix ent (:pk ent)) 
-                             (isql/prefix sub-ent (keyword (str (:table ent) "_id")))
+                  :has-many [(eng/prefix ent (:pk ent)) 
+                             (eng/prefix sub-ent (keyword (str (:table ent) "_id")))
                              sub-ent])
         opts (when (:fk opts)
-               {:fk (isql/prefix foreign-ent (:fk opts))})]
+               {:fk (eng/prefix foreign-ent (:fk opts))})]
     (merge {:table (:table sub-ent)
             :alias (:alias sub-ent)
             :rel-type type
@@ -443,7 +448,7 @@
   "Set the fields to be retrieved by default in select queries for the
   entity."
   [ent & fields]
-  (update-in ent [:fields] concat (map #(isql/prefix ent %) fields)))
+  (update-in ent [:fields] concat (map #(eng/prefix ent %) fields)))
 
 (defn table
   "Set the name of the table and an optional alias to be used for the entity. 
@@ -489,8 +494,8 @@
 (defn- force-prefix [ent fields]
   (for [field fields]
     (if (vector? field)
-      [(isql/generated (isql/prefix ent (first field))) (second field)]
-      (isql/prefix ent field))))
+      [(utils/generated (eng/prefix ent (first field))) (second field)]
+      (eng/prefix ent field))))
 
 (defn merge-part [query neue k]
   (update-in query [k] #(if-let [vs (k neue)]
@@ -514,9 +519,9 @@
     (merge-query query neue)))
 
 (defn- with-later [rel query ent func]
-  (let [fk (isql/generated (:fk rel))
+  (let [fk (utils/generated (:fk rel))
         pk (get-in query [:ent :pk])
-        table (keyword (isql/table-alias ent))]
+        table (keyword (eng/table-alias ent))]
     (post-query query 
                 (partial map 
                          #(assoc % table
