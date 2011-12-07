@@ -193,20 +193,25 @@
                                       [values]
                                       values)))
 
-(defn join 
-  "Add a join clause to a select query, specifying the table name to join and the two fields
-  to predicate the join on.
+(defn join* [query type table clause]
+  (update-in query [:joins] conj [type table clause]))
+
+(defmacro join 
+  "Add a join clause to a select query, specifying the table name to join and the predicate
+  to join on.
   
   (join query addresses)
-  (join query addresses :addres.users_id :users.id)
-  (join query :right addresses :address.users_id :users.id)"
+  (join query addresses (= :addres.users_id :users.id))
+  (join query :right addresses (= :address.users_id :users.id))"
   ([query ent]
-   (let [{:keys [pk fk]} (get-rel (:ent query) ent)]
-     (join query ent pk fk)))
-  ([query table field1 field2]
-   (join query :left table field1 field2))
-  ([query type table field1 field2]
-   (update-in query [:joins] conj [type table field1 field2])))
+   `(let [q# ~query
+          e# ~ent
+          rel# (get-rel (:ent q#) e#)]
+      (join* q# :left e# (sfns/pred-= (:pk rel#) (:fk rel#)))))
+  ([query table clause]
+   `(join* ~query :left ~table ~(eng/parse-where clause)))
+  ([query type table clause]
+   `(join* ~query ~type ~table ~(eng/parse-where clause))))
 
 (defn post-query
   "Add a function representing a query that should be executed for each result in a select.
@@ -380,14 +385,14 @@
   "Create a relation map describing how two entities are related."
   [ent sub-ent type opts]
   (let [[pk fk foreign-ent] (condp = type
-                  :has-one [(eng/prefix ent (:pk ent)) 
-                            (eng/prefix sub-ent (keyword (str (:table ent) "_id")))
+                  :has-one [(raw (eng/prefix ent (:pk ent)))
+                            (raw (eng/prefix sub-ent (keyword (str (:table ent) "_id"))))
                             sub-ent]
-                  :belongs-to [(eng/prefix sub-ent (:pk sub-ent)) 
-                               (eng/prefix ent (keyword (str (:table sub-ent) "_id")))
+                  :belongs-to [(raw (eng/prefix sub-ent (:pk sub-ent)))
+                               (raw (eng/prefix ent (keyword (str (:table sub-ent) "_id"))))
                                ent]
-                  :has-many [(eng/prefix ent (:pk ent)) 
-                             (eng/prefix sub-ent (keyword (str (:table ent) "_id")))
+                  :has-many [(raw (eng/prefix ent (:pk ent)))
+                             (raw (eng/prefix sub-ent (keyword (str (:table ent) "_id"))))
                              sub-ent])
         opts (when (:fk opts)
                {:fk (eng/prefix foreign-ent (:fk opts))})]
@@ -519,7 +524,7 @@
     (merge-query query neue)))
 
 (defn- with-later [rel query ent func]
-  (let [fk (utils/generated (:fk rel))
+  (let [fk (:fk rel)
         pk (get-in query [:ent :pk])
         table (keyword (eng/table-alias ent))]
     (post-query query 
@@ -533,7 +538,7 @@
   (let [table (if (:alias rel)
                 [(:table ent) (:alias ent)]
                 (:table ent))
-        query (join query table (:pk rel) (:fk rel))]
+        query (join query table (= (:pk rel) (:fk rel)))]
     (sub-query query ent func)))
 
 (defn with* [query sub-ent func]

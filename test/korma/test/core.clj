@@ -166,8 +166,8 @@
 (deftest join-order
          (sql-only
            (is (= (select users 
-                    (join :user2 :users.id :user2.users_id)
-                    (join :user3 :users.id :user3.users_id))
+                    (join :user2 (= :users.id :user2.users_id))
+                    (join :user3 (= :users.id :user3.users_id)))
                   "SELECT \"users\".* FROM \"users\" LEFT JOIN \"user2\" ON \"users\".\"id\" = \"user2\".\"users_id\" LEFT JOIN \"user3\" ON \"users\".\"id\" = \"user3\".\"users_id\""))))
 
 (deftest aggregate-group
