@@ -126,6 +126,9 @@
     (coll? v) (coll-str v)
     :else (parameterize v)))
 
+(defn not-nil? [& vs]
+  (every? #(not (nil? %)) vs))
+
 ;;*****************************************************
 ;; Bindings
 ;;*****************************************************
@@ -182,9 +185,11 @@
 
 (defn pred-and [& args] (group-with " AND " args))
 (defn pred-= [k v] (cond 
-                     (and k v) (infix k "=" v)
-                     k (infix k "IS" v)
-                     v (infix v "IS" k)))
+                     (not-nil? k v) (infix k "=" v)
+                     (not-nil? k) (infix k "IS" v)
+                     (not-nil? v) (infix v "IS" k)))
+
+(defn set= [[k v]] (map-val (infix k "=" v)))
 
 (defn pred-vec [[k v]]
   (let [[func value] (if (vector? v)
@@ -314,7 +319,7 @@
 (defn sql-set [query]
   (bind-query {}
               (let [fields (for [[k v] (:set-fields query)] [(utils/generated (field-identifier k)) (utils/generated (str-value v))])
-                    clauses (map kv-clause fields)
+                    clauses (map set= fields)
                     clauses-str (utils/comma clauses)
                     neue-sql (str " SET " clauses-str)]
     (update-in query [:sql-str] str neue-sql))))

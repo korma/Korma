@@ -246,6 +246,18 @@
            (is (= (select delims)
                   "SELECT DELIMS.* FROM DELIMS"))))
 
+(deftest false-set-in-update
+  (sql-only
+    (are [query result] (= query result)
+         (update user2 (set-fields {:blah false}))
+         "UPDATE \"users\" SET \"blah\" = FALSE"
+
+         (update user2 (set-fields {:blah nil}))
+         "UPDATE \"users\" SET \"blah\" = NULL"
+
+         (update user2 (set-fields {:blah true}))
+         "UPDATE \"users\" SET \"blah\" = TRUE")))
+
 (deftest raws
          (sql-only
            (is (= (select user2 (where {(raw "ROWNUM") [>= 5]})))
