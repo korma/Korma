@@ -117,6 +117,14 @@
             :subname db} 
            opts)))
 
+(defmacro transaction [& body]
+  `(jdbc/with-connection (get-connection @_default)
+     (jdbc/transaction
+       ~@body)))
+
+(def rollback jdbc/set-rollback-only)
+(def is-rollback? jdbc/is-rollback-only)
+
 (defn handle-exception [e sql params]
   (println "Failure to execute query with SQL:")
   (println sql " :: " params)
@@ -124,20 +132,26 @@
     (instance? java.sql.SQLException e) (jdbc/print-sql-exception e)
     :else (.printStackTrace e)))
 
+(defn- exec-sql [query]
+  (let [results? (:results query)
+        sql (:sql-str query)
+        params (:params query)]
+    (try
+      (condp = results?
+        :results (jdbc/with-query-results rs (apply vector sql params)
+                   (vec rs))
+        :keys (ijdbc/do-prepared-return-keys* sql params)
+        (jdbc/do-prepared sql params))
+      (catch Exception e (handle-exception e sql params)))))
+
 (defn do-query [query]
   (let [conn (when-let[db (:db query)]
                (get-connection db))
         cur (or conn (get-connection @_default))
-        opts (or (:options query) @conf/options)
-        results? (:results query)
-        sql (:sql-str query)
-        params (:params query)]
-    (try 
-      (jdbc/with-naming-strategy (->strategy (:naming opts))
+        prev-conn (jdbc/find-connection)
+        opts (or (:options query) @conf/options)]
+    (jdbc/with-naming-strategy (->strategy (:naming opts))
+      (if-not prev-conn
         (jdbc/with-connection cur
-          (condp = results?
-            :results (jdbc/with-query-results rs (apply vector sql params)
-                       (vec rs))
-            :keys (ijdbc/do-prepared-return-keys* sql params)
-            (jdbc/do-prepared sql params))))
-      (catch Exception e (handle-exception e sql params)))))
+          (exec-sql query))
+        (exec-sql query)))))
