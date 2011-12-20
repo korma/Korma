@@ -459,7 +459,11 @@
   "Set the name of the table and an optional alias to be used for the entity. 
   By default the table is the name of entity's symbol."
   [ent t & [alias]]
-  (let [ent (assoc ent :table (name t))]
+  (let [tname (if (or (keyword? t)
+                      (string? t))
+                (name t)
+                t)
+        ent (assoc ent :table tname)]
     (if alias
       (assoc ent :alias (name alias))
       ent)))

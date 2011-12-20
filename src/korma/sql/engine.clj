@@ -105,11 +105,13 @@
   (wrap-values v))
 
 (defn table-str [v]
-  (let [tstr (cond
-               (string? v) v
-               (map? v) (:table v)
-               :else (name v))]
-    (delimit-str tstr)))
+  (if (utils/special-map? v)
+    (map-val v)
+    (let [tstr (cond
+                 (string? v) v
+                 (map? v) (:table v)
+                 :else (name v))]
+      (delimit-str tstr))))
 
 (defn parameterize [v]
   (when *bound-params*
