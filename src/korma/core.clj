@@ -462,7 +462,9 @@
   (let [tname (if (or (keyword? t)
                       (string? t))
                 (name t)
-                t)
+                (if alias
+                  t
+                  (throw (Exception. "Generated tables must have aliases."))))
         ent (assoc ent :table tname)]
     (if alias
       (assoc ent :alias (name alias))

@@ -299,3 +299,17 @@
                                                       (where {:age [> 5]}))]})
                           (where {:email [like "%@gmail.com"]}))))
               [10 5 "%@gmail.com"]))
+
+(deftest entity-as-subselect
+  (defentity subsel
+    (table (subselect "test") :test))
+  
+  ;;This kind of entity needs and alias.
+  (is (thrown? Exception 
+               (defentity subsel2 
+                 (table (subselect "test"))))) 
+
+  (are [query result] (= query result)
+       (sql-only
+         (select subsel))
+       "SELECT \"test\".* FROM (SELECT \"test\".* FROM \"test\") \"test\""))
