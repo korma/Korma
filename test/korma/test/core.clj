@@ -25,7 +25,7 @@
 (defentity users-alias
   (table :users :u))
 
-(defentity blah (pk :cool) (has-many users))
+(defentity blah (pk :cool) (has-many users {:fk :cool_id}))
 
 (deftest select-function
          (is (= (-> (select* "users")
@@ -269,7 +269,7 @@
                           (select blah (with users))))]
 
            (is (= result
-                  "dry run :: SELECT \"blah\".* FROM \"blah\" :: []\ndry run :: SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"blah_id\" = ?) :: [1]\n"))))
+                  "dry run :: SELECT \"blah\".* FROM \"blah\" :: []\ndry run :: SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"cool_id\" = ?) :: [1]\n"))))
 
 (deftest subselects
          (are [query result] (= query result)

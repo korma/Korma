@@ -395,7 +395,7 @@
                              (raw (eng/prefix sub-ent (keyword (str (:table ent) "_id"))))
                              sub-ent])
         opts (when (:fk opts)
-               {:fk (eng/prefix foreign-ent (:fk opts))})]
+               {:fk (raw (eng/prefix foreign-ent (:fk opts)))})]
     (merge {:table (:table sub-ent)
             :alias (:alias sub-ent)
             :rel-type type
