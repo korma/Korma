@@ -61,7 +61,7 @@
   (cond
     (map? field) (map-val field)
     (string? field) field
-    (= :* field) (name field)
+    (= "*" (name field)) "*"
     :else (let [field-name (name field)
                 parts (string/split field-name #"\.")]
             (if-not (next parts)
@@ -280,9 +280,7 @@
 ;;*****************************************************
 
 (defn sql-select [query]
-  (let [clauses (if-not (seq (:fields query))
-                  [(field-str :*)]
-                  (map field-str (:fields query)))
+  (let [clauses (map field-str (:fields query))
         modifiers-clause (when (seq (:modifiers query))
                            (apply str (cons (:modifiers query) " ")))
         clauses-str (utils/comma clauses)

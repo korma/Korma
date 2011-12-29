@@ -35,7 +35,7 @@
   [ent]
   (let [q (empty-query ent)]
     (merge q {:type :select
-              :fields []
+              :fields [::*]
               :from [(:ent q)]
               :modifiers []
               :joins []
@@ -131,6 +131,12 @@
 (defn- add-aliases [query as]
   (update-in query [:aliases] set/union as))
 
+(defn- update-fields [query fs]
+  (let [[first-cur] (:fields query)]
+    (if (= first-cur ::*)
+      (assoc query :fields fs)
+      (update-in query [:set-fields] concat fs))))
+
 (defn fields
   "Set the fields to be selected in a query. Fields can either be a keyword
   or a vector of two keywords [field alias]:
@@ -140,7 +146,7 @@
   (let [aliases (set (map second (filter coll? vs)))]
     (-> query
         (add-aliases aliases)
-        (update-in [:fields] concat vs))))
+        (update-fields vs))))
 
 (defn set-fields
   "Set the fields and values for an update query."
