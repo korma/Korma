@@ -183,11 +183,11 @@
 
 (defn order
   "Add an ORDER BY clause to a select query. field should be a keyword of the field name, dir
-  is DESC by default.
+  is ASC by default.
   
   (order query :created :asc)"
   [query field & [dir]]
-  (update-in query [:order] conj [field (or dir :desc)]))
+  (update-in query [:order] conj [field (or dir :ASC)]))
 
 (defn values
   "Add records to an insert clause. values can either be a vector of maps or a single

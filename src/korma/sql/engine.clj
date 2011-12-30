@@ -262,19 +262,6 @@
   (for [v vs]
     (wrap-values (map #(get v %) ks))))
 
-(defn column-clause [{:keys [type col attrs] :as column}]
-  (let [field (delimit-str (name col))
-        field-type (cond 
-                     (vector? type) (do-wrapper (name (first type)) (second type))
-                     (map? type) (map-val type)
-                     :else (name type))
-        attr-clause (utils/space (for [v attrs] 
-                                   (if (keyword? v) 
-                                     (name v)
-                                     (str-value v))))
-        clause (utils/space [field field-type attr-clause])]
-    clause))
-
 ;;*****************************************************
 ;; Query types
 ;;*****************************************************
@@ -302,14 +289,6 @@
         ins-values (insert-values-clause ins-keys (:values query))
         values-clause (utils/comma ins-values)
         neue-sql (str "INSERT INTO " (table-str query) " " (utils/wrap keys-clause) " VALUES " values-clause)]
-    (assoc query :sql-str neue-sql)))
-
-(defn sql-create [query]
-  (let [neue-sql (str "CREATE TABLE " (table-str query) " ")]
-    (assoc query :sql-str neue-sql)))
-
-(defn sql-drop [query]
-  (let [neue-sql (str "DROP TABLE " (table-str query))]
     (assoc query :sql-str neue-sql)))
 
 ;;*****************************************************
@@ -363,10 +342,6 @@
                      (str " OFFSET " offset))]
     (update-in query [:sql-str] str limit-sql offset-sql)))
 
-(defn sql-columns [query]
-  (let [clauses (map column-clause (:columns query))
-        clauses-str (utils/wrap-all clauses)]
-    (update-in query [:sql-str] str clauses-str)))
 
 ;;*****************************************************
 ;; To sql
@@ -400,21 +375,3 @@
   (bind-params
     (-> query 
       (sql-insert))))
-
-(defmethod ->sql :create [query]
-  (bind-params
-    (-> query
-        (sql-create)
-        (sql-columns))))
-
-(defmethod ->sql :alter [query]
-  (bind-params
-    (-> query
-        )))
-
-(defmethod ->sql :drop [query]
-  (bind-params
-    (-> query
-        (sql-drop))))
-
-

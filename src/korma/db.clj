@@ -130,7 +130,8 @@
   (println sql " :: " params)
   (cond
     (instance? java.sql.SQLException e) (jdbc/print-sql-exception e)
-    :else (.printStackTrace e)))
+    :else (.printStackTrace e))
+  (throw e))
 
 (defn- exec-sql [query]
   (let [results? (:results query)

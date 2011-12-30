@@ -35,7 +35,7 @@
                   (limit 5)
                   (offset 3)
                   (as-sql))
-                "SELECT \"users\".\"id\", \"users\".\"username\" FROM \"users\" WHERE (\"users\".\"username\" = ?) ORDER BY \"users\".\"created\" DESC LIMIT 5 OFFSET 3")))
+                "SELECT \"users\".\"id\", \"users\".\"username\" FROM \"users\" WHERE (\"users\".\"username\" = ?) ORDER BY \"users\".\"created\" ASC LIMIT 5 OFFSET 3")))
 
 
 (deftest simple-selects
@@ -55,13 +55,13 @@
                 (select users
                         (where {:username "chris"})
                         (order :created))
-                "SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"username\" = ?) ORDER BY \"users\".\"created\" DESC"
+                "SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"username\" = ?) ORDER BY \"users\".\"created\" ASC"
                 (select users
                         (where {:active true})
                         (order :created)
                         (limit 5)
                         (offset 3))
-                "SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"active\" = TRUE) ORDER BY \"users\".\"created\" DESC LIMIT 5 OFFSET 3")))
+                "SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"active\" = TRUE) ORDER BY \"users\".\"created\" ASC LIMIT 5 OFFSET 3")))
 
 (deftest update-function
          (is (= (-> (update* "users")
