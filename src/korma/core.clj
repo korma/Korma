@@ -135,7 +135,7 @@
   (let [[first-cur] (:fields query)]
     (if (= first-cur ::*)
       (assoc query :fields fs)
-      (update-in query [:set-fields] concat fs))))
+      (update-in query [:fields] concat fs))))
 
 (defn fields
   "Set the fields to be selected in a query. Fields can either be a keyword
