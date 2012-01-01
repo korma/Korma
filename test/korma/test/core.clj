@@ -300,6 +300,16 @@
                           (where {:email [like "%@gmail.com"]}))))
               [10 5 "%@gmail.com"]))
 
+(deftest multiple-aggregates
+  (defentity the_table)
+  (is (= (sql-only
+           (-> (select* the_table)
+               (aggregate (min :date_created) :start_date)
+               (aggregate (max :date_created) :end_date)
+               (where {:id [in [1 2 3]]})
+               (exec)))
+         "SELECT MIN(\"the_table\".\"date_created\") \"start_date\", MAX(\"the_table\".\"date_created\") \"end_date\" FROM \"the_table\" WHERE (\"the_table\".\"id\" IN (?, ?, ?))")))
+
 (deftest entity-as-subselect
   (defentity subsel
     (table (subselect "test") :test))
