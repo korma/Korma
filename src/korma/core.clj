@@ -365,7 +365,7 @@
   a string or a vector of the sql string and its params. You can also optionally
   provide the connection to execute against as the first parameter.
   
-  (exec-raw [\"SELECT * FROM users WHERE age > ?\" [5]] true)"
+  (exec-raw [\"SELECT * FROM users WHERE age > ?\" [5]] :results)"
   [conn? & [sql with-results?]]
   (let [sql-vec (fn [v] (if (vector? v) v [v nil]))
         [conn? [sql-str params] with-results?] (if (or (string? conn?)
