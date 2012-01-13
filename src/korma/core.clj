@@ -19,7 +19,10 @@
     (throw (Exception. (str "Invalid entity provided for the query: " ent)))))
 
 (defn empty-query [ent]
-  (let [[ent table alias db opts] (if (string? ent)
+  (let [ent (if (keyword? ent)
+              (name ent)
+              ent)
+        [ent table alias db opts] (if (string? ent)
                                     [{:table ent} ent nil nil nil]
                                     [ent (:table ent) (:alias ent) 
                                      (:db ent) (get-in ent [:db :options])])]
@@ -177,8 +180,8 @@
   [query form]
   `(let [q# ~query]
      (where* q# 
-             (eng/pred-map
-               (bind-query q#
+             (bind-query q#
+                         (eng/pred-map
                            ~(eng/parse-where `~form))))))
 
 (defn order

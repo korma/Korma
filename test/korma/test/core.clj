@@ -310,6 +310,16 @@
                (exec)))
          "SELECT MIN(\"the_table\".\"date_created\") \"start_date\", MAX(\"the_table\".\"date_created\") \"end_date\" FROM \"the_table\" WHERE (\"the_table\".\"id\" IN (?, ?, ?))")))
 
+(deftest subselect-table-prefix
+  (defentity first_table)
+  (is (= (sql-only
+           (select first_table
+                   (where {:first_table_column
+                           (subselect :second_table
+                                      (fields :second_table_column)
+                                      (where {:second_table_column 1}))})))
+         "SELECT \"first_table\".* FROM \"first_table\" WHERE (\"first_table\".\"first_table_column\" = (SELECT \"second_table\".\"second_table_column\" FROM \"second_table\" WHERE (\"second_table\".\"second_table_column\" = ?)))")))
+
 (deftest entity-as-subselect
   (defentity subsel
     (table (subselect "test") :test))
