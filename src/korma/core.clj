@@ -36,45 +36,53 @@
   "Create an empty select query. Ent can either be an entity defined by defentity,
   or a string of the table name"
   [ent]
-  (let [q (empty-query ent)]
-    (merge q {:type :select
-              :fields [::*]
-              :from [(:ent q)]
-              :modifiers []
-              :joins []
-              :where []
-              :order []
-              :aliases #{}
-              :group []
-              :results :results})))
+  (if (:type ent)
+    ent
+    (let [q (empty-query ent)]
+      (merge q {:type :select
+                :fields [::*]
+                :from [(:ent q)]
+                :modifiers []
+                :joins []
+                :where []
+                :order []
+                :aliases #{}
+                :group []
+                :results :results}))))
 
 (defn update* 
   "Create an empty update query. Ent can either be an entity defined by defentity,
   or a string of the table name."
   [ent]
-  (let [q (empty-query ent)]
-    (merge q {:type :update
-              :fields {}
-              :where []
-              :results :keys})))
+  (if (:type ent)
+    ent
+    (let [q (empty-query ent)]
+      (merge q {:type :update
+                :fields {}
+                :where []
+                :results :keys}))))
 
 (defn delete* 
   "Create an empty delete query. Ent can either be an entity defined by defentity,
   or a string of the table name"
   [ent]
-  (let [q (empty-query ent)]
-    (merge q {:type :delete
-              :where []
-              :results :keys})))
+  (if (:type ent)
+    ent
+    (let [q (empty-query ent)]
+      (merge q {:type :delete
+                :where []
+                :results :keys}))))
 
 (defn insert* 
   "Create an empty insert query. Ent can either be an entity defined by defentity,
   or a string of the table name"
   [ent]
-  (let [q (empty-query ent)]
-    (merge q {:type :insert
-              :values []
-              :results :keys})))
+  (if (:type ent)
+    ent
+    (let [q (empty-query ent)]
+      (merge q {:type :insert
+                :values []
+                :results :keys}))))
 
 ;;*****************************************************
 ;; Query macros

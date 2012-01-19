@@ -300,6 +300,12 @@
                           (where {:email [like "%@gmail.com"]}))))
               [10 5 "%@gmail.com"]))
 
+(deftest select-query-object
+  (are [query result] (= query result)
+       (sql-only (select (-> (select* "blah")
+                             (where {:id 4}))))
+       "SELECT \"blah\".* FROM \"blah\" WHERE (\"blah\".\"id\" = ?)"))
+
 (deftest multiple-aggregates
   (defentity the_table)
   (is (= (sql-only
