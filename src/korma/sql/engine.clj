@@ -269,7 +269,7 @@
 (defn sql-select [query]
   (let [clauses (map field-str (:fields query))
         modifiers-clause (when (seq (:modifiers query))
-                           (apply str (cons (:modifiers query) " ")))
+                           (str (reduce str (:modifiers query)) " "))
         clauses-str (utils/comma clauses)
         tables (utils/comma (map from-table (:from query)))
         neue-sql (str "SELECT " modifiers-clause clauses-str " FROM " tables)]

@@ -287,7 +287,7 @@
   `(utils/sub-query (query-only (select ~@parts))))
 
 (defn modifier [query & modifiers]
-  (update-in query [:modifiers] conj (apply str modifiers)))
+  (update-in query [:modifiers] conj (reduce str modifiers)))
 
 (def raw utils/generated)
 
