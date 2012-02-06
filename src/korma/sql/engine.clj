@@ -159,6 +159,7 @@
                  'or 'korma.sql.fns/pred-or
                  'not 'korma.sql.fns/pred-not
                  'in 'korma.sql.fns/pred-in
+                 'not-in 'korma.sql.fns/pred-not-in
                  '> 'korma.sql.fns/pred->
                  '< 'korma.sql.fns/pred-<
                  '>= 'korma.sql.fns/pred->=
