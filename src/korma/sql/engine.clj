@@ -241,14 +241,14 @@
 (defn kv-clause [pair]
     (map-val (pred-vec pair)))
 
-(defn from-table [v]
+(defn from-table [v & [already-aliased?]]
   (cond
     (string? v) (table-str v)
     (vector? v) (let [[table alias] v]
-                  (str (from-table table) (alias-clause alias)))
+                  (str (from-table table :aliased) (alias-clause alias)))
     (map? v) (if (:table v)
                (let [{:keys [table alias]} v]
-                 (str (table-str table) (alias-clause alias)))
+                 (str (table-str table) (when-not already-aliased? (alias-clause alias))))
                (map-val v))
     :else (table-str v)))
 

@@ -344,3 +344,12 @@
        (sql-only
          (select subsel))
        "SELECT \"test\".* FROM (SELECT \"test\".* FROM \"test\") \"test\""))
+
+(deftest multiple-aliases
+  (defentity blahblah 
+    (table :blah :bb))
+
+  (sql-only
+    (are [query result] (= query result)
+         (select blahblah (join [blahblah :not-bb] (= :bb.cool :not-bb.cool2)))
+         "SELECT \"bb\".* FROM \"blah\" \"bb\" LEFT JOIN \"blah\" \"not-bb\" ON \"bb\".\"cool\" = \"not-bb\".\"cool2\"")))
