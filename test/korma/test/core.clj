@@ -361,5 +361,5 @@
          "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"cool\" IN (?))"
 
          (select :test (where {:cool [in []]}))
-         "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"cool\" IN (\"\"))"
+         "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"cool\" IN (NULL))"
          )))

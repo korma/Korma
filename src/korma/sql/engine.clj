@@ -38,7 +38,7 @@
 (defn wrap-values [vs]
   (if (seq vs)
     (utils/wrap (comma-values vs))
-    "(\"\")"))
+    "(NULL)"))
 
 (defn map-val [v]
   (let [func (utils/func? v)
