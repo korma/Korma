@@ -226,9 +226,9 @@
           rel# (get-rel (:ent q#) e#)]
       (join* q# :left e# (sfns/pred-= (:pk rel#) (:fk rel#)))))
   ([query table clause]
-   `(join* ~query :left ~table ~(eng/parse-where clause)))
+   `(join* ~query :left ~table (eng/pred-map ~(eng/parse-where clause))))
   ([query type table clause]
-   `(join* ~query ~type ~table ~(eng/parse-where clause))))
+   `(join* ~query ~type ~table (eng/pred-map ~(eng/parse-where clause)))))
 
 (defn post-query
   "Add a function representing a query that should be executed for each result in a select.

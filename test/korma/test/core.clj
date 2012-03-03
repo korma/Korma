@@ -170,6 +170,12 @@
                    (join :user3 (= :users.id :user3.users_id)))
            "SELECT \"users\".* FROM \"users\" LEFT JOIN \"user2\" ON \"users\".\"id\" = \"user2\".\"users_id\" LEFT JOIN \"user3\" ON \"users\".\"id\" = \"user3\".\"users_id\""))))
 
+(deftest join-with-map
+  (sql-only
+    (are [query result] (= query result)
+         (select :blah (join :cool {:cool.id :blah.id}))
+         "SELECT \"blah\".* FROM \"blah\" LEFT JOIN \"cool\" ON (\"cool\".\"id\" = \"blah\".\"id\")")))
+
 (deftest aggregate-group
   (sql-only
     (is (= (select users (group :id :name))
