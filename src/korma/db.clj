@@ -49,13 +49,21 @@
         @db
         db))))
 
+(defn create-db
+  "Create a db connection object manually instead of using defdb. This is often useful for
+  creating connections dynamically, and probably should be followed up with:
+
+  (default-connection my-new-conn)"
+  [spec]
+  {:pool (delay-pool spec)
+   :options (conf/extract-options spec)})
+
 (defmacro defdb 
   "Define a database specification. The last evaluated defdb will be used by default
   for all queries where no database is specified by the entity."
   [db-name spec]
   `(let [spec# ~spec]
-     (defonce ~db-name {:pool (delay-pool spec#)
-                        :options (conf/extract-options spec#)})
+     (defonce ~db-name (create-db spec#))
      (default-connection ~db-name)))
 
 (defn postgres 
