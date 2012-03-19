@@ -1,4 +1,5 @@
 (ns korma.core
+  "Core querying and entity functions"
   (:require [korma.sql.engine :as eng]
             [korma.sql.fns :as sfns]
             [korma.sql.utils :as utils]
@@ -271,25 +272,43 @@
 ;; Other sql
 ;;*****************************************************
 
-(defn sqlfn* 
+(defn sqlfn*
   "Call an arbitrary SQL function by providing the name of the function
-  and its params"  
+  and its params"
   [fn-name & params]
   (apply eng/sql-func (name fn-name) params))
 
-(defmacro sqlfn 
+(defmacro sqlfn
   "Call an arbitrary SQL function by providing func as a symbol or keyword
   and its params"
   [func & params]
   `(sqlfn* (quote ~func) ~@params))
 
-(defmacro subselect [& parts]
+(defmacro subselect
+  "Create a subselect clause to be used in queries. This works exactly like (select ...)
+  execept it will wrap the query in ( .. ) and make sure it can be used in any current
+  query:
+
+  (select users
+    (where {:id [in (subselect users2 (fields :id))]}))"
+  [& parts]
   `(utils/sub-query (query-only (select ~@parts))))
 
-(defn modifier [query & modifiers]
+(defn modifier
+  "Add a modifer to the beginning of a query:
+
+  (select orders
+    (modifier \"DISTINCT\"))"
+  [query & modifiers]
   (update-in query [:modifiers] conj (reduce str modifiers)))
 
-(def raw utils/generated)
+(def raw
+  "Embed a raw string of SQL in a query. This is used when Korma doesn't
+  provide some specific functionality you're looking for:
+
+  (select users
+    (fields (raw \"PERIOD(NOW(), NOW())\")))"
+  utils/generated)
 
 ;;*****************************************************
 ;; Query exec
@@ -372,7 +391,7 @@
   "Execute a raw SQL string, supplying whether results should be returned. `sql` can either be
   a string or a vector of the sql string and its params. You can also optionally
   provide the connection to execute against as the first parameter.
-  
+
   (exec-raw [\"SELECT * FROM users WHERE age > ?\" [5]] :results)"
   [conn? & [sql with-results?]]
   (let [sql-vec (fn [v] (if (vector? v) v [v nil]))
@@ -396,7 +415,7 @@
    :transforms '()
    :prepares '()
    :fields []
-   :rel {}}) 
+   :rel {}})
 
 (defn create-relation
   "Create a relation map describing how two entities are related."
@@ -425,7 +444,7 @@
   (let [var-name (-> sub-ent meta :name)
         cur-ns *ns*]
     (assoc-in ent [:rel (name var-name)]
-              (delay 
+              (delay
                 (let [resolved (ns-resolve cur-ns var-name)
                       sub-ent (when resolved
                                 (deref sub-ent))]
@@ -443,7 +462,7 @@
   "Add a has-one relationship for the given entity. It is assumed that the foreign key
   is on the sub-entity with the format table_id: user.id = address.user_id
   Opts can include a key for :fk to explicitly set the foreign key.
-  
+
   (has-one users address {:fk :addressID})"
   [ent sub-ent & [opts]]
   `(rel ~ent (var ~sub-ent) :has-one ~opts))
@@ -452,7 +471,7 @@
   "Add a belongs-to relationship for the given entity. It is assumed that the foreign key
   is on the current entity with the format sub-ent-table_id: email.user_id = user.id.
   Opts can include a key for :fk to explicitly set the foreign key.
-  
+
   (belongs-to users email {:fk :emailID})"
   [ent sub-ent & [opts]]
   `(rel ~ent (var ~sub-ent) :belongs-to ~opts))
@@ -576,11 +595,18 @@
   type of :belongs-to or :has-one, the requested fields will be returned directly in
   the result map. If the entity is a :has-many, a second query will be executed lazily
   and a key of the entity name will be assoc'd with a vector of the results.
-  
+
   (defentity email (entity-fields :email))
   (defentity user (has-many email))
   (select user
-  (with email) => [{:name \"chris\" :email [{email: \"c@c.com\"}]} ..."
+    (with email) => [{:name \"chris\" :email [{email: \"c@c.com\"}]} ...
+
+  With can also take a body that will further refine the relation:
+  (select user
+     (with address
+        (with state)
+        (fields :address.city :state.state)
+        (where {:address.zip x})))"
   [query ent & body]
   `(with* ~query ~ent (fn [q#]
                         (-> q#

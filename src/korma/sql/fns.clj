@@ -1,4 +1,5 @@
-(ns korma.sql.fns
+(ns ^{:no-doc true}
+  korma.sql.fns
   (:require [korma.sql.engine :as eng])
   (:use [korma.sql.engine :only [infix group-with wrapper sql-func]]))
 

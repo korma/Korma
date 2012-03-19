@@ -32,12 +32,12 @@
                (.setMaxIdleTime idle))]
     {:datasource cpds}))
 
-(defn delay-pool 
+(defn delay-pool
   "Return a delay for creating a connection pool for the given spec."
   [spec]
   (delay (connection-pool spec)))
 
-(defn get-connection 
+(defn get-connection
   "Get a connection from the potentially delayed connection object."
   [db]
   (let [db (if (map? db)
@@ -58,7 +58,7 @@
   {:pool (delay-pool spec)
    :options (conf/extract-options spec)})
 
-(defmacro defdb 
+(defmacro defdb
   "Define a database specification. The last evaluated defdb will be used by default
   for all queries where no database is specified by the entity."
   [db-name spec]
@@ -66,7 +66,7 @@
      (defonce ~db-name (create-db spec#))
      (default-connection ~db-name)))
 
-(defn postgres 
+(defn postgres
   "Create a database specification for a postgres database. Opts should include keys
   for :db, :user, and :password. You can also optionally set host and port."
   [{:keys [host port db] :as opts}]
@@ -75,10 +75,10 @@
         db (or db "")]
   (merge {:classname "org.postgresql.Driver" ; must be in classpath
           :subprotocol "postgresql"
-          :subname (str "//" host ":" port "/" db)} 
+          :subname (str "//" host ":" port "/" db)}
          opts)))
 
-(defn oracle 
+(defn oracle
   "Create a database specification for an Oracle database. Opts should include keys
   for :user and :password. You can also optionally set host and port."
   [{:keys [host port] :as opts}]
@@ -89,19 +89,21 @@
             :subname (str "@" host ":" port)}
            opts)))
 
-(defn mysql 
+(defn mysql
   "Create a database specification for a mysql database. Opts should include keys
-  for :db, :user, and :password. You can also optionally set host and port."
+  for :db, :user, and :password. You can also optionally set host and port.
+  Delimiters are automatically set to \"`\"."
   [{:keys [host port db] :as opts}]
   (let [host (or (:host opts) "localhost")
         port (or (:port opts) 3306)
         db (or (:db opts) "")]
   (merge {:classname "com.mysql.jdbc.Driver" ; must be in classpath
           :subprotocol "mysql"
-          :subname (str "//" host ":" port "/" db)} 
+          :subname (str "//" host ":" port "/" db)
+          :delimiters "`"}
          opts)))
 
-(defn mssql 
+(defn mssql
   "Create a database specification for a mssql database. Opts should include keys
   for :db, :user, and :password. You can also optionally set host and port."
   [{:keys [user password db host port] :as opts}]
@@ -122,16 +124,25 @@
   (let [db (or (:db opts) "sqlite.db")]
     (merge {:classname "org.sqlite.JDBC" ; must be in classpath
             :subprotocol "sqlite"
-            :subname db} 
+            :subname db}
            opts)))
 
-(defmacro transaction [& body]
+(defmacro transaction
+  "Execute all queries within the body in a single transaction."
+  [& body]
   `(jdbc/with-connection (get-connection @_default)
      (jdbc/transaction
        ~@body)))
 
-(def rollback jdbc/set-rollback-only)
-(def is-rollback? jdbc/is-rollback-only)
+(defn rollback
+  "Tell this current transaction to rollback."
+  []
+  (jdbc/set-rollback-only))
+
+(defn is-rollback?
+  "Returns true if the current transaction will be rolled back"
+  []
+  (jdbc/is-rollback-only))
 
 (defn handle-exception [e sql params]
   (println "Failure to execute query with SQL:")

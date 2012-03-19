@@ -1,4 +1,5 @@
-(ns korma.sql.engine
+(ns ^{:no-doc true}
+  korma.sql.engine
   (:require [clojure.string :as string]
             [korma.sql.utils :as utils]
             [korma.config :as conf]
