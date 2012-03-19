@@ -327,6 +327,14 @@
              (exec)))
          "SELECT MIN(\"the_table\".\"date_created\") \"start_date\", MAX(\"the_table\".\"date_created\") \"end_date\" FROM \"the_table\" WHERE (\"the_table\".\"id\" IN (?, ?, ?))")))
 
+(deftest not-in
+  (defentity the_table)
+  (is (= (sql-only
+           (-> (select* the_table)
+             (where {:id [not-in [1 2 3]]})
+             (exec)))
+         "SELECT \"the_table\".* FROM \"the_table\" WHERE (\"the_table\".\"id\" NOT IN (?, ?, ?))")))
+
 (deftest subselect-table-prefix
   (defentity first_table)
   (is (= (sql-only

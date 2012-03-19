@@ -12,6 +12,7 @@
 (defn pred-not [v] (wrapper "NOT" v))
 
 (defn pred-in [k v] (infix k "IN" v))
+(defn pred-not-in [k v] (infix k "NOT IN" v))
 (defn pred-> [k v] (infix k ">" v))
 (defn pred-< [k v] (infix k "<" v))
 (defn pred->= [k v] (infix k ">=" v))
