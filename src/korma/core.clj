@@ -302,13 +302,14 @@
   [query & modifiers]
   (update-in query [:modifiers] conj (reduce str modifiers)))
 
-(def raw
+(defn raw
   "Embed a raw string of SQL in a query. This is used when Korma doesn't
   provide some specific functionality you're looking for:
 
   (select users
     (fields (raw \"PERIOD(NOW(), NOW())\")))"
-  utils/generated)
+  [s]
+  (utils/generated s))
 
 ;;*****************************************************
 ;; Query exec
