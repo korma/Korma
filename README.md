@@ -12,6 +12,27 @@ Simply add Korma as a dependency to your lein/cake project:
 
 For docs and real usage, check out http://sqlkorma.com
 
+To get rid of the ridiculously verbose logging, add the following into src/log4j.xml:
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+  <logger name="com.mchange">
+    <level value="WARN"/>
+  </logger>
+</log4j:configuration>
+```
+
+And include log4j in your project.clj:
+
+```clojure
+[log4j "1.2.15" :exclusions [javax.mail/mail
+                            javax.jms/jms
+                            com.sun.jdmk/jmxtools
+                            com.sun.jmx/jmxri]]
+```
+
 ## Examples of generated queries:
 
 ```clojure
