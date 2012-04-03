@@ -339,6 +339,15 @@
       (update-in query [:sql-str] str neue-sql))
     query))
 
+(defn sql-having [query]
+  (if (seq (:having query))
+    (let [clauses (map #(if (map? %) (map-val %) %)
+                       (:having query))
+          clauses-str (string/join " AND " clauses)
+          neue-sql (str " HAVING " clauses-str)]
+      (update-in query [:sql-str] str neue-sql))
+    query))
+
 (defn sql-limit-offset [{:keys [limit offset] :as query}]
   (let [limit-sql (when limit
                     (str " LIMIT " limit))
@@ -359,6 +368,7 @@
       (sql-joins)
       (sql-where)
       (sql-group)
+      (sql-having)
       (sql-order)
       (sql-limit-offset))))
 
