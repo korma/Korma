@@ -148,9 +148,9 @@
   (println "Failure to execute query with SQL:")
   (println sql " :: " params)
   (cond
-    (instance? java.sql.SQLException e) (jdbc/print-sql-exception e)
+    (instance? java.sql.SQLException e) (jdbc/print-sql-exception (.getNextException e))
     :else (.printStackTrace e))
-  (throw e))
+  (throw (.getNextException e)))
 
 (defn- exec-sql [query]
   (let [results? (:results query)
