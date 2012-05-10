@@ -145,12 +145,15 @@
   (jdbc/is-rollback-only))
 
 (defn handle-exception [e sql params]
-  (println "Failure to execute query with SQL:")
-  (println sql " :: " params)
-  (cond
-    (instance? java.sql.SQLException e) (jdbc/print-sql-exception (.getNextException e))
-    :else (.printStackTrace e))
-  (throw (.getNextException e)))
+  (if (instance? java.sql.SQLException e)
+    (do
+      (when-let [ex (.getNextException e)]
+        (handle-exception ex sql params))
+      (println "Failure to execute query with SQL:")
+      (println sql " :: " params)
+      (jdbc/print-sql-exception e))
+    (.printStackTrace e))
+  (throw e))
 
 (defn- exec-sql [query]
   (let [results? (:results query)
