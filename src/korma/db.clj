@@ -1,7 +1,6 @@
 (ns korma.db
   "Functions for creating and managing database specifications."
   (:require [clojure.java.jdbc :as jdbc]
-            [clojure.java.jdbc.internal :as ijdbc]
             [korma.config :as conf])
   (:import com.mchange.v2.c3p0.ComboPooledDataSource))
 
@@ -163,7 +162,7 @@
       (condp = results?
         :results (jdbc/with-query-results rs (apply vector sql params)
                    (vec rs))
-        :keys (ijdbc/do-prepared-return-keys* sql params)
+        :keys (jdbc/do-prepared-return-keys sql params)
         (jdbc/do-prepared sql params))
       (catch Exception e (handle-exception e sql params)))))
 
