@@ -107,7 +107,7 @@
   for :db, :user, and :password. You can also optionally set host and port."
   [{:keys [user password db host port] :as opts}]
   (let [host (or (:host opts) "localhost")
-        port (or (:port opts) 5432)
+        port (or (:port opts) 1433)
         user (or user "dbuser")
         password (or password "dbpassword")
         db (or (:db opts) "")]
