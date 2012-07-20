@@ -126,6 +126,16 @@
             :subname db}
            opts)))
 
+(defn h2
+  "Create a database specification for a h2 database. Opts should include a key
+  for :db which is the path to the database file."
+  [{:keys [db] :as opts}]
+  (let [db (or (:db opts) "h2.db")]
+    (merge {:classname "org.h2.Driver" ; must be in classpath
+            :subprotocol "h2"
+            :subname db}
+           opts)))
+
 (defmacro transaction
   "Execute all queries within the body in a single transaction."
   [& body]
