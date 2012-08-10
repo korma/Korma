@@ -1,7 +1,7 @@
 (ns ^{:no-doc true}
   korma.sql.fns
   (:require [korma.sql.engine :as eng])
-  (:use [korma.sql.engine :only [infix group-with wrapper sql-func]]))
+  (:use [korma.sql.engine :only [infix group-with wrapper sql-func trinary]]))
 
 ;;*****************************************************
 ;; Predicates
@@ -18,6 +18,9 @@
 (defn pred->= [k v] (infix k ">=" v))
 (defn pred-<= [k v] (infix k "<=" v))
 (defn pred-like [k v] (infix k "LIKE" v))
+
+(defn pred-between [k [v1 v2]]
+  (trinary k "BETWEEN" v1 "AND" v2))
 
 (def pred-= eng/pred-=)
 (defn pred-not= [k v] (cond
