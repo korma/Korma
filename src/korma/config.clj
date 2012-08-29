@@ -43,4 +43,4 @@
 
 (defn merge-defaults
   [opts]
-  (reset! options opts))
+  (swap! options merge opts))
