@@ -167,10 +167,10 @@
       (catch Exception e (handle-exception e sql params)))))
 
 (defn do-query [query]
-  (let [conn (when-let[db (:db query)]
-               (get-connection db))
-        cur (or conn (get-connection @_default))
-        prev-conn (jdbc/find-connection)
+  (let [prev-conn (jdbc/find-connection)
+        conn (if-not prev-conn (when-let[db (:db query)]
+                                 (get-connection db)))
+        cur (if-not prev-conn (or conn (get-connection @_default)))
         opts (or (:options query) @conf/options)]
     (jdbc/with-naming-strategy (->strategy (:naming opts))
       (if-not prev-conn
