@@ -377,3 +377,16 @@
          (select :test (where {:cool [in []]}))
          "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"cool\" IN (NULL))"
          )))
+
+
+(deftest prepare-filter
+  (defn reverse-strings [values]
+    (apply merge (for [[k v] values :when (string? v)] {k (apply str (reverse v))})))
+
+  (defentity reversed-users
+    (table :users)
+    (prepare reverse-strings))
+
+  (query-only
+    (is (= (-> (insert reversed-users (values {:first "chris" :last "granger"})) :params)
+         ["sirhc" "regnarg"]))))

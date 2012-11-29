@@ -349,11 +349,11 @@
 
 (defn- apply-transforms
   [query results]
-  (if (not= (:type query) :select)
+  (if (= (:type query) :delete)
     results
     (if-let [trans (seq (-> query :ent :transforms))]
       (let [trans-fn (apply comp trans)]
-        (map trans-fn results))
+        (if (vector? results) (map trans-fn results) (trans-fn results)))
       results)))
 
 (defn- apply-prepares
