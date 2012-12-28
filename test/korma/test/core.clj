@@ -149,6 +149,14 @@
                             (like :name "john"))))
          "SELECT \"users\".* FROM \"users\" WHERE ((\"users\".\"name\" LIKE ?) OR \"users\".\"name\" LIKE ?)")))
 
+(deftest where-edge-cases
+  (sql-only
+   (are [query result] (= query result)
+        (select users (where {}))
+        "SELECT \"users\".* FROM \"users\""
+        (select users (where* {}))
+        "SELECT \"users\".* FROM \"users\"")))
+
 (deftest with-many
   (with-out-str
     (dry-run 

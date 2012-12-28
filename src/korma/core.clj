@@ -174,7 +174,9 @@
   "Add a where clause to the query. Clause can be either a map or a string, and
   will be AND'ed to the other clauses."
   [query clause]
-  (update-in query [:where] conj clause))
+  (if (empty? clause)
+    query
+    (update-in query [:where] conj clause)))
 
 (defmacro where
   "Add a where clause to the query, expressing the clause in clojure expressions
@@ -187,11 +189,13 @@
   to values. The value can be a vector with one of the above predicate functions 
   describing how the key is related to the value: (where query {:name [like \"chris\"})"
   [query form]
-  `(let [q# ~query]
-     (where* q# 
-             (bind-query q#
-                         (eng/pred-map
-                           ~(eng/parse-where `~form))))))
+  (let [parsed-where (eng/parse-where `~form)]
+    `(let [q# ~query]
+       (if (empty? ~parsed-where)
+         q#
+         (where* q#
+                 (bind-query q#
+                             (eng/pred-map ~parsed-where)))))))
 
 (defn order
   "Add an ORDER BY clause to a select query. field should be a keyword of the field name, dir
