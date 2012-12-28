@@ -165,8 +165,6 @@
   (sql-only
    (are [query result] (= query result)
         (select users (where {}))
-        "SELECT \"users\".* FROM \"users\""
-        (select users (where* {}))
         "SELECT \"users\".* FROM \"users\"")))
 
 (deftest with-many

@@ -323,7 +323,9 @@
                        (:where query))
           clauses-str (string/join " AND " clauses)
           neue-sql (str " WHERE " clauses-str)]
-      (update-in query [:sql-str] str neue-sql))
+      (if (= "()" clauses-str)
+        query
+        (update-in query [:sql-str] str neue-sql)))
     query))
 
 (defn sql-order [query]
