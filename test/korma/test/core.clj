@@ -106,7 +106,13 @@
   (is (= (-> (insert* "users")
            (values {:first "chris" :last "granger"})
            (as-sql))
-         "INSERT INTO \"users\" (\"last\", \"first\") VALUES (?, ?)")))
+         "INSERT INTO \"users\" (\"last\", \"first\") VALUES (?, ?)"))
+
+  (testing "WHEN values is empty THEN generates a NOOP SQL statement"
+    (is (= (-> (insert* "users")
+               (values {})
+               (as-sql))
+           "DO 0"))))
 
 (deftest insert-queries
   (sql-only
@@ -117,7 +123,13 @@
          (insert users
                  (values [{:first "chris" :last "granger"}
                           {:last "jordan" :first "michael"}]))
-         "INSERT INTO \"users\" (\"last\", \"first\") VALUES (?, ?), (?, ?)")))
+         "INSERT INTO \"users\" (\"last\", \"first\") VALUES (?, ?), (?, ?)"
+         (insert users (values {}))
+         "DO 0"
+         (insert users (values []))
+         "DO 0"
+         (insert users (values [{} {}]))
+         "DO 0")))
 
 (deftest complex-where
   (sql-only
