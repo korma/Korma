@@ -192,6 +192,31 @@
              (bind-query q#
                          (eng/pred-map ~(eng/parse-where `~form))))))
 
+(defn having*
+  "Add a where clause to the query. Clause can be either a map or a string, and
+  will be AND'ed to the other clauses."
+  [query clause]
+  (update-in query [:having] conj clause))
+
+(defmacro having
+  "Add a having clause to the query, expressing the clause in clojure expressions
+  with keywords used to reference fields.
+  e.g. (having query (or (= :hits 1) (> :hits 5)))
+
+  Available predicates: and, or, =, not=, <, >, <=, >=, in, like, not
+
+  Having can also take a map at any point and will create a clause that compares keys
+  to values. The value can be a vector with one of the above predicate functions
+  describing how the key is related to the value: (having query {:name [like \"chris\"})
+
+  Having only works if you have an aggregation, using it without one will cause an error."
+  [query form]
+  `(let [q# ~query]
+     (having* q#
+              (bind-query q#
+                          (eng/pred-map
+                           ~(eng/parse-where `~form))))))
+
 (defn order
   "Add an ORDER BY clause to a select query. field should be a keyword of the field name, dir
   is ASC by default.
