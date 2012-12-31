@@ -34,7 +34,7 @@
   (::generated m))
 
 (defn special-map? [m]
-  (some #(% m) [func? pred? sub-query? generated?]))
+  (boolean (some #(% m) [func? pred? sub-query? generated?])))
 
 ;;*****************************************************
 ;; str-utils
@@ -51,7 +51,4 @@
 
 (defn wrap-all [vs]
   (wrap (comma vs)))
-
-
-
 

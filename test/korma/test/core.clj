@@ -408,4 +408,24 @@
 
   (query-only
     (is (= (-> (insert reversed-users (values {:first "chris" :last "granger"})) :params)
-         ["sirhc" "regnarg"]))))
+           ["sirhc" "regnarg"]))))
+
+(deftest predicates-used-with-brackets
+  (sql-only
+   (are [query result] (= query result)
+        (select :test (where {:id [= 1]}))
+        "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"id\" = ?)"
+        (select :test (where {:id [< 10]}))
+        "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"id\" < ?)"
+        (select :test (where {:id [<= 10]}))
+        "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"id\" <= ?)"
+
+        ;; clearly this is not an intended use of 'or'!
+        (select :test (where {:id [or [1 2 3]]}))
+        "SELECT \"test\".* FROM \"test\" WHERE ((\"test\".\"id\" OR (?, ?, ?)))"
+
+        (select :test (where {:id [not-in [1 2 3]]}))
+        "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"id\" NOT IN (?, ?, ?))"
+        (select :test (where {:id [not= 1]}))
+        "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"id\" != ?)"
+        )))
