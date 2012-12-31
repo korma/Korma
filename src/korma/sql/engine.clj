@@ -163,6 +163,7 @@
                  'not 'korma.sql.fns/pred-not
                  'in 'korma.sql.fns/pred-in
                  'not-in 'korma.sql.fns/pred-not-in
+                 'between 'korma.sql.fns/pred-between
                  '> 'korma.sql.fns/pred->
                  '< 'korma.sql.fns/pred-<
                  '>= 'korma.sql.fns/pred->=
@@ -179,6 +180,14 @@
 
 (defn do-wrapper [op v]
   (str op (utils/wrap (str-value v))))
+
+(defn do-trinary [k op v1 sep v2]
+  (-> [(str-value k) op (str-value v1) sep (str-value v2)]
+      utils/space
+      utils/wrap))
+
+(defn trinary [k op v1 sep v2]
+  (utils/pred do-trinary [(try-prefix k) op (try-prefix v1) sep (try-prefix v2)]))
 
 (defn infix [k op v]
   (utils/pred do-infix [(try-prefix k) op (try-prefix v)]))

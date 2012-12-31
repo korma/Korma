@@ -181,7 +181,7 @@
   with keywords used to reference fields.
   e.g. (where query (or (= :hits 1) (> :hits 5)))
 
-  Available predicates: and, or, =, not=, <, >, <=, >=, in, like, not
+  Available predicates: and, or, =, not=, <, >, <=, >=, in, like, not, between
 
   Where can also take a map at any point and will create a clause that compares keys
   to values. The value can be a vector with one of the above predicate functions 
