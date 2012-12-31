@@ -1,3 +1,4 @@
+*   Added `between` predicate (Charles Duffy)
 *   Corrected default port for MS SQL Server (Alexander Zolotko)
 *   Added basic `having` support (Mike Aldred)
 *   Added `korma.db/h2` to create a database specification for a h2 database (Juha Syrjälä)

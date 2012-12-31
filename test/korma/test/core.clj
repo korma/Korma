@@ -423,8 +423,10 @@
         "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"id\" < ?)"
         (select :test (where {:id [<= 10]}))
         "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"id\" <= ?)"
+        (select :test (where {:id [between [1 10]]}))
+        "SELECT \"test\".* FROM \"test\" WHERE ((\"test\".\"id\" BETWEEN ? AND ?))"
 
-        ;; clearly this is not an intended use of 'or'!
+     ;; clearly this is not an intended use of 'or'!
         (select :test (where {:id [or [1 2 3]]}))
         "SELECT \"test\".* FROM \"test\" WHERE ((\"test\".\"id\" OR (?, ?, ?)))"
 
