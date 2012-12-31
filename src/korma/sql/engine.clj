@@ -72,15 +72,15 @@
               (string/join "." (map delimit-str parts))))))
 
 (defn prefix [ent field]
-  (let [field-name (field-identifier field)]
-    ;;check if it's already prefixed
-    (if (and (keyword? field)
-             (not (*bound-aliases* field))
-             (= -1 (.indexOf field-name ".")))
-      (let [table (if (string? ent)
-                    ent
-                    (table-alias ent))]
-        (str (delimit-str table) "." field-name))
+  (let [field-name (field-identifier field)
+        not-already-prefixed? (and (keyword? field)
+                                   (not (*bound-aliases* field))
+                                   (= -1 (.indexOf field-name ".")))]
+    (if not-already-prefixed?
+        (let [table (if (string? ent)
+                      ent
+                      (table-alias ent))]
+          (str (delimit-str table) "." field-name))
       field-name)))
 
 (defn try-prefix [v]
