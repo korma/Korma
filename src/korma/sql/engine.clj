@@ -317,16 +317,19 @@
         clauses-str (apply str clauses)]
     (update-in query [:sql-str] str clauses-str)))
 
-(defn sql-where [query]
-  (if (seq (:where query))
+(defn- sql-where-or-having [where-or-having-kw where-or-having-str query]
+  (if (seq (get query where-or-having-kw))
     (let [clauses (map #(if (map? %) (map-val %) %)
-                       (:where query))
+      (get query where-or-having-kw))
           clauses-str (string/join " AND " clauses)
-          neue-sql (str " WHERE " clauses-str)]
+          neue-sql (str where-or-having-str clauses-str)]
       (if (= "()" clauses-str)
         query
         (update-in query [:sql-str] str neue-sql)))
     query))
+
+(def sql-where  (partial sql-where-or-having :where  " WHERE "))
+(def sql-having (partial sql-where-or-having :having " HAVING "))
 
 (defn sql-order [query]
   (if (seq (:order query))
@@ -342,15 +345,6 @@
     (let [clauses (map field-str (:group query))
           clauses-str (utils/comma clauses)
           neue-sql (str " GROUP BY " clauses-str)]
-      (update-in query [:sql-str] str neue-sql))
-    query))
-
-(defn sql-having [query]
-  (if (seq (:having query))
-    (let [clauses (map #(if (map? %) (map-val %) %)
-                       (:having query))
-          clauses-str (string/join " AND " clauses)
-          neue-sql (str " HAVING " clauses-str)]
       (update-in query [:sql-str] str neue-sql))
     query))
 

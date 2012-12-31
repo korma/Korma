@@ -199,7 +199,11 @@
     (is (= (select users (group :id :name))
            "SELECT \"users\".* FROM \"users\" GROUP BY \"users\".\"id\", \"users\".\"name\""))
     (is (= (select users (aggregate (count :*) :cnt :id))
-           "SELECT COUNT(\"users\".*) \"cnt\" FROM \"users\" GROUP BY \"users\".\"id\""))))
+           "SELECT COUNT(\"users\".*) \"cnt\" FROM \"users\" GROUP BY \"users\".\"id\""))
+    (is (= (select users
+                   (aggregate (count :*) :cnt :id)
+                   (having {:id 5}))
+            "SELECT COUNT(\"users\".*) \"cnt\" FROM \"users\" GROUP BY \"users\".\"id\" HAVING (\"users\".\"id\" = ?)"))))
 
 (deftest quoting
   (sql-only

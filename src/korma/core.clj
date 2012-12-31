@@ -193,7 +193,7 @@
                          (eng/pred-map ~(eng/parse-where `~form))))))
 
 (defn having*
-  "Add a where clause to the query. Clause can be either a map or a string, and
+  "Add a having clause to the query. Clause can be either a map or a string, and
   will be AND'ed to the other clauses."
   [query clause]
   (update-in query [:having] conj clause))
@@ -214,8 +214,7 @@
   `(let [q# ~query]
      (having* q#
               (bind-query q#
-                          (eng/pred-map
-                           ~(eng/parse-where `~form))))))
+                          (eng/pred-map ~(eng/parse-where `~form))))))
 
 (defn order
   "Add an ORDER BY clause to a select query. field should be a keyword of the field name, dir
