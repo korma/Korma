@@ -44,3 +44,103 @@
   (defdb valid {:datasource :from-app-server})
   (is (= {:datasource :from-app-server} (get-connection valid))))
 
+
+;;; DB spec creation fns
+
+(deftest test-postgres
+  (testing "postgres - defaults"
+    (is (= {:classname "org.postgresql.Driver"
+            :subprotocol "postgresql"
+            :subname "//localhost:5432/"}
+           (postgres {}))))
+  (testing "postgres - options selected"
+    (is (= {:db "db"
+            :port "port"
+            :host "host"
+            :classname "org.postgresql.Driver"
+            :subprotocol "postgresql"
+            :subname "//host:port/db"}
+           (postgres {:host "host"
+                      :port "port"
+                      :db "db"})))))
+
+(deftest test-oracle
+  (testing "oracle - defaults"
+    (is (= {:classname "oracle.jdbc.driver.OracleDriver"
+            :subprotocol "oracle:thin"
+            :subname "@localhost:1521"}
+           (oracle {}))))
+  (testing "oracle - options selected"
+    (is (= {:port "port"
+            :host "host"
+            :classname "oracle.jdbc.driver.OracleDriver"
+            :subprotocol "oracle:thin"
+            :subname "@host:port"}
+           (oracle {:host "host"
+                    :port "port"})))))
+
+(deftest test-mysql
+  (testing "mysql - defaults"
+    (is (= {:classname "com.mysql.jdbc.Driver"
+            :subprotocol "mysql"
+            :subname "//localhost:3306/"
+            :delimiters "`"}
+           (mysql {}))))
+  (testing "mysql - options selected"
+    (is (= {:db "db"
+            :port "port"
+            :host "host"
+            :classname "com.mysql.jdbc.Driver"
+            :subprotocol "mysql"
+            :subname "//host:port/db"
+            :delimiters "`"}
+           (mysql {:host "host"
+                   :port "port"
+                   :db "db"})))))
+
+(deftest test-mssql
+  (testing "mssql - defaults"
+    (is (= {:classname "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+            :subprotocol "sqlserver"
+            :subname "//localhost:1433;database=;user=dbuser;password=dbpassword"}
+           (mssql {}))))
+  (testing "mssql - options selected"
+    (is (= {:db "db"
+            :password "password"
+            :user "user"
+            :port "port"
+            :host "host"
+            :classname "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+            :subprotocol "sqlserver"
+            :subname "//host:port;database=db;user=user;password=password"}
+           (mssql {:host "host"
+                   :port "port"
+                   :db "db"
+                   :user "user"
+                   :password "password"})))))
+
+(deftest test-sqlite3
+  (testing "sqlite3 - defaults"
+    (is (= {:classname "org.sqlite.JDBC"
+            :subprotocol "sqlite"
+            :subname "sqlite.db"}
+           (sqlite3 {}))))
+  (testing "sqlite3 - options selected"
+    (is (= {:db "db"
+            :classname "org.sqlite.JDBC"
+            :subprotocol "sqlite"
+            :subname "db"}
+           (sqlite3 {:db "db"})))))
+
+(deftest test-h2
+  (testing "h2 - defaults"
+    (is (= {:classname "org.h2.Driver"
+            :subprotocol "h2"
+            :subname "h2.db"}
+           (h2 {}))))
+  (testing "h2 - options selected"
+    (is (= {:db "db"
+            :classname "org.h2.Driver"
+            :subprotocol "h2"
+            :subname "db"}
+           (h2 {:db "db"})))))
