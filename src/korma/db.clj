@@ -21,18 +21,23 @@
   "Create a connection pool for the given database spec only if it
   contains the keys :subprotocol, :subname, and :classname. Otherwise,
   spec is returned unaltered."
-  [spec]
-  (if (every? (partial contains? spec) [:subprotocol :subname :classname])
-    (let [excess (or (:excess-timeout spec) (* 30 60))
-          idle (or (:idle-timeout spec) (* 3 60 60))
-          cpds (doto (ComboPooledDataSource.)
-                 (.setDriverClass (:classname spec))
-                 (.setJdbcUrl (str "jdbc:" (:subprotocol spec) ":" (:subname spec)))
-                 (.setUser (:user spec))
-                 (.setPassword (:password spec))
-                 (.setMaxIdleTimeExcessConnections excess)
-                 (.setMaxIdleTime idle))]
-      {:datasource cpds})
+  [{:keys [subprotocol subname classname user password
+           excess-timeout idle-timeout minimum-pool-size maximum-pool-size]
+    :or {excess-timeout (* 30 60)
+         idle-timeout (* 3 60 60)
+         minimum-pool-size 3
+         maximum-pool-size 15}
+    :as spec}]
+  (if (and subprotocol subname classname)
+    {:datasource (doto (ComboPooledDataSource.)
+                   (.setDriverClass classname)
+                   (.setJdbcUrl (str "jdbc:" subprotocol ":" subname))
+                   (.setUser user)
+                   (.setPassword password)
+                   (.setMaxIdleTimeExcessConnections excess-timeout)
+                   (.setMaxIdleTime idle-timeout)
+                   (.setMinPoolSize minimum-pool-size)
+                   (.setMaxPoolSize maximum-pool-size))}
     spec))
 
 (defn delay-pool

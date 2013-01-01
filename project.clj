@@ -7,4 +7,5 @@
   :codox {:exclude [korma.sql.engine
                     korma.sql.fns
                     korma.sql.utils]}
-          :dev-dependencies [[postgresql "9.0-801.jdbc4"]])
+  :dev-dependencies [[com.h2database/h2 "1.3.164"]
+                     [postgresql "9.0-801.jdbc4"]])
