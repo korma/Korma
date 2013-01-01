@@ -1,7 +1,7 @@
 (ns korma.test.db
-  (:use [korma.db]
-        [clojure.test]))
+  (:use clojure.test
+        korma.db))
 
-(deftest spec-with-missing-keys-should-return-itself
+(deftest spec-with-missing-keys-returns-itself
   (defdb valid {:datasource :from-app-server})
   (is (= {:datasource :from-app-server} (get-connection valid))))

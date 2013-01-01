@@ -1,8 +1,8 @@
 (ns korma.test.config
-  (:use [korma.config]
-        [clojure.test]))
+  (:use clojure.test
+        korma.config))
 
-(deftest merge-nil-with-default-options
-  (let [original options]
-    (merge-defaults nil)
-    (is (= original options))))
+(deftest can-merge-options-into-the-defaults
+  (let [original @options]
+    (merge-defaults {:a 1})
+    (is (= (assoc original :a 1) @options))))

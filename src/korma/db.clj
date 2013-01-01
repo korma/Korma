@@ -20,7 +20,7 @@
 (defn connection-pool
   "Create a connection pool for the given database spec only if it
   contains the keys :subprotocol, :subname, and :classname. Otherwise,
-  spec is returned unmolested."
+  spec is returned unaltered."
   [spec]
   (if (every? (partial contains? spec) [:subprotocol :subname :classname])
     (let [excess (or (:excess-timeout spec) (* 30 60))

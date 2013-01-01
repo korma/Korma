@@ -1,3 +1,5 @@
+*   Merge defaults instead of overwriting them (Jim Crossley)
+*   DB specs can reference existing datasources or JNDI references (Jim Crossley)
 *   Added `between` predicate (Charles Duffy)
 *   Corrected default port for MS SQL Server (Alexander Zolotko)
 *   Added basic `having` support (Mike Aldred)
