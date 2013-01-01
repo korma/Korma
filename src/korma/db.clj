@@ -18,18 +18,22 @@
   (reset! _default conn))
 
 (defn connection-pool
-  "Create a connection pool for the given database spec."
+  "Create a connection pool for the given database spec only if it
+  contains the keys :subprotocol, :subname, and :classname. Otherwise,
+  spec is returned unmolested."
   [spec]
-  (let [excess (or (:excess-timeout spec) (* 30 60))
-        idle (or (:idle-timeout spec) (* 3 60 60))
-        cpds (doto (ComboPooledDataSource.)
-               (.setDriverClass (:classname spec))
-               (.setJdbcUrl (str "jdbc:" (:subprotocol spec) ":" (:subname spec)))
-               (.setUser (:user spec))
-               (.setPassword (:password spec))
-               (.setMaxIdleTimeExcessConnections excess)
-               (.setMaxIdleTime idle))]
-    {:datasource cpds}))
+  (if (every? (partial contains? spec) [:subprotocol :subname :classname])
+    (let [excess (or (:excess-timeout spec) (* 30 60))
+          idle (or (:idle-timeout spec) (* 3 60 60))
+          cpds (doto (ComboPooledDataSource.)
+                 (.setDriverClass (:classname spec))
+                 (.setJdbcUrl (str "jdbc:" (:subprotocol spec) ":" (:subname spec)))
+                 (.setUser (:user spec))
+                 (.setPassword (:password spec))
+                 (.setMaxIdleTimeExcessConnections excess)
+                 (.setMaxIdleTime idle))]
+      {:datasource cpds})
+    spec))
 
 (defn delay-pool
   "Return a delay for creating a connection pool for the given spec."
@@ -39,9 +43,7 @@
 (defn get-connection
   "Get a connection from the potentially delayed connection object."
   [db]
-  (let [db (if (map? db)
-             (:pool db)
-             db)]
+  (let [db (or (:pool db) db)]
     (if-not db
       (throw (Exception. "No valid DB connection selected."))
       (if (delay? db)
