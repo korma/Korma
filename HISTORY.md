@@ -1,3 +1,6 @@
+0.3.0-beta13
+------------
+
 *   Set Min/Max Connection Pool Size from db spec (Nick Zalabak)
 *   Merge defaults instead of overwriting them (Jim Crossley)
 *   DB specs can reference existing datasources or JNDI references (Jim Crossley)
