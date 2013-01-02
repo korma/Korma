@@ -76,9 +76,7 @@
   "Create a database specification for a postgres database. Opts should include keys
   for :db, :user, and :password. You can also optionally set host and port."
   [{:keys [host port db]
-    :or {host "localhost"
-         port 5432
-         db ""}
+    :or {host "localhost", port 5432, db ""}
     :as opts}]
   (merge {:classname "org.postgresql.Driver" ; must be in classpath
           :subprotocol "postgresql"
@@ -89,8 +87,7 @@
   "Create a database specification for an Oracle database. Opts should include keys
   for :user and :password. You can also optionally set host and port."
   [{:keys [host port]
-    :or {host "localhost"
-         port 1521}
+    :or {host "localhost", port 1521}
     :as opts}]
   (merge {:classname "oracle.jdbc.driver.OracleDriver" ; must be in classpath
           :subprotocol "oracle:thin"
@@ -102,9 +99,7 @@
   for :db, :user, and :password. You can also optionally set host and port.
   Delimiters are automatically set to \"`\"."
   [{:keys [host port db]
-    :or {host "localhost"
-         port 3306
-         db ""}
+    :or {host "localhost", port 3306, db ""}
     :as opts}]
   (merge {:classname "com.mysql.jdbc.Driver" ; must be in classpath
           :subprotocol "mysql"
@@ -116,11 +111,7 @@
   "Create a database specification for a mssql database. Opts should include keys
   for :db, :user, and :password. You can also optionally set host and port."
   [{:keys [user password db host port]
-    :or {user "dbuser"
-         password "dbpassword"
-         db ""
-         host "localhost"
-         port 1433}
+    :or {user "dbuser", password "dbpassword", db "", host "localhost", port 1433}
     :as opts}]
   (merge {:classname "com.microsoft.sqlserver.jdbc.SQLServerDriver" ; must be in classpath
           :subprotocol "sqlserver"
