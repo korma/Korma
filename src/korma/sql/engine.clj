@@ -60,6 +60,12 @@
 (defn table-alias [{:keys [type table alias]}]
   (or alias table))
 
+(defn table-identifier [table-name]
+  (let [parts (string/split table-name #"\.")]
+    (if-not (next parts)
+      (delimit-str table-name)
+      (string/join "." (map delimit-str parts)))))
+
 (defn field-identifier [field]
   (cond
     (map? field) (map-val field)
@@ -80,7 +86,7 @@
         (let [table (if (string? ent)
                       ent
                       (table-alias ent))]
-          (str (delimit-str table) "." field-name))
+          (str (table-identifier table) "." field-name))
       field-name)))
 
 (defn try-prefix [v]
@@ -114,7 +120,7 @@
                  (string? v) v
                  (map? v) (:table v)
                  :else (name v))]
-      (delimit-str tstr))))
+      (table-identifier tstr))))
 
 (defn parameterize [v]
   (when *bound-params*
