@@ -4,13 +4,16 @@ Tasty SQL for Clojure.
 
 ## Getting started
 
-Simply add Korma as a dependency to your lein/cake project:
+Simply add Korma as a dependency to your lein project:
 
 ```clojure
 [korma "0.3.0-beta13"]
 ```
 
-For docs and real usage, check out http://sqlkorma.com
+## Docs and Real Usage
+
+*   [http://sqlkorma.com](http://sqlkorma.com)
+*   [API Docs](http://korma.github.com/Korma/)
 
 To get rid of the ridiculously verbose logging, add the following into src/log4j.xml:
 
