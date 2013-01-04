@@ -1,9 +1,9 @@
-(ns ^{:no-doc true}
-  korma.sql.engine
+(ns korma.sql.engine
   (:require [clojure.string :as string]
-            [korma.sql.utils :as utils]
+            [clojure.walk :as walk]
             [korma.config :as conf]
-            [clojure.walk :as walk]))
+            [korma.sql.engine :as user]
+            [korma.sql.utils :as utils]))
 
 ;;*****************************************************
 ;; dynamic vars

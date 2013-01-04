@@ -1,7 +1,9 @@
 (ns ^{:no-doc true}
   korma.sql.fns
-  (:require [korma.sql.engine :as eng])
-  (:use [korma.sql.engine :only [infix group-with wrapper sql-func trinary]]))
+  (:require [korma.sql.engine :as eng]
+            [korma.sql.engine :refer [group-with
+                                      infix
+                                      sql-func trinary wrapper]]))
 
 ;;*****************************************************
 ;; Predicates

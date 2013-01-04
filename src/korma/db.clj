@@ -2,7 +2,7 @@
   "Functions for creating and managing database specifications."
   (:require [clojure.java.jdbc :as jdbc]
             [korma.config :as conf])
-  (:import com.mchange.v2.c3p0.ComboPooledDataSource))
+  (:import (com.mchange.v2.c3p0 ComboPooledDataSource)))
 
 (defonce _default (atom nil))
 

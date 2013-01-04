@@ -1,11 +1,10 @@
 (ns korma.core
   "Core querying and entity functions"
-  (:require [korma.sql.engine :as eng]
+  (:require [korma.sql.engine :as eng :refer [bind-query bind-params]]
             [korma.sql.fns :as sfns]
             [korma.sql.utils :as utils]
             [clojure.set :as set]
-            [korma.db :as db])
-  (:use [korma.sql.engine :only [bind-query bind-params]]))
+            [korma.db :as db]))
 
 (def ^{:dynamic true} *exec-mode* false)
 (declare get-rel)

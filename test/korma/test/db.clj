@@ -1,6 +1,7 @@
 (ns korma.test.db
-  (:use clojure.test
-        korma.db))
+  (:require [clojure.test :refer [deftest is testing]]
+            [korma.db :refer [connection-pool defdb get-connection h2
+                              mssql mysql oracle postgres sqlite3]]))
 
 
 (def db-config-with-defaults
