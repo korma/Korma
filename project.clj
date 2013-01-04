@@ -11,7 +11,8 @@
                                    [org.clojure/java.jdbc "0.2.2"]]}
              :dev {:dependencies [[com.h2database/h2 "1.3.164"]
                                   [postgresql "9.0-801.jdbc4"]
-                                  [slamhound "1.3.1"]]}}
+                                  [slamhound "1.3.1"]]
+                   :plugins [[codox "0.6.4"]]}}
   :aliases {"slamhound" ["run" "-m" "slam.hound"]}
 
   ;; Lein1 - will be removed at some point
