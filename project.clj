@@ -3,7 +3,9 @@
   :url "http://github.com/ibdknox/korma"
   :codox {:exclude [korma.sql.engine
                     korma.sql.fns
-                    korma.sql.utils]}
+                    korma.sql.utils]
+          :src-dir-uri "https://github.com/korma/Korma/blob/master"
+          :src-linenum-anchor-prefix "L"}
   
   ;;Lein2 - the way of the future
   :profiles {:user {:dependencies [[org.clojure/clojure "1.4.0"]
