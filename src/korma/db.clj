@@ -180,7 +180,7 @@
 
 (defn do-query [{:keys [db options] :or {options @conf/options} :as query}]
   (jdbc/with-naming-strategy (->strategy (:naming options))
-    (if-let [prev-conn (jdbc/find-connection)]
+    (if (jdbc/find-connection)
       (exec-sql query)
       (do
         (let [conn (or (when db
