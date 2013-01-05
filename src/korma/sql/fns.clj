@@ -1,15 +1,15 @@
-(ns ^{:no-doc true}
-  korma.sql.fns
-  (:require [korma.sql.engine :as eng]
-            [korma.sql.engine :refer [group-with
-                                      infix
-                                      sql-func trinary wrapper]]))
+(ns korma.sql.fns
+  (:require [korma.sql.engine :as eng])
+  (:use [korma.sql.engine :only [infix group-with sql-func trinary wrapper]]))
 
 ;;*****************************************************
 ;; Predicates
 ;;*****************************************************
 
-(def pred-and eng/pred-and)
+
+(defn pred-and [& args]
+  (apply eng/pred-and args))
+
 (defn pred-or [& args] (group-with " OR " args))
 (defn pred-not [v] (wrapper "NOT" v))
 

@@ -1,6 +1,6 @@
 (ns korma.test.config
-  (:require [clojure.test :refer [deftest is]]
-            [korma.config :refer [merge-defaults options]]))
+  (:use [clojure.test :only [deftest is]]
+        [korma.config :only [merge-defaults options]]))
 
 (deftest can-merge-options-into-the-defaults
   (let [original @options]
