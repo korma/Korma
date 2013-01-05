@@ -1,4 +1,4 @@
-(defproject korma "0.3.0-beta13"
+(defproject korma "0.3.0-beta14-SNAPSHOT"
   :description "Tasty SQL for Clojure"
   :url "http://github.com/ibdknox/korma"
   :codox {:exclude [korma.sql.engine
@@ -15,7 +15,8 @@
                                   [postgresql "9.0-801.jdbc4"]
                                   [slamhound "1.3.1"]]
                    :plugins [[codox "0.6.4"]
-                             [jonase/eastwood "0.0.2"]]}
+                             [jonase/eastwood "0.0.2"]
+                             [lein-localrepo "0.4.1"]]}
              :1.3.0 {:dependencies [[org.clojure/clojure "1.3.0"]]}
              :1.4.0 {:dependencies [[org.clojure/clojure "1.4.0"]]}
              :1.5.0 {:dependencies [[org.clojure/clojure "1.5.0-RC1"]]}}

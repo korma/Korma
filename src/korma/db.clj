@@ -158,36 +158,34 @@
   (jdbc/is-rollback-only))
 
 (defn handle-exception [e sql params]
-  (if (instance? java.sql.SQLException e)
+  (if-not (instance? java.sql.SQLException e)
+    (.printStackTrace e)
     (do
       (when-let [ex (.getNextException e)]
         (handle-exception ex sql params))
       (println "Failure to execute query with SQL:")
       (println sql " :: " params)
-      (jdbc/print-sql-exception e))
-    (.printStackTrace e))
+      (jdbc/print-sql-exception e)))
   (throw e))
 
-(defn- exec-sql [query]
-  (let [results? (:results query)
-        sql (:sql-str query)
-        params (:params query)]
-    (try
-      (condp = results?
-        :results (jdbc/with-query-results rs (apply vector sql params)
-                   (vec rs))
-        :keys (jdbc/do-prepared-return-keys sql params)
-        (jdbc/do-prepared sql params))
-      (catch Exception e (handle-exception e sql params)))))
+(defn- exec-sql [{:keys [results sql-str params]}]
+  (try
+    (case results
+      :results (jdbc/with-query-results rs (apply vector sql-str params)
+                 (vec rs))
+      :keys (jdbc/do-prepared-return-keys sql-str params)
+      (jdbc/do-prepared sql-str params))
+    (catch Exception e
+      (handle-exception e sql-str params))))
 
-(defn do-query [query]
-  (let [prev-conn (jdbc/find-connection)
-        conn (if-not prev-conn (when-let[db (:db query)]
-                                 (get-connection db)))
-        cur (if-not prev-conn (or conn (get-connection @_default)))
-        opts (or (:options query) @conf/options)]
-    (jdbc/with-naming-strategy (->strategy (:naming opts))
-      (if-not prev-conn
-        (jdbc/with-connection cur
-          (exec-sql query))
-        (exec-sql query)))))
+(defn do-query [{:keys [db options] :or {options @conf/options} :as query}]
+  (jdbc/with-naming-strategy (->strategy (:naming options))
+    (if-let [prev-conn (jdbc/find-connection)]
+      (exec-sql query)
+      (do
+        (let [conn (or (when db
+                         (get-connection db))
+                       (get-connection @_default))]
+          (jdbc/with-connection conn
+            (exec-sql query)))))))
+
