@@ -6,10 +6,6 @@
 
 (defonce _default (atom nil))
 
-(defn ->strategy [{:keys [keys fields]}]
-  {:keyword keys
-   :identifier fields})
-
 (defn default-connection
   "Set the database connection that Korma should use by default when no 
   alternative is specified."
@@ -157,7 +153,7 @@
   []
   (jdbc/is-rollback-only))
 
-(defn handle-exception [e sql params]
+(defn- handle-exception [e sql params]
   (if-not (instance? java.sql.SQLException e)
     (.printStackTrace e)
     (do
@@ -178,8 +174,12 @@
     (catch Exception e
       (handle-exception e sql-str params))))
 
+(defn- ->naming-strategy [{:keys [keys fields]}]
+  {:keyword keys
+   :identifier fields})
+
 (defn do-query [{:keys [db options] :or {options @conf/options} :as query}]
-  (jdbc/with-naming-strategy (->strategy (:naming options))
+  (jdbc/with-naming-strategy (->naming-strategy (:naming options))
     (if (jdbc/find-connection)
       (exec-sql query)
       (do
