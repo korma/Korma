@@ -14,7 +14,8 @@
              :dev {:dependencies [[com.h2database/h2 "1.3.164"]
                                   [postgresql "9.0-801.jdbc4"]
                                   [slamhound "1.3.1"]]
-                   :plugins [[codox "0.6.4"]]}
+                   :plugins [[codox "0.6.4"]
+                             [jonase/eastwood "0.0.2"]]}
              :1.3.0 {:dependencies [[org.clojure/clojure "1.3.0"]]}
              :1.4.0 {:dependencies [[org.clojure/clojure "1.4.0"]]}
              :1.5.0 {:dependencies [[org.clojure/clojure "1.5.0-RC1"]]}}

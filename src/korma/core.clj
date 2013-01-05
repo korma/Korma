@@ -14,11 +14,6 @@
 ;; Query types
 ;;*****************************************************
 
-(defn- check-ent [ent]
-  (when-not (or (string? ent)
-                (map? ent))
-    (throw (Exception. (str "Invalid entity provided for the query: " ent)))))
-
 (defn empty-query [ent]
   (let [ent (if (keyword? ent)
               (name ent)
