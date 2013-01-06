@@ -40,15 +40,12 @@
 ;; str-utils
 ;;*****************************************************
 
-(defn space [vs]
-  (string/join " " vs))
-
-(defn comma [vs]
+(defn comma-separated [vs]
   (string/join ", " vs))
 
 (defn wrap [v]
   (str "(" v ")"))
 
 (defn wrap-all [vs]
-  (wrap (comma vs)))
+  (wrap (comma-separated vs)))
 

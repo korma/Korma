@@ -34,7 +34,7 @@
   (map str-value vs))
 
 (defn comma-values [vs]
-  (utils/comma (str-values vs)))
+  (utils/comma-separated (str-values vs)))
 
 (defn wrap-values [vs]
   (if (seq vs)
@@ -62,9 +62,9 @@
 
 (defn table-identifier [table-name]
   (let [parts (string/split table-name #"\.")]
-    (if-not (next parts)
-      (delimit-str table-name)
-      (string/join "." (map delimit-str parts)))))
+    (if (next parts)
+      (string/join "." (map delimit-str parts))
+      (delimit-str table-name))))
 
 (defn field-identifier [field]
   (cond
@@ -172,7 +172,7 @@
 
 
 (defn do-infix [k op v]
-  (utils/space [(str-value k) op (str-value v)]))
+  (string/join " " [(str-value k) op (str-value v)]))
 
 (defn do-group [op vs]
   (utils/wrap (string/join op (str-values vs))))
@@ -181,9 +181,7 @@
   (str op (utils/wrap (str-value v))))
 
 (defn do-trinary [k op v1 sep v2]
-  (-> [(str-value k) op (str-value v1) sep (str-value v2)]
-      utils/space
-      utils/wrap))
+  (utils/wrap (string/join " " [(str-value k) op (str-value v1) sep (str-value v2)])))
 
 (defn trinary [k op v1 sep v2]
   (utils/pred do-trinary [(try-prefix k) op (try-prefix v1) sep (try-prefix v2)]))
@@ -286,8 +284,8 @@
   (let [clauses (map field-str (:fields query))
         modifiers-clause (when (seq (:modifiers query))
                            (str (reduce str (:modifiers query)) " "))
-        clauses-str (utils/comma clauses)
-        tables (utils/comma (map from-table (:from query)))
+        clauses-str (utils/comma-separated clauses)
+        tables (utils/comma-separated (map from-table (:from query)))
         neue-sql (str "SELECT " modifiers-clause clauses-str " FROM " tables)]
     (assoc query :sql-str neue-sql)))
 
@@ -303,9 +301,9 @@
 
 (defn sql-insert [query]
   (let [ins-keys (keys (first (:values query)))
-        keys-clause (utils/comma (map field-identifier ins-keys))
+        keys-clause (utils/comma-separated (map field-identifier ins-keys))
         ins-values (insert-values-clause ins-keys (:values query))
-        values-clause (utils/comma ins-values)
+        values-clause (utils/comma-separated ins-values)
         neue-sql (if-not (empty? ins-keys)
                    (str "INSERT INTO " (table-str query) " " (utils/wrap keys-clause) " VALUES " values-clause)
                    noop-query)]
@@ -320,7 +318,7 @@
               (let [fields (for [[k v] (:set-fields query)]
                              [(utils/generated (field-identifier k)) (utils/generated (str-value v))])
                     clauses (map set= fields)
-                    clauses-str (utils/comma clauses)
+                    clauses-str (utils/comma-separated clauses)
                     neue-sql (str " SET " clauses-str)]
     (update-in query [:sql-str] str neue-sql))))
 
@@ -348,7 +346,7 @@
   (if (seq (:order query))
     (let [clauses (for [[k dir] (:order query)]
                     (str (str-value k) " " (string/upper-case (name dir))))
-          clauses-str (utils/comma clauses)
+          clauses-str (utils/comma-separated clauses)
           neue-sql (str " ORDER BY " clauses-str)]
       (update-in query [:sql-str] str neue-sql))
     query))
@@ -356,7 +354,7 @@
 (defn sql-group [query]
   (if (seq (:group query))
     (let [clauses (map field-str (:group query))
-          clauses-str (utils/comma clauses)
+          clauses-str (utils/comma-separated clauses)
           neue-sql (str " GROUP BY " clauses-str)]
       (update-in query [:sql-str] str neue-sql))
     query))

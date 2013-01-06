@@ -429,8 +429,7 @@
    :fields []
    :rel {}})
 
-(defn- simple-table-name                                                                                                                                                                       
-  [ent]
+(defn- simple-table-name [ent]
   (last (string/split (:table ent) #"\.")))
 
 (defn create-relation

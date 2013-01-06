@@ -1,3 +1,7 @@
+*  Fixed table-name delimiting, and at the same time, support Postgres' schema and 
+   queries covering multiple databases.  
+   See: https://github.com/korma/Korma/pull/105 (Tsutomu YANO)
+
 0.3.0-beta13
 ------------
 

@@ -27,12 +27,6 @@
 
 (defentity blah (pk :cool) (has-many users {:fk :cool_id}))
 
-(defentity book-with-db (table :korma.book))
-(defentity author-with-db (table :other.author) (belongs-to book-with-db))
-
-(defentity book-with-schema (table :korma.myschema.book))
-(defentity author-with-schema (table :korma.otherschema.author) (belongs-to book-with-schema))
-
 (deftest select-function
   (is (= "SELECT \"users\".\"id\", \"users\".\"username\" FROM \"users\" WHERE (\"users\".\"username\" = ?) ORDER BY \"users\".\"created\" ASC LIMIT 5 OFFSET 3"
          (-> (select* "users")
@@ -440,6 +434,15 @@
         "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"id\" != ?)"
         (select :test (where {:id [not= 1]})))))
 
+
+;;; Supporting Postgres' schema and queries covering multiple databases
+
+(defentity book-with-db (table :korma.book))
+(defentity author-with-db (table :other.author) (belongs-to book-with-db))
+
+(defentity book-with-schema (table :korma.myschema.book))
+(defentity author-with-schema (table :korma.otherschema.author) (belongs-to book-with-schema))
+
 (deftest dbname-on-tablename 
   (are [query result] (= query result)
        (sql-only
@@ -452,3 +455,5 @@
          (select author-with-schema (with book-with-schema)))
          "SELECT \"korma\".\"otherschema\".\"author\".*, \"korma\".\"myschema\".\"book\".* FROM \"korma\".\"otherschema\".\"author\" LEFT JOIN \"korma\".\"myschema\".\"book\" ON \"korma\".\"myschema\".\"book\".\"id\" = \"korma\".\"otherschema\".\"author\".\"book_id\""))
 
+
+;;;
