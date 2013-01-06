@@ -4,7 +4,7 @@
                     :naming {:fields identity
                              :keys identity}}))
 
-(defn ->delimiters
+(defn- ->delimiters
   [cs]
   (if cs
     (let [[begin end] cs
@@ -12,7 +12,7 @@
       [begin end])
     ["\"" "\""]))
 
-(defn ->naming
+(defn- ->naming
   [strategy]
   (merge {:keys identity
           :fields identity}

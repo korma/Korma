@@ -5,7 +5,7 @@
             [korma.sql.utils :as utils]
             [clojure.set :as set]
             [korma.db :as db])
-  (:use [korma.sql.engine :only [bind-query bind-params]]))
+  (:use [korma.sql.engine :only [bind-query]]))
 
 (def ^{:dynamic true} *exec-mode* false)
 (declare get-rel)
@@ -28,61 +28,61 @@
      :options opts
      :alias alias}))
 
+(defmacro ^{:private true} make-query [ent m]
+  `(let [ent# ~ent]
+     (if (:type ent#)
+       ent#
+       (let [~'this-query (empty-query ent#)]
+         (merge ~'this-query ~m)))))
+
 (defn select* 
   "Create an empty select query. Ent can either be an entity defined by defentity,
   or a string of the table name"
   [ent]
-  (if (:type ent)
-    ent
-    (let [q (empty-query ent)]
-      (merge q {:type :select
-                :fields [::*]
-                :from [(:ent q)]
-                :modifiers []
-                :joins []
-                :where []
-                :order []
-                :aliases #{}
-                :group []
-                :results :results}))))
+  (make-query ent {:type :select
+                   :fields [::*]
+                   :from [(:ent this-query)]
+                   :modifiers []
+                   :joins []
+                   :where []
+                   :order []
+                   :aliases #{}
+                   :group []
+                   :results :results}))
 
 (defn update* 
   "Create an empty update query. Ent can either be an entity defined by defentity,
   or a string of the table name."
   [ent]
-  (if (:type ent)
-    ent
-    (let [q (empty-query ent)]
-      (merge q {:type :update
-                :fields {}
-                :where []
-                :results :keys}))))
-
+  (make-query ent {:type :update
+                   :fields {}
+                   :where []
+                   :results :keys}))
+  
 (defn delete* 
   "Create an empty delete query. Ent can either be an entity defined by defentity,
   or a string of the table name"
   [ent]
-  (if (:type ent)
-    ent
-    (let [q (empty-query ent)]
-      (merge q {:type :delete
-                :where []
-                :results :keys}))))
-
+  (make-query ent {:type :delete
+                   :where []
+                   :results :keys}))
+  
 (defn insert* 
   "Create an empty insert query. Ent can either be an entity defined by defentity,
   or a string of the table name"
   [ent]
-  (if (:type ent)
-    ent
-    (let [q (empty-query ent)]
-      (merge q {:type :insert
-                :values []
-                :results :keys}))))
+  (make-query ent {:type :insert
+                   :values []
+                   :results :keys}))
 
 ;;*****************************************************
 ;; Query macros
 ;;*****************************************************
+
+(defn- make-query-then-exec [query-fn ent body]
+  `(let [query# (-> (~query-fn ~ent)
+                    ~@body)]
+     (exec query#)))
 
 (defmacro select 
   "Creates a select query, applies any modifying functions in the body and then
@@ -92,9 +92,7 @@
         (fields :name :email)
         (where {:id 2}))"
   [ent & body]
-  `(let [query# (-> (select* ~ent)
-                 ~@body)]
-     (exec query#)))
+  (make-query-then-exec select* ent body))
 
 (defmacro update 
   "Creates an update query, applies any modifying functions in the body and then
@@ -104,9 +102,7 @@
         (set-fields {:name \"chris\"}) 
         (where {:id 4}))"
   [ent & body]
-  `(let [query# (-> (update* ~ent)
-                  ~@body)]
-     (exec query#)))
+  (make-query-then-exec update* ent body))
 
 (defmacro delete 
   "Creates a delete query, applies any modifying functions in the body and then
@@ -115,9 +111,7 @@
   ex: (delete user 
         (where {:id 7}))"
   [ent & body]
-  `(let [query# (-> (delete* ~ent)
-                  ~@body)]
-     (exec query#)))
+  (make-query-then-exec delete* ent body))
 
 (defmacro insert 
   "Creates an insert query, applies any modifying functions in the body and then
@@ -127,9 +121,7 @@
   ex: (insert user 
         (values [{:name \"chris\"} {:name \"john\"}]))"
   [ent & body]
-  `(let [query# (-> (insert* ~ent)
-                  ~@body)]
-     (exec query#)))
+  (make-query-then-exec insert* ent body))
 
 ;;*****************************************************
 ;; Query parts
@@ -165,6 +157,12 @@
   [query table]
   (update-in query [:from] conj table))
 
+(defn- where-or-having-form [where*-or-having* query form]
+  `(let [q# ~query]
+     (~where*-or-having* q#
+                         (bind-query q#
+                                     (eng/pred-map ~(eng/parse-where `~form))))))
+
 (defn where*
   "Add a where clause to the query. Clause can be either a map or a string, and
   will be AND'ed to the other clauses."
@@ -182,10 +180,7 @@
   to values. The value can be a vector with one of the above predicate functions 
   describing how the key is related to the value: (where query {:name [like \"chris\"})"
   [query form]
-  `(let [q# ~query]
-     (where* q#
-             (bind-query q#
-                         (eng/pred-map ~(eng/parse-where `~form))))))
+  (where-or-having-form where* query form))
 
 (defn having*
   "Add a having clause to the query. Clause can be either a map or a string, and
@@ -206,10 +201,7 @@
 
   Having only works if you have an aggregation, using it without one will cause an error."
   [query form]
-  `(let [q# ~query]
-     (having* q#
-              (bind-query q#
-                          (eng/pred-map ~(eng/parse-where `~form))))))
+  (where-or-having-form having* query form))
 
 (defn order
   "Add an ORDER BY clause to a select query. field should be a keyword of the field name, dir
@@ -378,7 +370,7 @@
   [query]
   (if-let [preps (seq (-> query :ent :prepares))]
     (let [preps (apply comp preps)]
-      (condp = (:type query)
+      (case (:type query)
         :insert (let [values (:values query)]
                   (assoc query :values (map preps values)))
         :update (let [value (:set-fields query)]
@@ -439,16 +431,16 @@
 (defn create-relation
   "Create a relation map describing how two entities are related."
   [ent sub-ent type opts]
-  (let [[pk fk foreign-ent] (condp = type
-                  :has-one [(raw (eng/prefix ent (:pk ent)))
-                            (raw (eng/prefix sub-ent (keyword (str (:table ent) "_id"))))
-                            sub-ent]
-                  :belongs-to [(raw (eng/prefix sub-ent (:pk sub-ent)))
-                               (raw (eng/prefix ent (keyword (str (:table sub-ent) "_id"))))
-                               ent]
-                  :has-many [(raw (eng/prefix ent (:pk ent)))
-                             (raw (eng/prefix sub-ent (keyword (str (:table ent) "_id"))))
-                             sub-ent])
+  (let [[pk fk foreign-ent] (case type
+                              :has-one [(raw (eng/prefix ent (:pk ent)))
+                                        (raw (eng/prefix sub-ent (keyword (str (:table ent) "_id"))))
+                                        sub-ent]
+                              :belongs-to [(raw (eng/prefix sub-ent (:pk sub-ent)))
+                                           (raw (eng/prefix ent (keyword (str (:table sub-ent) "_id"))))
+                                           ent]
+                              :has-many [(raw (eng/prefix ent (:pk ent)))
+                                         (raw (eng/prefix sub-ent (keyword (str (:table ent) "_id"))))
+                                         sub-ent])
         opts (when (:fk opts)
                {:fk (raw (eng/prefix foreign-ent (:fk opts)))})]
     (merge {:table (:table sub-ent)

@@ -146,13 +146,6 @@
              *bound-options* (or (:options ~query) @conf/options)]
      ~@body))
 
-(defmacro bind-params [& body]
-  `(binding [*bound-params* (atom [])]
-     (let [query# (do ~@body)
-           params# (if (:params query#)
-                     (concat (:params query#) @*bound-params*)
-                     @*bound-params*)]
-       (assoc query# :params params#))))
 ;;*****************************************************
 ;; Predicates
 ;;*****************************************************
@@ -198,13 +191,17 @@
 (defn wrapper [op v]
   (utils/pred do-wrapper [op v]))
 
-(defn pred-and [& args] (group-with " AND " args))
-(defn pred-= [k v] (cond 
-                     (not-nil? k v) (infix k "=" v)
-                     (not-nil? k) (infix k "IS" v)
-                     (not-nil? v) (infix v "IS" k)))
+(defn pred-and [& args]
+  (group-with " AND " args))
 
-(defn set= [[k v]] (map-val (infix k "=" v)))
+(defn pred-= [k v]
+  (cond
+   (not-nil? k v) (infix k "=" v)
+   (not-nil? k) (infix k "IS" v)
+   (not-nil? v) (infix v "IS" k)))
+
+(defn set= [[k v]]
+  (map-val (infix k "=" v)))
 
 (defn pred-vec [[k v]]
   (let [[func value] (if (vector? v)
@@ -314,7 +311,8 @@
 
 (defn sql-set [query]
   (bind-query {}
-              (let [fields (for [[k v] (:set-fields query)] [(utils/generated (field-identifier k)) (utils/generated (str-value v))])
+              (let [fields (for [[k v] (:set-fields query)]
+                             [(utils/generated (field-identifier k)) (utils/generated (str-value v))])
                     clauses (map set= fields)
                     clauses-str (utils/comma clauses)
                     neue-sql (str " SET " clauses-str)]
@@ -327,15 +325,15 @@
     (update-in query [:sql-str] str clauses-str)))
 
 (defn- sql-where-or-having [where-or-having-kw where-or-having-str query]
-  (if (seq (get query where-or-having-kw))
+  (if (empty? (get query where-or-having-kw))
+    query
     (let [clauses (map #(if (map? %) (map-val %) %)
       (get query where-or-having-kw))
           clauses-str (string/join " AND " clauses)
           neue-sql (str where-or-having-str clauses-str)]
       (if (= "()" clauses-str)
         query
-        (update-in query [:sql-str] str neue-sql)))
-    query))
+        (update-in query [:sql-str] str neue-sql)))))
 
 (def sql-where  (partial sql-where-or-having :where  " WHERE "))
 (def sql-having (partial sql-where-or-having :having " HAVING "))
@@ -369,32 +367,29 @@
 ;; To sql
 ;;*****************************************************
 
-(defmulti ->sql :type)
-(defmethod ->sql :select [query]
-  (bind-params
-    (-> query 
-      (sql-select)
-      (sql-joins)
-      (sql-where)
-      (sql-group)
-      (sql-having)
-      (sql-order)
-      (sql-limit-offset))))
+(defmacro ^{:private true} bind-params [& body]
+  `(binding [*bound-params* (atom [])]
+     (let [query# (do ~@body)
+           params# (concat (:params query#) @*bound-params*)]
+       (assoc query# :params params#))))
 
-(defmethod ->sql :update [query]
+(defn ->sql [query]
   (bind-params
-    (-> query 
-      (sql-update)
-      (sql-set)
-      (sql-where))))
-
-(defmethod ->sql :delete [query]
-  (bind-params
-    (-> query 
-      (sql-delete)
-      (sql-where))))
-
-(defmethod ->sql :insert [query]
-  (bind-params
-    (-> query 
-      (sql-insert))))
+   (case (:type query)
+     :select (-> query 
+                 sql-select
+                 sql-joins
+                 sql-where
+                 sql-group
+                 sql-having
+                 sql-order
+                 sql-limit-offset)
+     :update (-> query 
+                 sql-update
+                 sql-set
+                 sql-where)
+     :delete (-> query 
+                 sql-delete
+                 sql-where)
+     :insert (-> query 
+                 sql-insert))))
