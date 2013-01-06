@@ -27,6 +27,12 @@
 
 (defentity blah (pk :cool) (has-many users {:fk :cool_id}))
 
+(defentity book-with-db (table :korma.book))
+(defentity author-with-db (table :other.author) (belongs-to book-with-db))
+
+(defentity book-with-schema (table :korma.myschema.book))
+(defentity author-with-schema (table :korma.otherschema.author) (belongs-to book-with-schema))
+
 (deftest select-function
   (is (= (-> (select* "users")
            (fields :id :username)
@@ -435,3 +441,16 @@
         (select :test (where {:id [not= 1]}))
         "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"id\" != ?)"
         )))
+
+(deftest dbname-on-tablename 
+  (are [query result] (= query result)
+       (sql-only
+         (select author-with-db (with book-with-db)))
+         "SELECT \"other\".\"author\".*, \"korma\".\"book\".* FROM \"other\".\"author\" LEFT JOIN \"korma\".\"book\" ON \"korma\".\"book\".\"id\" = \"other\".\"author\".\"book_id\""))
+
+(deftest schemaname-on-tablename 
+  (are [query result] (= query result)
+       (sql-only
+         (select author-with-schema (with book-with-schema)))
+         "SELECT \"korma\".\"otherschema\".\"author\".*, \"korma\".\"myschema\".\"book\".* FROM \"korma\".\"otherschema\".\"author\" LEFT JOIN \"korma\".\"myschema\".\"book\" ON \"korma\".\"myschema\".\"book\".\"id\" = \"korma\".\"otherschema\".\"author\".\"book_id\""))
+
