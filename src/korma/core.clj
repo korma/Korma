@@ -444,15 +444,14 @@
                                            ent]
                               :has-many [(raw (eng/prefix ent (:pk ent)))
                                          (raw (eng/prefix sub-ent (keyword (str (simple-table-name ent) "_id"))))
-                                         sub-ent])
-        opts (when (:fk opts)
-               {:fk (raw (eng/prefix foreign-ent (:fk opts)))})]
-    (merge {:table (:table sub-ent)
-            :alias (:alias sub-ent)
-            :rel-type type
-            :pk pk
-            :fk fk}
-           opts)))
+                                         sub-ent])]
+    {:table (:table sub-ent)
+     :alias (:alias sub-ent)
+     :rel-type type
+     :pk pk
+     :fk (if (:fk opts)
+           (raw (eng/prefix foreign-ent (:fk opts)))
+           fk)}))
 
 (defn rel
   [ent sub-ent type opts]
