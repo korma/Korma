@@ -5,3 +5,5 @@ pom.xml
 .lein-failures
 .lein-deps-sum
 /target/
+*.iml
+/.idea
