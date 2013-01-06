@@ -434,7 +434,7 @@
 
 (defn create-relation
   "Create a relation map describing how two entities are related."
-  [ent sub-ent type opts]
+  [ent sub-ent type optional-fk]
   (let [[pk fk foreign-ent] (case type
                               :has-one [(raw (eng/prefix ent (:pk ent)))
                                         (raw (eng/prefix sub-ent (keyword (str (simple-table-name ent) "_id"))))
@@ -449,8 +449,8 @@
      :alias (:alias sub-ent)
      :rel-type type
      :pk pk
-     :fk (if (:fk opts)
-           (raw (eng/prefix foreign-ent (:fk opts)))
+     :fk (if optional-fk
+           (raw (eng/prefix foreign-ent optional-fk))
            fk)}))
 
 (defn rel
@@ -475,29 +475,29 @@
 (defmacro has-one
   "Add a has-one relationship for the given entity. It is assumed that the foreign key
   is on the sub-entity with the format table_id: user.id = address.user_id
-  Opts can include a key for :fk to explicitly set the foreign key.
+  Can optionally pass a map with a :fk key to explicitly set the foreign key.
 
   (has-one users address {:fk :addressID})"
-  [ent sub-ent & [opts]]
-  `(rel ~ent (var ~sub-ent) :has-one ~opts))
+  [ent sub-ent & [{:keys [fk]}]]
+  `(rel ~ent (var ~sub-ent) :has-one ~fk))
 
 (defmacro belongs-to
   "Add a belongs-to relationship for the given entity. It is assumed that the foreign key
   is on the current entity with the format sub-ent-table_id: email.user_id = user.id.
-  Opts can include a key for :fk to explicitly set the foreign key.
+  Can optionally pass a map with a :fk key to explicitly set the foreign key.
 
   (belongs-to users email {:fk :emailID})"
-  [ent sub-ent & [opts]]
-  `(rel ~ent (var ~sub-ent) :belongs-to ~opts))
+  [ent sub-ent & [{:keys [fk]}]]
+  `(rel ~ent (var ~sub-ent) :belongs-to ~fk))
 
 (defmacro has-many
   "Add a has-many relation for the given entity. It is assumed that the foreign key
   is on the sub-entity with the format table_id: user.id = email.user_id
-  Opts can include a key for :fk to explicitly set the foreign key.
+  Can optionally pass a map with a :fk key to explicitly set the foreign key.
   
   (has-many users email {:fk :emailID})"
-  [ent sub-ent & [opts]]
-  `(rel ~ent (var ~sub-ent) :has-many ~opts))
+  [ent sub-ent & [{:keys [fk]}]]
+  `(rel ~ent (var ~sub-ent) :has-many ~fk))
 
 (defn entity-fields
   "Set the fields to be retrieved by default in select queries for the
