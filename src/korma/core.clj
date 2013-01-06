@@ -558,7 +558,7 @@
       [(utils/generated (eng/prefix ent (first field))) (second field)]
       (eng/prefix ent field))))
 
-(defn merge-part [query neue k]
+(defn- merge-part [query neue k]
   (update-in query [k] #(if-let [vs (k neue)]
                           (vec (concat % vs))
                           %)))
@@ -570,16 +570,16 @@
     (-> merged
         (add-aliases (:aliases neue)))))
 
-(defn- sub-query [query sub-ent func]
+(defn- sub-query [query sub-ent body-fn]
   (let [neue (select* sub-ent)
-        neue (bind-query neue (func neue))
+        neue (bind-query neue (body-fn neue))
         neue (-> neue
                  (update-in [:fields] #(force-prefix sub-ent %))
                  (update-in [:order] #(force-prefix sub-ent %))
                  (update-in [:group] #(force-prefix sub-ent %)))]
     (merge-query query neue)))
 
-(defn- with-later [rel query ent func]
+(defn- with-later [rel query ent body-fn]
   (let [fk (:fk rel)
         pk (get-in query [:ent :pk])
         table (keyword (eng/table-alias ent))]
@@ -587,22 +587,22 @@
                 (partial map 
                          #(assoc % table
                                  (select ent
-                                         (func)
+                                         (body-fn)
                                          (where {fk (get % pk)})))))))
 
-(defn- with-now [rel query ent func]
+(defn- with-now [rel query ent body-fn]
   (let [table (if (:alias rel)
                 [(:table ent) (:alias ent)]
                 (:table ent))
         query (join query table (= (:pk rel) (:fk rel)))]
-    (sub-query query ent func)))
+    (sub-query query ent body-fn)))
 
-(defn with* [query sub-ent func]
+(defn with* [query sub-ent body-fn]
   (let [rel (get-rel (:ent query) sub-ent)]
-    (cond
-      (not rel) (throw (Exception. (str "No relationship defined for table: " (:table sub-ent))))
-      (#{:has-one :belongs-to} (:rel-type rel)) (with-now rel query sub-ent func)
-      :else (with-later rel query sub-ent func))))
+    (case (:rel-type rel)
+      (:has-one :belongs-to) (with-now rel query sub-ent body-fn)
+      :has-many              (with-later rel query sub-ent body-fn)
+      (throw (Exception. (str "No relationship defined for table: " (:table sub-ent)))))))
 
 (defmacro with
   "Add a related entity to the given select query. If the entity has a relationship
