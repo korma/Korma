@@ -4,6 +4,7 @@
             [korma.sql.fns :as sfns]
             [korma.sql.utils :as utils]
             [clojure.set :as set]
+            [clojure.string :as string]
             [korma.db :as db])
   (:use [korma.sql.engine :only [bind-query]]))
 
@@ -428,18 +429,22 @@
    :fields []
    :rel {}})
 
+(defn- simple-table-name                                                                                                                                                                       
+  [ent]
+  (last (string/split (:table ent) #"\.")))
+
 (defn create-relation
   "Create a relation map describing how two entities are related."
   [ent sub-ent type opts]
   (let [[pk fk foreign-ent] (case type
                               :has-one [(raw (eng/prefix ent (:pk ent)))
-                                        (raw (eng/prefix sub-ent (keyword (str (:table ent) "_id"))))
+                                        (raw (eng/prefix sub-ent (keyword (str (simple-table-name ent) "_id"))))
                                         sub-ent]
                               :belongs-to [(raw (eng/prefix sub-ent (:pk sub-ent)))
-                                           (raw (eng/prefix ent (keyword (str (:table sub-ent) "_id"))))
+                                           (raw (eng/prefix ent (keyword (str (simple-table-name sub-ent) "_id"))))
                                            ent]
                               :has-many [(raw (eng/prefix ent (:pk ent)))
-                                         (raw (eng/prefix sub-ent (keyword (str (:table ent) "_id"))))
+                                         (raw (eng/prefix sub-ent (keyword (str (simple-table-name ent) "_id"))))
                                          sub-ent])
         opts (when (:fk opts)
                {:fk (raw (eng/prefix foreign-ent (:fk opts)))})]
