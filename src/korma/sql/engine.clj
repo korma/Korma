@@ -373,12 +373,9 @@
 (declare ->sql)
 
 (defn- sql-combination-query [type query]
-  (let [sub-queries (map ->sql (:queries query))
-        sub-query-sqls (map :sql-str sub-queries)
+  (let [sub-query-sqls (map map-val (:queries query))
         neue-sql (string/join (str " " type " ") sub-query-sqls)]
-    (assoc query
-      :sql-str neue-sql
-      :params (apply utils/vconcat (map :params sub-queries)))))
+    (assoc query :sql-str neue-sql)))
 
 (def sql-union     (partial sql-combination-query "UNION"))
 (def sql-union-all (partial sql-combination-query "UNION ALL"))
