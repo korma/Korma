@@ -53,7 +53,7 @@
       func (let [vs (comma-values args)]
              (format func vs))
       sub (do
-            (swap! *bound-params* #(vec (concat % (:params sub))))
+            (swap! *bound-params* utils/vconcat (:params sub))
             (utils/wrap (:sql-str sub)))
       :else (pred-map v))))
 
@@ -373,9 +373,8 @@
 
 (defmacro ^{:private true} bind-params [& body]
   `(binding [*bound-params* (atom [])]
-     (let [query# (do ~@body)
-           params# (concat (:params query#) @*bound-params*)]
-       (assoc query# :params params#))))
+     (let [query# (do ~@body)]
+       (update-in query# [:params] utils/vconcat @*bound-params*))))
 
 (defn ->sql [query]
   (bind-params

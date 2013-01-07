@@ -215,9 +215,9 @@
   
   (values query [{:name \"john\"} {:name \"ed\"}])"
   [query values]
-  (update-in query [:values] concat (if (map? values)
-                                      [values]
-                                      values)))
+  (update-in query [:values] utils/vconcat (if (map? values)
+                                             [values]
+                                             values)))
 
 (defn join* [query type table clause]
   (update-in query [:joins] conj [type table clause]))
