@@ -76,27 +76,27 @@
                    :values []
                    :results :keys}))
 
-(defn union* [queries]
+(defn union* []
   {:type :union
-   :queries (vec queries)
+   :queries []
    :order []
    :results :results})
 
-(defn union-all* [queries]
+(defn union-all* []
   {:type :union-all
-   :queries (vec queries)
+   :queries []
    :order []
    :results :results})
 
-(defn intersect* [queries]
+(defn intersect* []
   {:type :intersect
-   :queries (vec queries)
+   :queries []
    :order []
    :results :results})
 
-(defn except* [queries]
+(defn except* []
   {:type :except
-   :queries (vec queries)
+   :queries []
    :order []
    :results :results})
 
@@ -104,10 +104,15 @@
 ;; Query macros
 ;;*****************************************************
 
-(defn- make-query-then-exec [query-fn ent body]
-  `(let [query# (-> (~query-fn ~ent)
-                    ~@body)]
-     (exec query#)))
+(defn- make-query-then-exec
+  ([query-fn body]
+     `(let [query# (-> (~query-fn)
+                       ~@body)]
+        (exec query#)))
+  ([query-fn ent body]
+     `(let [query# (-> (~query-fn ~ent)
+                       ~@body)]
+        (exec query#))))
 
 (defmacro select 
   "Creates a select query, applies any modifying functions in the body and then
@@ -148,17 +153,17 @@
   [ent & body]
   (make-query-then-exec insert* ent body))
 
-(defmacro union [queries & body]
-  (make-query-then-exec union* queries body))
+(defmacro union [& body]
+  (make-query-then-exec union* body))
 
-(defmacro union-all [queries & body]
-  (make-query-then-exec union-all* queries body))
+(defmacro union-all [& body]
+  (make-query-then-exec union-all* body))
 
-(defmacro intersect [queries & body]
-  (make-query-then-exec intersect* queries body))
+(defmacro intersect [& body]
+  (make-query-then-exec intersect* body))
 
-(defmacro except [queries & body]
-  (make-query-then-exec except* queries body))
+(defmacro except [& body]
+  (make-query-then-exec except* body))
 
 ;;*****************************************************
 ;; Query parts
@@ -320,6 +325,9 @@
                  (if ~group-by
                    (group res# ~group-by)
                    res#)))))
+
+(defn queries [query & queries]
+  (update-in query [:queries] utils/vconcat queries))
 
 ;;*****************************************************
 ;; Other sql
