@@ -394,10 +394,20 @@
      (let [query# (do ~@body)]
        (update-in query# [:params] utils/vconcat @*bound-params*))))
 
+(defn- type->combination-query [query]
+  (case (:type query)
+    :union sql-union
+    :union-all sql-union-all
+    :intersect sql-intersect
+    :except sql-except))
+
 (defn ->sql [query]
   (bind-params
    (case (:type query)
-     :union (sql-union query)
+     (:union :union-all :intersect :except) (let [combiner (type->combination-query query)]
+                                              (-> query
+                                                  combiner
+                                                  sql-order))
      :select (-> query 
                  sql-select
                  sql-joins

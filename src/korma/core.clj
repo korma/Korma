@@ -79,6 +79,25 @@
 (defn union* [& queries]
   {:type :union
    :queries (vec queries)
+   :order []
+   :results :results})
+
+(defn union-all* [& queries]
+  {:type :union-all
+   :queries (vec queries)
+   :order []
+   :results :results})
+
+(defn intersect* [& queries]
+  {:type :intersect
+   :queries (vec queries)
+   :order []
+   :results :results})
+
+(defn except* [& queries]
+  {:type :except
+   :queries (vec queries)
+   :order []
    :results :results})
 
 ;;*****************************************************
@@ -131,6 +150,15 @@
 
 (defmacro union [& queries]
   `(exec (union* ~@queries)))
+
+(defmacro union-all [& queries]
+  `(exec (union-all* ~@queries)))
+
+(defmacro intersect [& queries]
+  `(exec (intersect* ~@queries)))
+
+(defmacro except [& queries]
+  `(exec (except* ~@queries)))
 
 ;;*****************************************************
 ;; Query parts
