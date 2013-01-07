@@ -549,3 +549,16 @@
               "LEFT JOIN \"mtm2\" "
               "ON \"mtm1_mtm2\".\"mtm2_id\" = \"mtm2\".\"id\" :: []\n")
          (with-out-str (dry-run (select mtm1 (join mtm2)))))))
+
+
+;;*****************************************************
+;; Union, Union All, Intersect & Except support
+;;*****************************************************
+
+(deftest test-union
+  (is (= "dry run :: SELECT * FROM \"users\" WHERE (\"users\".\"a\" = ?) UNION SELECT * FROM \"state\" WHERE (\"state\".\"c\" = ? AND \"state\".\"b\" = ?) :: [1 3 2]\n"
+         (with-out-str (dry-run (union (-> (select* users)
+                                           (where {:a 1}))
+                                       (-> (select* state)
+                                           (where {:b 2
+                                                   :c 3}))))))))

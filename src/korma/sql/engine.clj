@@ -366,6 +366,24 @@
                      (str " OFFSET " offset))]
     (update-in query [:sql-str] str limit-sql offset-sql)))
 
+;;*****************************************************
+;; Combination Queries
+;;*****************************************************
+
+(declare ->sql)
+
+(defn- sql-combination-query [type query]
+  (let [sub-queries (map ->sql (:queries query))
+        sub-query-sqls (map :sql-str sub-queries)
+        neue-sql (string/join (str " " type " ") sub-query-sqls)]
+    (assoc query
+      :sql-str neue-sql
+      :params (apply utils/vconcat (map :params sub-queries)))))
+
+(def sql-union     (partial sql-combination-query "UNION"))
+(def sql-union-all (partial sql-combination-query "UNION ALL"))
+(def sql-intersect (partial sql-combination-query "INTERSECT"))
+(def sql-except    (partial sql-combination-query "EXCEPT"))
 
 ;;*****************************************************
 ;; To sql
@@ -379,6 +397,7 @@
 (defn ->sql [query]
   (bind-params
    (case (:type query)
+     :union (sql-union query)
      :select (-> query 
                  sql-select
                  sql-joins

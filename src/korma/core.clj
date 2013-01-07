@@ -76,6 +76,11 @@
                    :values []
                    :results :keys}))
 
+(defn union* [& queries]
+  {:type :union
+   :queries (vec queries)
+   :results :results})
+
 ;;*****************************************************
 ;; Query macros
 ;;*****************************************************
@@ -123,6 +128,9 @@
         (values [{:name \"chris\"} {:name \"john\"}]))"
   [ent & body]
   (make-query-then-exec insert* ent body))
+
+(defmacro union [& queries]
+  `(exec (union* ~@queries)))
 
 ;;*****************************************************
 ;; Query parts
