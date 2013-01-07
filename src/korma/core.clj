@@ -222,22 +222,31 @@
 (defn join* [query type table clause]
   (update-in query [:joins] conj [type table clause]))
 
+(defn add-joins [query ent rel]
+  (if-let [join-table (:join-table rel)]
+    (-> query
+        (join* :left join-table (sfns/pred-= (:lpk rel) @(:lfk rel)))
+        (join* :left ent (sfns/pred-= @(:rfk rel) (:rpk rel))))
+    (join* query :left ent (sfns/pred-= (:pk rel) (:fk rel)))))
+
 (defmacro join 
-  "Add a join clause to a select query, specifying the table name to join and the predicate
-  to join on.
+  "Add a join clause to a select query, specifying the table name to
+  join and the predicate to join on. If the relationship uses a join
+  table then two clauses will be added. Otherwise, only one clause
+  will be added.
   
   (join query addresses)
   (join query addresses (= :addres.users_id :users.id))
   (join query :right addresses (= :address.users_id :users.id))"
   ([query ent]
-   `(let [q# ~query
-          e# ~ent
-          rel# (get-rel (:ent q#) e#)]
-      (join* q# :left e# (sfns/pred-= (:pk rel#) (:fk rel#)))))
+     `(let [q# ~query
+            e# ~ent
+            rel# (get-rel (:ent q#) e#)]
+        (add-joins q# e# rel#)))
   ([query table clause]
-   `(join* ~query :left ~table (eng/pred-map ~(eng/parse-where clause))))
+     `(join* ~query :left ~table (eng/pred-map ~(eng/parse-where clause))))
   ([query type table clause]
-   `(join* ~query ~type ~table (eng/pred-map ~(eng/parse-where clause)))))
+     `(join* ~query ~type ~table (eng/pred-map ~(eng/parse-where clause)))))
 
 (defn post-query
   "Add a function representing a query that should be executed for each result in a select.
@@ -429,39 +438,49 @@
 (defn- simple-table-name [ent]
   (last (string/split (:table ent) #"\.")))
 
-(defn create-relation
-  "Create a relation map describing how two entities are related."
-  [ent sub-ent type optional-fk]
-  (let [[pk fk foreign-ent] (case type
-                              :has-one [(raw (eng/prefix ent (:pk ent)))
-                                        (raw (eng/prefix sub-ent (keyword (str (simple-table-name ent) "_id"))))
-                                        sub-ent]
-                              :belongs-to [(raw (eng/prefix sub-ent (:pk sub-ent)))
-                                           (raw (eng/prefix ent (keyword (str (simple-table-name sub-ent) "_id"))))
-                                           ent]
-                              :has-many [(raw (eng/prefix ent (:pk ent)))
-                                         (raw (eng/prefix sub-ent (keyword (str (simple-table-name ent) "_id"))))
-                                         sub-ent])]
-    {:table (:table sub-ent)
-     :alias (:alias sub-ent)
-     :rel-type type
-     :pk pk
-     :fk (if optional-fk
-           (raw (eng/prefix foreign-ent optional-fk))
-           fk)}))
+(defn- default-fk-name [ent]
+  (cond
+   (map? ent) (keyword (str (simple-table-name ent) "_id"))
+   (var? ent) (recur @ent)
+   :else      (throw (Exception. (str "Can't determine default fk for " ent)))))
 
-(defn rel
-  [ent sub-ent type opts]
+(defn- many-to-many-keys [parent child {:keys [join-table lfk rfk]}]
+  {:lpk (raw (eng/prefix parent (:pk parent)))
+   :lfk (delay (raw (eng/prefix {:table (name join-table)} @lfk)))
+   :rfk (delay (raw (eng/prefix {:table (name join-table)} @rfk)))
+   :rpk (raw (eng/prefix child (:pk child)))
+   :join-table join-table})
+
+(defn- get-db-keys [parent child]
+  {:pk (raw (eng/prefix parent (:pk parent)))
+   :fk (raw (eng/prefix child (default-fk-name parent)))})
+
+(defn- db-keys-and-foreign-ent [type ent sub-ent opts]
+  (case type
+    :many-to-many        [(many-to-many-keys ent sub-ent opts) sub-ent]
+    (:has-one :has-many) [(get-db-keys ent sub-ent) sub-ent]
+    :belongs-to          [(get-db-keys sub-ent ent) ent]))
+
+(defn create-relation [ent sub-ent type opts]
+  (let [[db-keys foreign-ent] (db-keys-and-foreign-ent type ent sub-ent opts)
+        fk-override (when (:fk opts)
+                      {:fk (raw (eng/prefix foreign-ent (:fk opts)))})]
+    (merge {:table (:table sub-ent)
+            :alias (:alias sub-ent)
+            :rel-type type}
+           db-keys
+           fk-override)))
+
+(defn rel [ent sub-ent type opts]
   (let [var-name (-> sub-ent meta :name)
         cur-ns *ns*]
     (assoc-in ent [:rel (name var-name)]
               (delay
-                (let [resolved (ns-resolve cur-ns var-name)
-                      sub-ent (when resolved
-                                (deref sub-ent))]
-                  (when-not (map? sub-ent)
-                    (throw (Exception. (format "Entity used in relationship does not exist: %s" (name var-name)))))
-                  (create-relation ent sub-ent type opts))))))
+               (let [resolved (ns-resolve cur-ns var-name)
+                     sub-ent (when resolved (deref sub-ent))]
+                 (when-not (map? sub-ent)
+                   (throw (Exception. (format "Entity used in relationship does not exist: %s" (name var-name)))))
+                 (create-relation ent sub-ent type opts))))))
 
 (defn get-rel [ent sub-ent]
   (let [sub-name (if (map? sub-ent)
@@ -475,8 +494,8 @@
   Can optionally pass a map with a :fk key to explicitly set the foreign key.
 
   (has-one users address {:fk :addressID})"
-  [ent sub-ent & [{:keys [fk]}]]
-  `(rel ~ent (var ~sub-ent) :has-one ~fk))
+  [ent sub-ent & [opts]]
+  `(rel ~ent (var ~sub-ent) :has-one ~opts))
 
 (defmacro belongs-to
   "Add a belongs-to relationship for the given entity. It is assumed that the foreign key
@@ -484,8 +503,8 @@
   Can optionally pass a map with a :fk key to explicitly set the foreign key.
 
   (belongs-to users email {:fk :emailID})"
-  [ent sub-ent & [{:keys [fk]}]]
-  `(rel ~ent (var ~sub-ent) :belongs-to ~fk))
+  [ent sub-ent & [opts]]
+  `(rel ~ent (var ~sub-ent) :belongs-to ~opts))
 
 (defmacro has-many
   "Add a has-many relation for the given entity. It is assumed that the foreign key
@@ -493,8 +512,22 @@
   Can optionally pass a map with a :fk key to explicitly set the foreign key.
   
   (has-many users email {:fk :emailID})"
-  [ent sub-ent & [{:keys [fk]}]]
-  `(rel ~ent (var ~sub-ent) :has-many ~fk))
+  [ent sub-ent & [opts]]
+  `(rel ~ent (var ~sub-ent) :has-many ~opts))
+
+(defn many-to-many-fn [ent sub-ent-var join-table opts]
+  (let [opts (assoc opts
+               :join-table join-table
+               :lfk (delay (get opts :lfk (default-fk-name ent)))
+               :rfk (delay (get opts :rfk (default-fk-name sub-ent-var))))]
+    (rel ent sub-ent-var :many-to-many opts)))
+
+(defmacro many-to-many
+  "Add a many-to-many relation for the given entity.  It is assumed that a join
+   table is used to implement the relationship and that the foreign keys are in
+   the join table."
+  [ent sub-ent join-table & [opts]]
+  `(many-to-many-fn ~ent (var ~sub-ent) ~join-table ~opts))
 
 (defn entity-fields
   "Set the fields to be retrieved by default in select queries for the
@@ -588,11 +621,22 @@
         query (join query table (= (:pk rel) (:fk rel)))]
     (sub-query query ent body-fn)))
 
+(defn- with-many-to-many [{:keys [lfk rfk rpk join-table]} query ent body-fn]
+  (let [pk (get-in query [:ent :pk])
+        table (keyword (eng/table-alias ent))]
+    (post-query query (partial map
+                               #(assoc % table
+                                       (select ent
+                                               (join :inner join-table (= @rfk rpk))
+                                               (body-fn)
+                                               (where {@lfk (get % pk)})))))))
+
 (defn with* [query sub-ent body-fn]
   (let [rel (get-rel (:ent query) sub-ent)]
     (case (:rel-type rel)
       (:has-one :belongs-to) (with-now rel query sub-ent body-fn)
       :has-many              (with-later rel query sub-ent body-fn)
+      :many-to-many          (with-many-to-many rel query sub-ent body-fn)
       (throw (Exception. (str "No relationship defined for table: " (:table sub-ent)))))))
 
 (defmacro with

@@ -435,7 +435,9 @@
         (select :test (where {:id [not= 1]})))))
 
 
-;;; Supporting Postgres' schema and queries covering multiple databases
+;;*****************************************************
+;; Supporting Postgres' schema and queries covering multiple databases
+;;*****************************************************
 
 (defentity book-with-db (table :korma.book))
 (defentity author-with-db (table :other.author) (belongs-to book-with-db))
@@ -456,4 +458,94 @@
          "SELECT \"korma\".\"otherschema\".\"author\".*, \"korma\".\"myschema\".\"book\".* FROM \"korma\".\"otherschema\".\"author\" LEFT JOIN \"korma\".\"myschema\".\"book\" ON \"korma\".\"myschema\".\"book\".\"id\" = \"korma\".\"otherschema\".\"author\".\"book_id\""))
 
 
-;;;
+;;*****************************************************
+;; Many-to-Many relationships
+;;*****************************************************
+
+(declare mtm1 mtm2)
+
+(defentity mtm1
+  (entity-fields :field1)
+  (many-to-many mtm2 :mtm1_mtm2 {:lfk :mtm1_id
+                                 :rfk :mtm2_id}))
+
+(defentity mtm2
+  (entity-fields :field2)
+  (many-to-many mtm1 :mtm1_mtm2 {:lfk :mtm2_id
+                                 :rfk :mtm1_id}))
+
+(deftest test-many-to-many
+  (is (= (str "dry run :: SELECT \"mtm2\".* FROM \"mtm2\" :: []\n"
+              "dry run :: SELECT \"mtm1\".* FROM \"mtm1\" "
+              "INNER JOIN \"mtm1_mtm2\" ON \"mtm1_mtm2\".\"mtm1_id\" "
+              "= \"mtm1\".\"id\" "
+              "WHERE (\"mtm1_mtm2\".\"mtm2_id\" = ?) :: [1]\n")
+         (with-out-str (dry-run (select mtm2 (with mtm1)))))))
+
+(deftest test-many-to-many-reverse
+  (is (= (str "dry run :: SELECT \"mtm1\".* FROM \"mtm1\" :: []\n"
+              "dry run :: SELECT \"mtm2\".* FROM \"mtm2\" "
+              "INNER JOIN \"mtm1_mtm2\" ON \"mtm1_mtm2\".\"mtm2_id\" "
+              "= \"mtm2\".\"id\" "
+              "WHERE (\"mtm1_mtm2\".\"mtm1_id\" = ?) :: [1]\n"))
+      (with-out-str (dry-run (select mtm1 (with mtm2))))))
+
+(deftest test-many-to-many-join
+  (is (= (str "dry run :: SELECT \"mtm2\".* FROM \"mtm2\" "
+              "LEFT JOIN \"mtm1_mtm2\" "
+              "ON \"mtm2\".\"id\" = \"mtm1_mtm2\".\"mtm2_id\" "
+              "LEFT JOIN \"mtm1\" "
+              "ON \"mtm1_mtm2\".\"mtm1_id\" = \"mtm1\".\"id\" :: []\n")
+         (with-out-str (dry-run (select mtm2 (join mtm1)))))))
+
+(deftest test-many-to-many-join-reverse
+  (is (= (str "dry run :: SELECT \"mtm1\".* FROM \"mtm1\" "
+              "LEFT JOIN \"mtm1_mtm2\" "
+              "ON \"mtm1\".\"id\" = \"mtm1_mtm2\".\"mtm1_id\" "
+              "LEFT JOIN \"mtm2\" "
+              "ON \"mtm1_mtm2\".\"mtm2_id\" = \"mtm2\".\"id\" :: []\n")
+         (with-out-str (dry-run (select mtm1 (join mtm2)))))))
+
+;; Entities with many-to-many relationships using default keys.
+
+(declare mtmdk1 mtmdk2)
+
+(defentity mtmdk1
+  (entity-fields :field1)
+  (many-to-many mtmdk2 :mtmdk1_mtmdk2))
+
+(defentity mtmdk2
+  (entity-fields :field2)
+  (many-to-many mtmdk1 :mtmdk1_mtmdk2))
+
+(deftest many-to-many-default-keys
+  (is (= (str "dry run :: SELECT \"mtmdk2\".* FROM \"mtmdk2\" :: []\n"
+              "dry run :: SELECT \"mtmdk1\".* FROM \"mtmdk1\" "
+              "INNER JOIN \"mtmdk1_mtmdk2\" "
+              "ON \"mtmdk1_mtmdk2\".\"mtmdk1_id\" = \"mtmdk1\".\"id\" "
+              "WHERE (\"mtmdk1_mtmdk2\".\"mtmdk2_id\" = ?) :: [1]\n")
+         (with-out-str (dry-run (select mtmdk2 (with mtmdk1)))))))
+
+(deftest many-to-many-default-keys-reverse
+  (is (= (str "dry run :: SELECT \"mtmdk1\".* FROM \"mtmdk1\" :: []\n"
+              "dry run :: SELECT \"mtmdk2\".* FROM \"mtmdk2\" "
+              "INNER JOIN \"mtmdk1_mtmdk2\" "
+              "ON \"mtmdk1_mtmdk2\".\"mtmdk2_id\" = \"mtmdk2\".\"id\" "
+              "WHERE (\"mtmdk1_mtmdk2\".\"mtmdk1_id\" = ?) :: [1]\n")
+         (with-out-str (dry-run (select mtmdk1 (with mtmdk2)))))))
+
+(deftest test-many-to-many-default-keys-join
+  (is (= (str "dry run :: SELECT \"mtm2\".* FROM \"mtm2\" "
+              "LEFT JOIN \"mtm1_mtm2\" "
+              "ON \"mtm2\".\"id\" = \"mtm1_mtm2\".\"mtm2_id\" "
+              "LEFT JOIN \"mtm1\" "
+              "ON \"mtm1_mtm2\".\"mtm1_id\" = \"mtm1\".\"id\" :: []\n")
+         (with-out-str (dry-run (select mtm2 (join mtm1)))))))
+
+(deftest test-many-to-many-default-keys-join-reverse
+  (is (= (str "dry run :: SELECT \"mtm1\".* FROM \"mtm1\" "
+              "LEFT JOIN \"mtm1_mtm2\" "
+              "ON \"mtm1\".\"id\" = \"mtm1_mtm2\".\"mtm1_id\" "
+              "LEFT JOIN \"mtm2\" "
+              "ON \"mtm1_mtm2\".\"mtm2_id\" = \"mtm2\".\"id\" :: []\n")
+         (with-out-str (dry-run (select mtm1 (join mtm2)))))))
