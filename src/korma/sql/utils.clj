@@ -49,3 +49,9 @@
 (defn wrap-all [vs]
   (wrap (comma-separated vs)))
 
+;;*****************************************************
+;; collection-utils
+;;*****************************************************
+
+(defn vconcat [v1 v2]
+  (vec (concat v1 v2)))

@@ -128,14 +128,11 @@
 ;; Query parts
 ;;*****************************************************
 
-(defn- add-aliases [query as]
-  (update-in query [:aliases] set/union as))
-
 (defn- update-fields [query fs]
   (let [[first-cur] (:fields query)]
     (if (= first-cur ::*)
       (assoc query :fields fs)
-      (update-in query [:fields] concat fs))))
+      (update-in query [:fields] utils/vconcat fs))))
 
 (defn fields
   "Set the fields to be selected in a query. Fields can either be a keyword
@@ -143,10 +140,10 @@
   
   (fields query :name [:firstname :first])"
   [query & vs] 
-  (let [aliases (set (map second (filter coll? vs)))]
+  (let [aliases (set (map second (filter vector? vs)))]
     (-> query
-        (add-aliases aliases)
-        (update-fields vs))))
+        (update-in [:aliases] set/union aliases)
+        (update-fields (vec vs)))))
 
 (defn set-fields
   "Set the fields and values for an update query."
@@ -261,7 +258,7 @@
 (defn group
   "Add a group-by clause to a select query"
   [query & fields]
-  (update-in query [:group] concat fields))
+  (update-in query [:group] utils/vconcat fields))
 
 (defmacro aggregate
   "Use a SQL aggregator function, aliasing the results, and optionally grouping by
@@ -503,7 +500,7 @@
   "Set the fields to be retrieved by default in select queries for the
   entity."
   [ent & fields]
-  (update-in ent [:fields] concat (map #(eng/prefix ent %) fields)))
+  (update-in ent [:fields] utils/vconcat (map #(eng/prefix ent %) fields)))
 
 (defn table
   "Set the name of the table and an optional alias to be used for the entity. 
@@ -553,22 +550,16 @@
 ;;*****************************************************
 
 (defn- force-prefix [ent fields]
-  (for [field fields]
-    (if (vector? field)
-      [(utils/generated (eng/prefix ent (first field))) (second field)]
-      (eng/prefix ent field))))
-
-(defn- merge-part [query neue k]
-  (update-in query [k] #(if-let [vs (k neue)]
-                          (vec (concat % vs))
-                          %)))
+  (vec (for [field fields]
+         (if (vector? field)
+           [(utils/generated (eng/prefix ent (first field))) (second field)]
+           (eng/prefix ent field)))))
 
 (defn- merge-query [query neue]
-  (let [merged (reduce #(merge-part % neue %2)
-                       query
-                       [:fields :group :order :where :params :joins :post-queries])]
-    (-> merged
-        (add-aliases (:aliases neue)))))
+  (reduce (fn [query* k]
+            (update-in query* [k] #(into % (get neue k))))
+          query
+          [:aliases :fields :group :joins :order :params :post-queries :where]))
 
 (defn- sub-query [query sub-ent body-fn]
   (let [neue (select* sub-ent)
