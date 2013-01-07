@@ -557,32 +557,68 @@
 
 (deftest test-union
   (is (= "dry run :: SELECT * FROM \"users\" WHERE (\"users\".\"a\" = ?) UNION SELECT * FROM \"state\" WHERE (\"state\".\"c\" = ? AND \"state\".\"b\" = ?) :: [1 3 2]\n"
-         (with-out-str (dry-run (union (-> (select* users)
-                                           (where {:a 1}))
-                                       (-> (select* state)
-                                           (where {:b 2
-                                                   :c 3}))))))))
-
-(deftest test-union-all
-  (is (= "dry run :: SELECT * FROM \"users\" WHERE (\"users\".\"a\" = ?) UNION ALL SELECT * FROM \"state\" WHERE (\"state\".\"c\" = ? AND \"state\".\"b\" = ?) :: [1 3 2]\n"
-         (with-out-str (dry-run (union-all (-> (select* users)
-                                               (where {:a 1}))
-                                           (-> (select* state)
-                                               (where {:b 2
-                                                       :c 3}))))))))
-
-(deftest test-intersect
-  (is (= "dry run :: SELECT * FROM \"users\" WHERE (\"users\".\"a\" = ?) INTERSECT SELECT * FROM \"state\" WHERE (\"state\".\"c\" = ? AND \"state\".\"b\" = ?) :: [1 3 2]\n"
-         (with-out-str (dry-run (intersect (-> (select* users)
-                                               (where {:a 1}))
-                                           (-> (select* state)
-                                               (where {:b 2
-                                                       :c 3}))))))))
-
-(deftest test-except
-  (is (= "dry run :: SELECT * FROM \"users\" WHERE (\"users\".\"a\" = ?) EXCEPT SELECT * FROM \"state\" WHERE (\"state\".\"c\" = ? AND \"state\".\"b\" = ?) :: [1 3 2]\n"
-         (with-out-str (dry-run (except (-> (select* users)
+         (with-out-str (dry-run (union [(-> (select* users)
                                             (where {:a 1}))
                                         (-> (select* state)
                                             (where {:b 2
-                                                    :c 3}))))))))
+                                                    :c 3}))]))))))
+
+(deftest test-union-all
+  (is (= "dry run :: SELECT * FROM \"users\" WHERE (\"users\".\"a\" = ?) UNION ALL SELECT * FROM \"state\" WHERE (\"state\".\"c\" = ? AND \"state\".\"b\" = ?) :: [1 3 2]\n"
+         (with-out-str (dry-run (union-all [(-> (select* users)
+                                                (where {:a 1}))
+                                            (-> (select* state)
+                                                (where {:b 2
+                                                        :c 3}))]))))))
+
+(deftest test-intersect
+  (is (= "dry run :: SELECT * FROM \"users\" WHERE (\"users\".\"a\" = ?) INTERSECT SELECT * FROM \"state\" WHERE (\"state\".\"c\" = ? AND \"state\".\"b\" = ?) :: [1 3 2]\n"
+         (with-out-str (dry-run (intersect [(-> (select* users)
+                                                (where {:a 1}))
+                                            (-> (select* state)
+                                                (where {:b 2
+                                                        :c 3}))]))))))
+
+(deftest test-except
+  (is (= "dry run :: SELECT * FROM \"users\" WHERE (\"users\".\"a\" = ?) EXCEPT SELECT * FROM \"state\" WHERE (\"state\".\"c\" = ? AND \"state\".\"b\" = ?) :: [1 3 2]\n"
+         (with-out-str (dry-run (except [(-> (select* users)
+                                             (where {:a 1}))
+                                         (-> (select* state)
+                                             (where {:b 2
+                                                     :c 3}))]))))))
+
+(deftest test-order-by-in-union
+  (is (= "dry run :: SELECT * FROM \"users\" WHERE (\"users\".\"a\" = ?) UNION SELECT * FROM \"state\" WHERE (\"state\".\"c\" = ? AND \"state\".\"b\" = ?) ORDER BY \"a\" ASC :: [1 3 2]\n"
+         (with-out-str (dry-run (union [(-> (select* users)
+                                            (where {:a 1}))
+                                        (-> (select* state)
+                                            (where {:b 2
+                                                    :c 3}))]
+                                       (order :a)))))))
+
+(deftest test-order-by-in-union-all
+  (is (= "dry run :: SELECT * FROM \"users\" WHERE (\"users\".\"a\" = ?) UNION ALL SELECT * FROM \"state\" WHERE (\"state\".\"c\" = ? AND \"state\".\"b\" = ?) ORDER BY \"a\" ASC :: [1 3 2]\n"
+         (with-out-str (dry-run (union-all [(-> (select* users)
+                                                (where {:a 1}))
+                                            (-> (select* state)
+                                                (where {:b 2
+                                                        :c 3}))]
+                                           (order :a)))))))
+
+(deftest test-order-by-in-intersect
+  (is (= "dry run :: SELECT * FROM \"users\" WHERE (\"users\".\"a\" = ?) INTERSECT SELECT * FROM \"state\" WHERE (\"state\".\"c\" = ? AND \"state\".\"b\" = ?) ORDER BY \"a\" ASC :: [1 3 2]\n"
+         (with-out-str (dry-run (intersect [(-> (select* users)
+                                                (where {:a 1}))
+                                            (-> (select* state)
+                                                (where {:b 2
+                                                        :c 3}))]
+                                           (order :a)))))))
+
+(deftest test-order-by-in-except
+  (is (= "dry run :: SELECT * FROM \"users\" WHERE (\"users\".\"a\" = ?) EXCEPT SELECT * FROM \"state\" WHERE (\"state\".\"c\" = ? AND \"state\".\"b\" = ?) ORDER BY \"a\" ASC :: [1 3 2]\n"
+         (with-out-str (dry-run (except [(-> (select* users)
+                                            (where {:a 1}))
+                                        (-> (select* state)
+                                            (where {:b 2
+                                                    :c 3}))]
+                                       (order :a)))))))

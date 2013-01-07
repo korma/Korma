@@ -76,25 +76,25 @@
                    :values []
                    :results :keys}))
 
-(defn union* [& queries]
+(defn union* [queries]
   {:type :union
    :queries (vec queries)
    :order []
    :results :results})
 
-(defn union-all* [& queries]
+(defn union-all* [queries]
   {:type :union-all
    :queries (vec queries)
    :order []
    :results :results})
 
-(defn intersect* [& queries]
+(defn intersect* [queries]
   {:type :intersect
    :queries (vec queries)
    :order []
    :results :results})
 
-(defn except* [& queries]
+(defn except* [queries]
   {:type :except
    :queries (vec queries)
    :order []
@@ -148,17 +148,17 @@
   [ent & body]
   (make-query-then-exec insert* ent body))
 
-(defmacro union [& queries]
-  `(exec (union* ~@queries)))
+(defmacro union [queries & body]
+  (make-query-then-exec union* queries body))
 
-(defmacro union-all [& queries]
-  `(exec (union-all* ~@queries)))
+(defmacro union-all [queries & body]
+  (make-query-then-exec union-all* queries body))
 
-(defmacro intersect [& queries]
-  `(exec (intersect* ~@queries)))
+(defmacro intersect [queries & body]
+  (make-query-then-exec intersect* queries body))
 
-(defmacro except [& queries]
-  `(exec (except* ~@queries)))
+(defmacro except [queries & body]
+  (make-query-then-exec except* queries body))
 
 ;;*****************************************************
 ;; Query parts
