@@ -380,7 +380,6 @@
 (def sql-union     (partial sql-combination-query "UNION"))
 (def sql-union-all (partial sql-combination-query "UNION ALL"))
 (def sql-intersect (partial sql-combination-query "INTERSECT"))
-(def sql-except    (partial sql-combination-query "EXCEPT"))
 
 ;;*****************************************************
 ;; To sql
@@ -395,16 +394,15 @@
   (case (:type query)
     :union sql-union
     :union-all sql-union-all
-    :intersect sql-intersect
-    :except sql-except))
+    :intersect sql-intersect))
 
 (defn ->sql [query]
   (bind-params
    (case (:type query)
-     (:union :union-all :intersect :except) (let [combiner (type->combination-query query)]
-                                              (-> query
-                                                  combiner
-                                                  sql-order))
+     (:union :union-all :intersect) (let [combiner (type->combination-query query)]
+                                      (-> query
+                                          combiner
+                                          sql-order))
      :select (-> query 
                  sql-select
                  sql-joins

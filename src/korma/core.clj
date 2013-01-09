@@ -94,12 +94,6 @@
    :order []
    :results :results})
 
-(defn except* []
-  {:type :except
-   :queries []
-   :order []
-   :results :results})
-
 ;;*****************************************************
 ;; Query macros
 ;;*****************************************************
@@ -161,9 +155,6 @@
 
 (defmacro intersect [& body]
   (make-query-then-exec intersect* body))
-
-(defmacro except [& body]
-  (make-query-then-exec except* body))
 
 ;;*****************************************************
 ;; Query parts

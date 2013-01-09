@@ -579,14 +579,6 @@
                                                                 (where {:b 2
                                                                         :c 3})))))))))
 
-(deftest test-except
-  (is (= "dry run :: (SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"a\" = ?)) EXCEPT (SELECT \"state\".* FROM \"state\" WHERE (\"state\".\"c\" = ? AND \"state\".\"b\" = ?)) :: [1 3 2]\n"
-         (with-out-str (dry-run (except (queries (subselect users
-                                                             (where {:a 1}))
-                                                 (subselect state
-                                                             (where {:b 2
-                                                                     :c 3})))))))))
-
 (deftest test-order-by-in-union
   (is (= "dry run :: (SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"a\" = ?)) UNION (SELECT \"state\".* FROM \"state\" WHERE (\"state\".\"c\" = ? AND \"state\".\"b\" = ?)) ORDER BY \"a\" ASC :: [1 3 2]\n"
          (with-out-str (dry-run (union (queries (subselect users
@@ -614,11 +606,3 @@
                                                                         :c 3})))
                                            (order :a)))))))
 
-(deftest test-order-by-in-except
-  (is (= "dry run :: (SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"a\" = ?)) EXCEPT (SELECT \"state\".* FROM \"state\" WHERE (\"state\".\"c\" = ? AND \"state\".\"b\" = ?)) ORDER BY \"a\" ASC :: [1 3 2]\n"
-         (with-out-str (dry-run (except (queries (subselect users
-                                                             (where {:a 1}))
-                                                 (subselect state
-                                                             (where {:b 2
-                                                                     :c 3})))
-                                       (order :a)))))))

@@ -1,3 +1,6 @@
+0.3.0-beta14
+------------
+
 *  Support for `many-to-many` relationships (Dennis Roberts)
 *  Fixed table-name delimiting, and at the same time, support Postgres' schema and 
    queries covering multiple databases.  
