@@ -76,19 +76,25 @@
                    :values []
                    :results :keys}))
 
-(defn union* []
+(defn union*
+  "Create an empty union query."
+  []
   {:type :union
    :queries []
    :order []
    :results :results})
 
-(defn union-all* []
+(defn union-all*
+  "Create an empty union-all query."
+  []
   {:type :union-all
    :queries []
    :order []
    :results :results})
 
-(defn intersect* []
+(defn intersect*
+  "Create an empty intersect query."
+  []
   {:type :intersect
    :queries []
    :order []
@@ -147,13 +153,43 @@
   [ent & body]
   (make-query-then-exec insert* ent body))
 
-(defmacro union [& body]
+(defmacro union
+  "Creates a union query, applies any modifying functions in the body and then
+  executes it. `ent` is either a string or an entity created by defentity.
+  
+  ex: (union 
+        (queries (subselect user
+                   (where {:id 7}))
+                 (subselect user-backup
+                   (where {:id 7})))
+        (order :name))"
+  [& body]
   (make-query-then-exec union* body))
 
-(defmacro union-all [& body]
+(defmacro union-all
+  "Creates a union-all query, applies any modifying functions in the body and then
+  executes it. `ent` is either a string or an entity created by defentity.
+  
+  ex: (union-all 
+        (queries (subselect user
+                   (where {:id 7}))
+                 (subselect user-backup
+                   (where {:id 7})))
+        (order :name))"
+  [& body]
   (make-query-then-exec union-all* body))
 
-(defmacro intersect [& body]
+(defmacro intersect
+  "Creates an intersect query, applies any modifying functions in the body and then
+  executes it. `ent` is either a string or an entity created by defentity.
+  
+  ex: (intersect 
+        (queries (subselect user
+                   (where {:id 7}))
+                 (subselect user-backup
+                   (where {:id 8})))
+        (order :name))"
+  [& body]
   (make-query-then-exec intersect* body))
 
 ;;*****************************************************
@@ -234,8 +270,8 @@
   (where-or-having-form having* query form))
 
 (defn order
-  "Add an ORDER BY clause to a select query. field should be a keyword of the field name, dir
-  is ASC by default.
+  "Add an ORDER BY clause to a select, union, union-all, or intersect query.
+  field should be a keyword of the field name, dir is ASC by default.
   
   (order query :created :asc)"
   [query field & [dir]]
