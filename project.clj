@@ -12,7 +12,7 @@
   ;;Lein2 - the way of the future
   :profiles {:user {:dependencies [[org.clojure/clojure "1.4.0"]
                                    [c3p0/c3p0 "0.9.1.2"]
-                                   [org.clojure/java.jdbc "0.2.2"]]}
+                                   [org.clojure/java.jdbc "0.2.3"]]}
              :dev {:dependencies [[com.h2database/h2 "1.3.164"]
                                   [postgresql "9.0-801.jdbc4"]
                                   [slamhound "1.3.1"]]
