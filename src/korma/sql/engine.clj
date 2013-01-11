@@ -370,8 +370,6 @@
 ;; Combination Queries
 ;;*****************************************************
 
-(declare ->sql)
-
 (defn- sql-combination-query [type query]
   (let [sub-query-sqls (map map-val (:queries query))
         neue-sql (string/join (str " " type " ") sub-query-sqls)]
