@@ -21,8 +21,7 @@
               ent)
         [ent table alias db opts] (if (string? ent)
                                     [{:table ent} ent nil nil nil]
-                                    [ent (:table ent) (:alias ent) 
-                                     (:db ent) (get-in ent [:db :options])])]
+                                    [ent (:table ent) (:alias ent) (:db ent) (get-in ent [:db :options])])]
     {:ent ent
      :table table
      :db db
@@ -104,15 +103,10 @@
 ;; Query macros
 ;;*****************************************************
 
-(defn- make-query-then-exec
-  ([query-fn body]
-     `(let [query# (-> (~query-fn)
-                       ~@body)]
-        (exec query#)))
-  ([query-fn ent body]
-     `(let [query# (-> (~query-fn ~ent)
-                       ~@body)]
-        (exec query#))))
+(defn- make-query-then-exec [query-fn body & args]
+  `(let [query# (-> (~query-fn ~@args)
+                    ~@body)]
+     (exec query#)))
 
 (defmacro select 
   "Creates a select query, applies any modifying functions in the body and then
@@ -122,7 +116,7 @@
         (fields :name :email)
         (where {:id 2}))"
   [ent & body]
-  (make-query-then-exec select* ent body))
+  (make-query-then-exec select* body ent))
 
 (defmacro update 
   "Creates an update query, applies any modifying functions in the body and then
@@ -132,7 +126,7 @@
         (set-fields {:name \"chris\"}) 
         (where {:id 4}))"
   [ent & body]
-  (make-query-then-exec update* ent body))
+  (make-query-then-exec update* body ent))
 
 (defmacro delete 
   "Creates a delete query, applies any modifying functions in the body and then
@@ -141,7 +135,7 @@
   ex: (delete user 
         (where {:id 7}))"
   [ent & body]
-  (make-query-then-exec delete* ent body))
+  (make-query-then-exec delete* body ent))
 
 (defmacro insert 
   "Creates an insert query, applies any modifying functions in the body and then
@@ -151,7 +145,7 @@
   ex: (insert user 
         (values [{:name \"chris\"} {:name \"john\"}]))"
   [ent & body]
-  (make-query-then-exec insert* ent body))
+  (make-query-then-exec insert* body ent))
 
 (defmacro union
   "Creates a union query, applies any modifying functions in the body and then
