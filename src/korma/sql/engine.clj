@@ -57,7 +57,7 @@
             (utils/wrap (:sql-str sub)))
       :else (pred-map v))))
 
-(defn table-alias [{:keys [type table alias]}]
+(defn table-alias [{:keys [table alias]}]
   (or alias table))
 
 (defn table-identifier [table-name]

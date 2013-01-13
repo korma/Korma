@@ -1,9 +1,9 @@
 (ns korma.test.core
   (:require [clojure.string :as string])
-  (:use [korma.core]
-        [korma.db]
-        [korma.config])
-  (:use [clojure.test]))
+  (:use clojure.test
+        korma.config
+        korma.core
+        korma.db))
 
 (defdb test-db-opts (postgres {:db "korma" :user "korma" :password "kormapass" :delimiters "" :naming {:fields string/upper-case}}))
 (defdb test-db (postgres {:db "korma" :user "korma" :password "kormapass"}))

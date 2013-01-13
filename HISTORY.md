@@ -1,4 +1,7 @@
+0.3.0-beta15-SNAPSHOT
+---------------------
 
+*  Can use mysql/count so that (count :*) works correctly on MySQL (Tsutomu YANO)
 *  Added `union`, `union-all`, and `intersect` queries
 
 0.3.0-beta14
