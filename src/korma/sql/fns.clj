@@ -1,5 +1,7 @@
 (ns korma.sql.fns
-  (:require [korma.sql.engine :as eng])
+  (:require [korma.db :as db]
+            [korma.mysql :as mysql]
+            [korma.sql.engine :as eng])
   (:use [korma.sql.engine :only [infix group-with sql-func trinary wrapper]]))
 
 ;;*****************************************************
@@ -34,10 +36,18 @@
 ;; Aggregates
 ;;*****************************************************
 
-(defn agg-count [v] (sql-func "COUNT" v))
-(defn agg-sum [v]   (sql-func "SUM" v))
-(defn agg-avg [v]   (sql-func "AVG" v))
-(defn agg-min [v]   (sql-func "MIN" v))
-(defn agg-max [v]   (sql-func "MAX" v))
-(defn agg-first [v] (sql-func "FIRST" v))
-(defn agg-last [v]  (sql-func "LAST" v))
+(defn- subprotocol [query]
+  (let [default (get-in @db/_default [:options :subprotocol])]
+     (or (get-in query [:db :options :subprotocol]) default)))
+
+(defn agg-count [query v]
+  (case (subprotocol query)
+    "mysql" (mysql/count query v)
+    (sql-func "COUNT" v)))
+
+(defn agg-sum [_query_ v]   (sql-func "SUM" v))
+(defn agg-avg [_query_ v]   (sql-func "AVG" v))
+(defn agg-min [_query_ v]   (sql-func "MIN" v))
+(defn agg-max [_query_ v]   (sql-func "MAX" v))
+(defn agg-first [_query_ v] (sql-func "FIRST" v))
+(defn agg-last [_query_ v]  (sql-func "LAST" v))

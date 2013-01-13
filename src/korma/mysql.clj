@@ -7,7 +7,7 @@
 (defn count
   "On MySQL, when an argument for COUNT() is a '*',
    it must be a simple '*', instead of 'fieldname.*'."
-  [v]
+  [_query_ v]
   (if (= "*" (name v))
     (sql-func "COUNT" (utils/generated "*"))
     (sql-func "COUNT" v)))
