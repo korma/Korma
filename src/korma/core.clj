@@ -347,7 +347,9 @@
                    (group res# ~group-by)
                    res#)))))
 
-(defn queries [query & queries]
+(defn queries
+  "Adds a group of queries to a union, union-all or intersect"
+  [query & queries]
   (update-in query [:queries] utils/vconcat queries))
 
 ;;*****************************************************
