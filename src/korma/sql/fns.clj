@@ -41,8 +41,8 @@
      (or (get-in query [:db :options :subprotocol]) default)))
 
 (defn agg-count [query v]
-  (case (subprotocol query)
-    "mysql" (mysql/count query v)
+  (if (= "mysql" (subprotocol query))
+    (mysql/count query v)
     (sql-func "COUNT" v)))
 
 (defn agg-sum [_query_ v]   (sql-func "SUM" v))
