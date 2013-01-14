@@ -445,10 +445,12 @@
   (if-let [preps (seq (-> query :ent :prepares))]
     (let [preps (apply comp preps)]
       (case (:type query)
-        :insert (let [values (:values query)]
-                  (assoc query :values (map preps values)))
-        :update (let [value (:set-fields query)]
-                  (assoc query :set-fields (preps value)))
+        :insert (->> (:values query)
+                     (map preps)
+                     (assoc query :values))
+        :update (->> (:set-fields query)
+                     preps
+                     (assoc query :set-fields))
         query))
     query))
 
