@@ -1,4 +1,6 @@
-0.3.0-beta15-SNAPSHOT
+
+
+0.3.0-beta15
 ---------------------
 
 *  transactional wrapping for multiple databases (Timo Westkämper)
