@@ -149,7 +149,7 @@
 
 (defmacro union
   "Creates a union query, applies any modifying functions in the body and then
-  executes it. `ent` is either a string or an entity created by defentity.
+  executes it.
   
   ex: (union 
         (queries (subselect user
@@ -162,7 +162,7 @@
 
 (defmacro union-all
   "Creates a union-all query, applies any modifying functions in the body and then
-  executes it. `ent` is either a string or an entity created by defentity.
+  executes it.
   
   ex: (union-all 
         (queries (subselect user
@@ -175,7 +175,7 @@
 
 (defmacro intersect
   "Creates an intersect query, applies any modifying functions in the body and then
-  executes it. `ent` is either a string or an entity created by defentity.
+  executes it.
   
   ex: (intersect 
         (queries (subselect user
