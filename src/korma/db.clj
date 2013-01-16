@@ -182,10 +182,5 @@
   (jdbc/with-naming-strategy (->naming-strategy (:naming options))
     (if (jdbc/find-connection)
       (exec-sql query)
-      (do
-        (let [conn (or (when db
-                         (get-connection db))
-                       (get-connection @_default))]
-          (jdbc/with-connection conn
-            (exec-sql query)))))))
-
+      (jdbc/with-connection (get-connection (or db @_default))
+        (exec-sql query)))))
