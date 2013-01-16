@@ -1,6 +1,7 @@
 0.3.0-beta15-SNAPSHOT
 ---------------------
 
+*  fixing macro expansion bug introduced in recent beta (Moritz Heidkamp, Joshua Eckroth)
 *  Can use mysql/count so that (count :*) works correctly on MySQL (Tsutomu YANO)
 *  Added `union`, `union-all`, and `intersect` queries
 
