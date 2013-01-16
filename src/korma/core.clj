@@ -103,8 +103,8 @@
 ;; Query macros
 ;;*****************************************************
 
-(defn- make-query-then-exec [query-fn body & args]
-  `(let [query# (-> (~query-fn ~@args)
+(defn- make-query-then-exec [query-fn-var body & args]
+  `(let [query# (-> (~query-fn-var ~@args)
                     ~@body)]
      (exec query#)))
 
