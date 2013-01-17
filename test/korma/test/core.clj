@@ -25,7 +25,10 @@
 (defentity users-alias
   (table :users :u))
 
-(defentity blah (pk :cool) (has-many users {:fk :cool_id}))
+(defentity ^{:private true} blah (pk :cool) (has-many users {:fk :cool_id}))
+
+(deftest test-defentity-accepts-metadata
+  (is (= true (:private (meta #'blah)))))
 
 (deftest select-function
   (is (= "SELECT \"users\".\"id\", \"users\".\"username\" FROM \"users\" WHERE (\"users\".\"username\" = ?) ORDER BY \"users\".\"created\" ASC LIMIT 5 OFFSET 3"
