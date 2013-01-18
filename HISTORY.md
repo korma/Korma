@@ -1,3 +1,8 @@
+0.3.0.RC2
+---------
+
+* Connection pool always returns a connection pool, use :make-pool? option to disable pool creation
+
 0.3.0-RC1
 ---------
 
