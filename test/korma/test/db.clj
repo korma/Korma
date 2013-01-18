@@ -52,7 +52,8 @@
   (testing "postgres - defaults"
     (is (= {:classname "org.postgresql.Driver"
             :subprotocol "postgresql"
-            :subname "//localhost:5432/"}
+            :subname "//localhost:5432/"
+            :make-pool? true}
            (postgres {}))))
   (testing "postgres - options selected"
     (is (= {:db "db"
@@ -60,32 +61,38 @@
             :host "host"
             :classname "org.postgresql.Driver"
             :subprotocol "postgresql"
-            :subname "//host:port/db"}
+            :subname "//host:port/db"
+            :make-pool? false}
            (postgres {:host "host"
                       :port "port"
-                      :db "db"})))))
+                      :db "db"
+                      :make-pool? false})))))
 
 (deftest test-oracle
   (testing "oracle - defaults"
     (is (= {:classname "oracle.jdbc.driver.OracleDriver"
             :subprotocol "oracle:thin"
-            :subname "@localhost:1521"}
+            :subname "@localhost:1521"
+            :make-pool? true}
            (oracle {}))))
   (testing "oracle - options selected"
     (is (= {:port "port"
             :host "host"
             :classname "oracle.jdbc.driver.OracleDriver"
             :subprotocol "oracle:thin"
-            :subname "@host:port"}
+            :subname "@host:port"
+            :make-pool? false}
            (oracle {:host "host"
-                    :port "port"})))))
+                    :port "port"
+                    :make-pool? false})))))
 
 (deftest test-mysql
   (testing "mysql - defaults"
     (is (= {:classname "com.mysql.jdbc.Driver"
             :subprotocol "mysql"
             :subname "//localhost:3306/"
-            :delimiters "`"}
+            :delimiters "`"
+            :make-pool? true}
            (mysql {}))))
   (testing "mysql - options selected"
     (is (= {:db "db"
@@ -94,16 +101,19 @@
             :classname "com.mysql.jdbc.Driver"
             :subprotocol "mysql"
             :subname "//host:port/db"
-            :delimiters "`"}
+            :delimiters "`"
+            :make-pool? false}
            (mysql {:host "host"
                    :port "port"
-                   :db "db"})))))
+                   :db "db"
+                   :make-pool? false})))))
 
 (deftest test-mssql
   (testing "mssql - defaults"
     (is (= {:classname "com.microsoft.sqlserver.jdbc.SQLServerDriver"
             :subprotocol "sqlserver"
-            :subname "//localhost:1433;database=;user=dbuser;password=dbpassword"}
+            :subname "//localhost:1433;database=;user=dbuser;password=dbpassword"
+            :make-pool? true}
            (mssql {}))))
   (testing "mssql - options selected"
     (is (= {:db "db"
@@ -113,35 +123,41 @@
             :host "host"
             :classname "com.microsoft.sqlserver.jdbc.SQLServerDriver"
             :subprotocol "sqlserver"
-            :subname "//host:port;database=db;user=user;password=password"}
+            :subname "//host:port;database=db;user=user;password=password"
+            :make-pool? false}
            (mssql {:host "host"
                    :port "port"
                    :db "db"
                    :user "user"
-                   :password "password"})))))
+                   :password "password"
+                   :make-pool? false})))))
 
 (deftest test-sqlite3
   (testing "sqlite3 - defaults"
     (is (= {:classname "org.sqlite.JDBC"
             :subprotocol "sqlite"
-            :subname "sqlite.db"}
+            :subname "sqlite.db"
+            :make-pool? true}
            (sqlite3 {}))))
   (testing "sqlite3 - options selected"
     (is (= {:db "db"
             :classname "org.sqlite.JDBC"
             :subprotocol "sqlite"
-            :subname "db"}
-           (sqlite3 {:db "db"})))))
+            :subname "db"
+            :make-pool? false}
+           (sqlite3 {:db "db" :make-pool? false})))))
 
 (deftest test-h2
   (testing "h2 - defaults"
     (is (= {:classname "org.h2.Driver"
             :subprotocol "h2"
-            :subname "h2.db"}
+            :subname "h2.db"
+            :make-pool? true}
            (h2 {}))))
   (testing "h2 - options selected"
     (is (= {:db "db"
             :classname "org.h2.Driver"
             :subprotocol "h2"
-            :subname "db"}
-           (h2 {:db "db"})))))
+            :subname "db"
+            :make-pool? false}
+           (h2 {:db "db" :make-pool? false})))))
