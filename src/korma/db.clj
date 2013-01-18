@@ -24,17 +24,15 @@
          minimum-pool-size 3
          maximum-pool-size 15}
     :as spec}]
-  (if (and subprotocol subname classname)
-    {:datasource (doto (ComboPooledDataSource.)
-                   (.setDriverClass classname)
-                   (.setJdbcUrl (str "jdbc:" subprotocol ":" subname))
-                   (.setUser user)
-                   (.setPassword password)
-                   (.setMaxIdleTimeExcessConnections excess-timeout)
-                   (.setMaxIdleTime idle-timeout)
-                   (.setMinPoolSize minimum-pool-size)
-                   (.setMaxPoolSize maximum-pool-size))}
-    spec))
+  {:datasource (doto (ComboPooledDataSource.)
+                 (.setDriverClass classname)
+                 (.setJdbcUrl (str "jdbc:" subprotocol ":" subname))
+                 (.setUser user)
+                 (.setPassword password)
+                 (.setMaxIdleTimeExcessConnections excess-timeout)
+                 (.setMaxIdleTime idle-timeout)
+                 (.setMinPoolSize minimum-pool-size)
+                 (.setMaxPoolSize maximum-pool-size))})
 
 (defn delay-pool
   "Return a delay for creating a connection pool for the given spec."

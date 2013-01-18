@@ -4,22 +4,19 @@
                     :naming {:fields identity
                              :keys identity}}))
 
-(defn- ->delimiters
-  [cs]
+(defn- ->delimiters [cs]
   (if cs
     (let [[begin end] cs
           end (or end begin)]
       [begin end])
     ["\"" "\""]))
 
-(defn- ->naming
-  [strategy]
+(defn- ->naming [strategy]
   (merge {:keys identity
           :fields identity}
          strategy))
 
-(defn extract-options
-  [{:keys [naming delimiters subprotocol]}]
+(defn extract-options [{:keys [naming delimiters subprotocol]}]
   {:naming (->naming naming)
    :delimiters (->delimiters delimiters)
    :subprotocol subprotocol})

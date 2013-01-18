@@ -1,4 +1,8 @@
+0.3.0-RC1
+---------
 
+* Allow opting out of the connection pool creation
+* Allow sending other kinds of sb specs straight through to java.jdbc
 
 0.3.0-beta15
 ---------------------
