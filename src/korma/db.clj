@@ -14,9 +14,7 @@
   (reset! _default conn))
 
 (defn connection-pool
-  "Create a connection pool for the given database spec only if it
-  contains the keys :subprotocol, :subname, and :classname. Otherwise,
-  spec is returned unaltered."
+  "Create a connection pool for the given database spec."
   [{:keys [subprotocol subname classname user password
            excess-timeout idle-timeout minimum-pool-size maximum-pool-size]
     :or {excess-timeout (* 30 60)
@@ -53,7 +51,9 @@
   "Create a db connection object manually instead of using defdb. This is often useful for
   creating connections dynamically, and probably should be followed up with:
 
-  (default-connection my-new-conn)"
+  (default-connection my-new-conn)
+
+  If the spec includes `:make-pool? true` makes a connection pool from the spec."
   [spec]
   {:pool (if (:make-pool? spec)
            (delay-pool spec)
