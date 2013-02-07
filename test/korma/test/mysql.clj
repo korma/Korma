@@ -14,18 +14,18 @@
 (deftest test-mysql-count
   (sql-only
     (are [result query] (= result query)
-      "SELECT COUNT(*) `cnt` FROM `users-mysql` GROUP BY `users-mysql`.`id`"
+      "SELECT COUNT(*) AS `cnt` FROM `users-mysql` GROUP BY `users-mysql`.`id`"
       (select users-mysql (aggregate (mysql/count :*) :cnt :id))
 
-      "SELECT COUNT(`users-non-mysql`.*) `cnt` FROM `users-non-mysql` GROUP BY `users-non-mysql`.`id`"
+      "SELECT COUNT(`users-non-mysql`.*) AS `cnt` FROM `users-non-mysql` GROUP BY `users-non-mysql`.`id`"
       (select users-non-mysql (aggregate (count :*) :cnt :id))
 
-      "SELECT COUNT(*) `cnt` FROM `users-mysql` GROUP BY `users-mysql`.`id` HAVING (`users-mysql`.`id` = ?)"
+      "SELECT COUNT(*) AS `cnt` FROM `users-mysql` GROUP BY `users-mysql`.`id` HAVING (`users-mysql`.`id` = ?)"
       (select users-mysql
              (aggregate (mysql/count :*) :cnt :id)
              (having {:id 5}))
 
-      "SELECT COUNT(`users-mysql`.`id`) `cnt` FROM `users-mysql`"
+      "SELECT COUNT(`users-mysql`.`id`) AS `cnt` FROM `users-mysql`"
       (select users-mysql (aggregate (mysql/count :id) :cnt)))))
 
 
@@ -35,5 +35,5 @@
   (defdb test-db-mysql (mysql {:db "korma" :user "korma" :password "kormapass"}))
 
   (sql-only
-   (is (= "SELECT COUNT(*) `cnt` FROM `users-no-db-specified` GROUP BY `users-no-db-specified`.`id`"
+   (is (= "SELECT COUNT(*) AS `cnt` FROM `users-no-db-specified` GROUP BY `users-no-db-specified`.`id`"
           (select users-no-db-specified (aggregate (count :*) :cnt :id))))))
