@@ -434,7 +434,7 @@
 
         "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"id\" NOT IN (?, ?, ?))"
         (select :test (where {:id [not-in [1 2 3]]}))
-        "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"id\" != ?)"
+        "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"id\" <> ?)"
         (select :test (where {:id [not= 1]})))))
 
 
