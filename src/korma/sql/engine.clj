@@ -97,7 +97,7 @@
 
 (defn alias-clause [alias]
   (when alias
-    (str " " (delimit-str (name alias)))))
+    (str " AS " (delimit-str (name alias)))))
 
 (defn field-str [v]
     (let [[fname alias] (if (vector? v)

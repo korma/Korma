@@ -47,7 +47,7 @@
          (select users)
          "SELECT \"users\".* FROM \"users\""
          (select users-alias)
-         "SELECT \"u\".* FROM \"users\" \"u\""
+         "SELECT \"u\".* FROM \"users\" AS \"u\""
          (select users
                  (fields :id :username))
          "SELECT \"users\".\"id\", \"users\".\"username\" FROM \"users\""
@@ -201,9 +201,9 @@
   (sql-only
     (is (= "SELECT \"users\".* FROM \"users\" GROUP BY \"users\".\"id\", \"users\".\"name\""
            (select users (group :id :name))))
-    (is (= "SELECT COUNT(\"users\".*) \"cnt\" FROM \"users\" GROUP BY \"users\".\"id\""
+    (is (= "SELECT COUNT(\"users\".*) AS \"cnt\" FROM \"users\" GROUP BY \"users\".\"id\""
            (select users (aggregate (count :*) :cnt :id))))
-    (is (= "SELECT COUNT(\"users\".*) \"cnt\" FROM \"users\" GROUP BY \"users\".\"id\" HAVING (\"users\".\"id\" = ?)"
+    (is (= "SELECT COUNT(\"users\".*) AS \"cnt\" FROM \"users\" GROUP BY \"users\".\"id\" HAVING (\"users\".\"id\" = ?)"
             (select users
                    (aggregate (count :*) :cnt :id)
                    (having {:id 5}))))))
@@ -215,7 +215,7 @@
 
 (deftest sqlfns
   (sql-only
-    (is (= "SELECT NOW() \"now\", MAX(\"users\".\"blah\"), AVG(SUM(?, ?), SUM(?, ?)) FROM \"users\" WHERE (\"users\".\"time\" >= NOW())"
+    (is (= "SELECT NOW() AS \"now\", MAX(\"users\".\"blah\"), AVG(SUM(?, ?), SUM(?, ?)) FROM \"users\" WHERE (\"users\".\"time\" >= NOW())"
            (select users
                    (fields [(sqlfn now) :now] (sqlfn max :blah) (sqlfn avg (sqlfn sum 3 4) (sqlfn sum 4 5)))
                    (where {:time [>= (sqlfn now)]}))))))
@@ -316,13 +316,13 @@
                  (where {:id [in (subselect users
                                             (where {:age [> 5]}))]})))
 
-       "SELECT \"users\".* FROM \"users\", (SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"age\" > ?)) \"u2\""
+       "SELECT \"users\".* FROM \"users\", (SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"age\" > ?)) AS \"u2\""
        (sql-only
          (select users
                  (from [(subselect users
                                    (where {:age [> 5]})) :u2])))
 
-       "SELECT \"users\".*, (SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"age\" > ?)) \"u2\" FROM \"users\""
+       "SELECT \"users\".*, (SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"age\" > ?)) AS \"u2\" FROM \"users\""
        (sql-only
          (select users
                  (fields :* [(subselect users
@@ -345,7 +345,7 @@
 
 (deftest multiple-aggregates
   (defentity the_table)
-  (is (= "SELECT MIN(\"the_table\".\"date_created\") \"start_date\", MAX(\"the_table\".\"date_created\") \"end_date\" FROM \"the_table\" WHERE (\"the_table\".\"id\" IN (?, ?, ?))"
+  (is (= "SELECT MIN(\"the_table\".\"date_created\") AS \"start_date\", MAX(\"the_table\".\"date_created\") AS \"end_date\" FROM \"the_table\" WHERE (\"the_table\".\"id\" IN (?, ?, ?))"
          (sql-only
            (-> (select* the_table)
              (aggregate (min :date_created) :start_date)
@@ -381,7 +381,7 @@
                  (table (subselect "test")))))
 
   (are [result query] (= result query)
-       "SELECT \"test\".* FROM (SELECT \"test\".* FROM \"test\") \"test\""
+       "SELECT \"test\".* FROM (SELECT \"test\".* FROM \"test\") AS \"test\""
        (sql-only
          (select subsel))))
 
@@ -391,7 +391,7 @@
 
   (sql-only
     (are [result query] (= result query)
-         "SELECT \"bb\".* FROM \"blah\" \"bb\" LEFT JOIN \"blah\" \"not-bb\" ON \"bb\".\"cool\" = \"not-bb\".\"cool2\""
+         "SELECT \"bb\".* FROM \"blah\" AS \"bb\" LEFT JOIN \"blah\" AS \"not-bb\" ON \"bb\".\"cool\" = \"not-bb\".\"cool2\""
          (select blahblah (join [blahblah :not-bb] (= :bb.cool :not-bb.cool2))))))
 
 (deftest empty-in-clause
