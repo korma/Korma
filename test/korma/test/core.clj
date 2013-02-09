@@ -208,6 +208,11 @@
                    (aggregate (count :*) :cnt :id)
                    (having {:id 5}))))))
 
+(deftest aggregate-stdev
+  (sql-only
+    (is (= "SELECT STDEV(\"users\".\"age\") AS \"DevAge\" FROM \"users\""
+           (select users (aggregate (stdev :age) :DevAge))))))
+
 (deftest quoting
   (sql-only
     (is (= "SELECT \"users\".\"testField\", \"users\".\"t!\" FROM \"users\""
