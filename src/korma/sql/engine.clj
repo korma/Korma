@@ -285,8 +285,7 @@
         modifiers-clause (when (seq (:modifiers query))
                            (str (reduce str (:modifiers query)) " "))
         clauses-str (utils/comma-separated clauses)
-        tables (utils/comma-separated (map from-table (:from query)))
-        neue-sql (str "SELECT " modifiers-clause clauses-str " FROM " tables)]
+        neue-sql (str "SELECT " modifiers-clause clauses-str)]
     (assoc query :sql-str neue-sql)))
 
 (defn sql-update [query]
@@ -325,8 +324,10 @@
 (defn sql-joins [query]
   (let [clauses (for [[type table clause] (:joins query)]
                   (join-clause type table clause))
-        clauses-str (apply str clauses)]
-    (update-in query [:sql-str] str clauses-str)))
+        tables (utils/comma-separated (map from-table (:from query)))
+        clauses-str (utils/left-assoc (cons (str tables (first clauses))
+                                            (rest clauses)))]
+    (update-in query [:sql-str] str " FROM " clauses-str)))
 
 (defn- sql-where-or-having [where-or-having-kw where-or-having-str query]
   (if (empty? (get query where-or-having-kw))

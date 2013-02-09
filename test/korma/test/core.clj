@@ -186,7 +186,7 @@
 
 (deftest join-order
   (sql-only
-    (is (= "SELECT \"users\".* FROM \"users\" LEFT JOIN \"user2\" ON \"users\".\"id\" = \"user2\".\"users_id\" LEFT JOIN \"user3\" ON \"users\".\"id\" = \"user3\".\"users_id\""
+    (is (= "SELECT \"users\".* FROM (\"users\" LEFT JOIN \"user2\" ON \"users\".\"id\" = \"user2\".\"users_id\") LEFT JOIN \"user3\" ON \"users\".\"id\" = \"user3\".\"users_id\""
            (select users
                    (join :user2 (= :users.id :user2.users_id))
                    (join :user3 (= :users.id :user3.users_id)))))))
@@ -235,7 +235,7 @@
                  (fields :*)
                  (with address (fields :id)))
 
-         "SELECT \"users\".*, \"address\".*, \"state\".* FROM \"users\" LEFT JOIN \"address\" ON \"users\".\"id\" = \"address\".\"users_id\" LEFT JOIN \"state\" ON \"state\".\"id\" = \"address\".\"state_id\" WHERE (\"state\".\"state\" = ?) AND (\"address\".\"id\" > ?)"
+         "SELECT \"users\".*, \"address\".*, \"state\".* FROM (\"users\" LEFT JOIN \"address\" ON \"users\".\"id\" = \"address\".\"users_id\") LEFT JOIN \"state\" ON \"state\".\"id\" = \"address\".\"state_id\" WHERE (\"state\".\"state\" = ?) AND (\"address\".\"id\" > ?)"
          (select user2
                  (fields :*)
                  (with address
@@ -494,17 +494,17 @@
       (with-out-str (dry-run (select mtm1 (with mtm2))))))
 
 (deftest test-many-to-many-join
-  (is (= (str "dry run :: SELECT \"mtm2\".* FROM \"mtm2\" "
+  (is (= (str "dry run :: SELECT \"mtm2\".* FROM (\"mtm2\" "
               "LEFT JOIN \"mtm1_mtm2\" "
-              "ON \"mtm2\".\"id\" = \"mtm1_mtm2\".\"mtm2_id\" "
+              "ON \"mtm2\".\"id\" = \"mtm1_mtm2\".\"mtm2_id\") "
               "LEFT JOIN \"mtm1\" "
               "ON \"mtm1_mtm2\".\"mtm1_id\" = \"mtm1\".\"id\" :: []\n")
          (with-out-str (dry-run (select mtm2 (join mtm1)))))))
 
 (deftest test-many-to-many-join-reverse
-  (is (= (str "dry run :: SELECT \"mtm1\".* FROM \"mtm1\" "
+  (is (= (str "dry run :: SELECT \"mtm1\".* FROM (\"mtm1\" "
               "LEFT JOIN \"mtm1_mtm2\" "
-              "ON \"mtm1\".\"id\" = \"mtm1_mtm2\".\"mtm1_id\" "
+              "ON \"mtm1\".\"id\" = \"mtm1_mtm2\".\"mtm1_id\") "
               "LEFT JOIN \"mtm2\" "
               "ON \"mtm1_mtm2\".\"mtm2_id\" = \"mtm2\".\"id\" :: []\n")
          (with-out-str (dry-run (select mtm1 (join mtm2)))))))
@@ -538,17 +538,17 @@
          (with-out-str (dry-run (select mtmdk1 (with mtmdk2)))))))
 
 (deftest test-many-to-many-default-keys-join
-  (is (= (str "dry run :: SELECT \"mtm2\".* FROM \"mtm2\" "
+  (is (= (str "dry run :: SELECT \"mtm2\".* FROM (\"mtm2\" "
               "LEFT JOIN \"mtm1_mtm2\" "
-              "ON \"mtm2\".\"id\" = \"mtm1_mtm2\".\"mtm2_id\" "
+              "ON \"mtm2\".\"id\" = \"mtm1_mtm2\".\"mtm2_id\") "
               "LEFT JOIN \"mtm1\" "
               "ON \"mtm1_mtm2\".\"mtm1_id\" = \"mtm1\".\"id\" :: []\n")
          (with-out-str (dry-run (select mtm2 (join mtm1)))))))
 
 (deftest test-many-to-many-default-keys-join-reverse
-  (is (= (str "dry run :: SELECT \"mtm1\".* FROM \"mtm1\" "
+  (is (= (str "dry run :: SELECT \"mtm1\".* FROM (\"mtm1\" "
               "LEFT JOIN \"mtm1_mtm2\" "
-              "ON \"mtm1\".\"id\" = \"mtm1_mtm2\".\"mtm1_id\" "
+              "ON \"mtm1\".\"id\" = \"mtm1_mtm2\".\"mtm1_id\") "
               "LEFT JOIN \"mtm2\" "
               "ON \"mtm1_mtm2\".\"mtm2_id\" = \"mtm2\".\"id\" :: []\n")
          (with-out-str (dry-run (select mtm1 (join mtm2)))))))
