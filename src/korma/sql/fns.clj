@@ -47,6 +47,7 @@
 
 (defn agg-sum [_query_ v]   (sql-func "SUM" v))
 (defn agg-avg [_query_ v]   (sql-func "AVG" v))
+(defn agg-stdev [_query_ v] (sql-func "STDEV" v))
 (defn agg-min [_query_ v]   (sql-func "MIN" v))
 (defn agg-max [_query_ v]   (sql-func "MAX" v))
 (defn agg-first [_query_ v] (sql-func "FIRST" v))

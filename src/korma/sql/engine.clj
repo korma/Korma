@@ -238,6 +238,7 @@
                  'first 'korma.sql.fns/agg-first
                  'last 'korma.sql.fns/agg-last
                  'avg 'korma.sql.fns/agg-avg
+                 'stdev 'korma.sql.fns/agg-stdev
                  'sum 'korma.sql.fns/agg-sum})
 
 (defn sql-func [op & vs]
