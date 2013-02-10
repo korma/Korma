@@ -1,7 +1,7 @@
 (ns korma.test.db
   (:use [clojure.test :only [deftest is testing]]
         [korma.db :only [connection-pool defdb get-connection h2
-                         mssql mysql oracle postgres sqlite3]]))
+                         mssql mysql odbc oracle postgres sqlite3]]))
 
 
 (def db-config-with-defaults
@@ -131,6 +131,21 @@
                    :user "user"
                    :password "password"
                    :make-pool? false})))))
+
+(deftest test-odbc
+  (testing "odbc - defaults"
+    (is (= {:classname "sun.jdbc.odbc.JdbcOdbcDriver"
+            :subprotocol "odbc"
+            :subname ""
+            :make-pool? true}
+           (odbc {}))))
+  (testing "odbc - options selected"
+    (is (= {:classname "sun.jdbc.odbc.JdbcOdbcDriver"
+            :subprotocol "odbc"
+            :subname "MyDsn"
+            :dsn "MyDsn"
+            :make-pool? false}
+           (odbc {:dsn "MyDsn" :make-pool? false})))))
 
 (deftest test-sqlite3
   (testing "sqlite3 - defaults"

@@ -118,6 +118,18 @@
           :make-pool? make-pool?} 
          opts))
 
+(defn odbc
+  "Create a database specification for an ODBC DSN. Opts
+  should include keys for :dsn and optionally :make-pool?."
+  [{:keys [dsn make-pool?]
+    :or {dsn "", make-pool? true}
+    :as opts}]
+  (merge {:classname "sun.jdbc.odbc.JdbcOdbcDriver" ; must be in classpath
+          :subprotocol "odbc"
+          :subname dsn
+          :make-pool? make-pool?}
+         opts))
+
 (defn sqlite3
   "Create a database specification for a SQLite3 database. Opts should include a key
   for :db which is the path to the database file."
