@@ -24,6 +24,7 @@
              :1.5.0 {:dependencies [[org.clojure/clojure "1.5.0-RC1"]]}}
   :aliases {"run-tests" ["with-profile" "1.3.0:1.4.0:1.5.0" "test"]
             "slamhound" ["run" "-m" "slam.hound"]}
+  :jvm-opts ["-Dline.separator=\n"]
 
   ;; Lein1 - will be removed at some point
   :dependencies [[org.clojure/clojure "1.3.0"]
