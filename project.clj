@@ -1,4 +1,4 @@
-(defproject korma "0.3.0-RC2"
+(defproject korma "0.3.0-RC3"
   :description "Tasty SQL for Clojure"
   :url "http://github.com/ibdknox/korma"
   :mailing-list {:name "Korma Google Group"
@@ -14,6 +14,7 @@
                                    [c3p0/c3p0 "0.9.1.2"]
                                    [org.clojure/java.jdbc "0.2.3"]]}
              :dev {:dependencies [[com.h2database/h2 "1.3.164"]
+                                  [gui-diff "0.4.0"]
                                   [postgresql "9.0-801.jdbc4"]
                                   [slamhound "1.3.1"]]
                    :plugins [[codox "0.6.4"]
