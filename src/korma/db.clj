@@ -118,6 +118,20 @@
           :make-pool? make-pool?} 
          opts))
 
+(defn msaccess
+  "Create a database specification for a Microsoft Access database. Opts
+  should include keys for :db and optionally :make-pool?."
+  [{:keys [db make-pool?]
+    :or {db "", make-pool? false}
+    :as opts}]
+  (merge {:classname "sun.jdbc.odbc.JdbcOdbcDriver" ; must be in classpath
+          :subprotocol "odbc"
+          :subname (str "Driver={Microsoft Access Driver (*.mdb"
+                        (when (.endsWith db ".accdb") ", *.accdb")
+                        ")};Dbq=" db)
+          :make-pool? make-pool?}
+         opts))
+
 (defn odbc
   "Create a database specification for an ODBC DSN. Opts
   should include keys for :dsn and optionally :make-pool?."
