@@ -1,7 +1,7 @@
 (ns korma.test.db
   (:use [clojure.test :only [deftest is testing]]
         [korma.db :only [connection-pool defdb get-connection h2
-                         mssql mysql odbc oracle postgres sqlite3]]))
+                         msaccess mssql mysql odbc oracle postgres sqlite3]]))
 
 
 (def db-config-with-defaults
@@ -131,6 +131,29 @@
                    :user "user"
                    :password "password"
                    :make-pool? false})))))
+
+(deftest test-msaccess
+  (testing "msaccess - defaults"
+    (is (= {:classname "sun.jdbc.odbc.JdbcOdbcDriver"
+            :subprotocol "odbc"
+            :subname "Driver={Microsoft Access Driver (*.mdb)};Dbq="
+            :make-pool? false}
+           (msaccess {}))))
+  (testing "msaccess - .mdb selected"
+    (is (= {:classname "sun.jdbc.odbc.JdbcOdbcDriver"
+            :subprotocol "odbc"
+            :subname "Driver={Microsoft Access Driver (*.mdb)};Dbq=db.mdb"
+            :db "db.mdb"
+            :make-pool? true}
+           (msaccess {:db "db.mdb" :make-pool? true}))))
+  (testing "msaccess - .accdb selected"
+    (is (= {:classname "sun.jdbc.odbc.JdbcOdbcDriver"
+            :subprotocol "odbc"
+            :subname (str "Driver={Microsoft Access Driver (*.mdb, *.accdb)};"
+                          "Dbq=db.accdb")
+            :db "db.accdb"
+            :make-pool? true}
+           (msaccess {:db "db.accdb" :make-pool? true})))))
 
 (deftest test-odbc
   (testing "odbc - defaults"
