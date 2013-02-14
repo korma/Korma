@@ -216,9 +216,10 @@
   `(jdbc/with-connection (get-connection ~db)
      ~@body))
 
-(defn do-query [{:keys [db options] :or {options @conf/options} :as query}]
-  (jdbc/with-naming-strategy (->naming-strategy (:naming options))
-    (if (jdbc/find-connection)
-      (exec-sql query)
-      (with-db (or db @_default)
-        (exec-sql query)))))
+(defn do-query [{:keys [db options] :as query}]
+  (let [options (or options @conf/options)]
+    (jdbc/with-naming-strategy (->naming-strategy (:naming options))
+      (if (jdbc/find-connection)
+        (exec-sql query)
+        (with-db (or db @_default)
+          (exec-sql query))))))
