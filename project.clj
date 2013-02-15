@@ -1,4 +1,4 @@
-(defproject korma "0.3.0-RC3"
+(defproject korma "0.3.0-RC4"
   :description "Tasty SQL for Clojure"
   :url "http://github.com/ibdknox/korma"
   :mailing-list {:name "Korma Google Group"
