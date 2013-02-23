@@ -2,6 +2,10 @@
 
 Tasty SQL for Clojure.
 
+## TravisCI Status
+
+[![Build Status](https://travis-ci.org/korma/Korma.png)](https://travis-ci.org/korma/Korma)
+
 ## Getting started
 
 Simply add Korma as a dependency to your lein project:

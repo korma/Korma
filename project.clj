@@ -22,7 +22,7 @@
                              [lein-localrepo "0.4.1"]]}
              :1.3.0 {:dependencies [[org.clojure/clojure "1.3.0"]]}
              :1.4.0 {:dependencies [[org.clojure/clojure "1.4.0"]]}
-             :1.5.0 {:dependencies [[org.clojure/clojure "1.5.0-RC1"]]}}
+             :1.5.0 {:dependencies [[org.clojure/clojure "1.5.0-RC16"]]}}
   :aliases {"run-tests" ["with-profile" "1.3.0:1.4.0:1.5.0" "test"]
             "slamhound" ["run" "-m" "slam.hound"]}
   :jvm-opts ["-Dline.separator=\n"]
