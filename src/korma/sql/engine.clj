@@ -385,7 +385,7 @@
 ;; To sql
 ;;*****************************************************
 
-(defmacro ^{:private true} bind-params [& body]
+(defmacro bind-params [& body]
   `(binding [*bound-params* (atom [])]
      (let [query# (do ~@body)]
        (update-in query# [:params] utils/vconcat @*bound-params*))))
