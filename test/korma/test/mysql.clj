@@ -37,3 +37,11 @@
   (sql-only
    (is (= "SELECT COUNT(*) AS `cnt` FROM `users-no-db-specified` GROUP BY `users-no-db-specified`.`id`"
           (select users-no-db-specified (aggregate (count :*) :cnt :id))))))
+
+(deftest test-nested-transactions-work
+  (defdb test-db-mysql (mysql {:db "korma" :user "korma" :password "kormapass"}))
+
+  (transaction
+   (insert users-mysql (values {:name "thiago"}))
+    (transaction
+     (update users-mysql (set-fields {:name "THIAGO"}) (where {:name "thiago"})))))
