@@ -46,7 +46,7 @@
   (jdbc/with-connection mysql-uri
     (jdbc/do-commands "CREATE DATABASE IF NOT EXISTS korma;"
                       "USE korma;"
-                      "CREATE TABLE IF NOT EXISTS `users-mysql` (name varchar(200));")))
+                      "CREATE TABLE IF NOT EXISTS `users-live-mysql` (name varchar(200));")))
 
 (defn- clean-korma-db []
   (jdbc/with-connection mysql-uri
@@ -54,11 +54,12 @@
 
 (deftest test-nested-transactions-work
   (setup-korma-db)
-  (defdb test-db-mysql (mysql {:db "korma" :user "root"}))
+  (defdb live-db-mysql (mysql {:db "korma" :user "root"}))
+  (defentity users-live-mysql (database live-db-mysql))
 
   (transaction
-   (insert users-mysql (values {:name "thiago"}))
+   (insert users-live-mysql (values {:name "thiago"}))
     (transaction
-     (update users-mysql (set-fields {:name "THIAGO"}) (where {:name "thiago"}))))
+     (update users-live-mysql (set-fields {:name "THIAGO"}) (where {:name "thiago"}))))
 
   (clean-korma-db))
