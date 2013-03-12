@@ -1,5 +1,6 @@
 (ns korma.test.mysql
-  (:require [korma.mysql :as mysql])
+  (:require [korma.mysql :as mysql]
+            [clojure.java.jdbc :as jdbc])
   (:use clojure.test
         korma.config
         korma.core
@@ -38,10 +39,26 @@
    (is (= "SELECT COUNT(*) AS `cnt` FROM `users-no-db-specified` GROUP BY `users-no-db-specified`.`id`"
           (select users-no-db-specified (aggregate (count :*) :cnt :id))))))
 
+(def mysql-uri
+  {:connection-uri "jdbc:mysql://localhost/?user=root"})
+
+(defn- setup-korma-db []
+  (jdbc/with-connection mysql-uri
+    (jdbc/do-commands "CREATE DATABASE IF NOT EXISTS korma;"
+                      "USE korma;"
+                      "CREATE TABLE IF NOT EXISTS `users-mysql` (name varchar(200));")))
+
+(defn- clean-korma-db []
+  (jdbc/with-connection mysql-uri
+    (jdbc/do-commands "DROP DATABASE korma;")))
+
 (deftest test-nested-transactions-work
-  (defdb test-db-mysql (mysql {:db "korma" :user "korma" :password "kormapass"}))
+  (setup-korma-db)
+  (defdb test-db-mysql (mysql {:db "korma" :user "root"}))
 
   (transaction
    (insert users-mysql (values {:name "thiago"}))
     (transaction
-     (update users-mysql (set-fields {:name "THIAGO"}) (where {:name "thiago"})))))
+     (update users-mysql (set-fields {:name "THIAGO"}) (where {:name "thiago"}))))
+
+  (clean-korma-db))
