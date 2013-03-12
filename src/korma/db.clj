@@ -171,11 +171,9 @@
 (defmacro transaction
   "Execute all queries within the body in a single transaction."
   [& body]
-  `(if (jdbc/find-connection)
-     (jdbc/transaction ~@body)
-     (jdbc/with-connection (get-connection @_default)
-       (jdbc/transaction
-        ~@body))))
+  `(jdbc/with-connection (get-connection @_default)
+     (jdbc/transaction
+       ~@body)))
 
 (defn rollback
   "Tell this current transaction to rollback."
