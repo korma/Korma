@@ -21,9 +21,9 @@
                    :plugins [[codox "0.6.4"]
                              [jonase/eastwood "0.0.2"]
                              [lein-localrepo "0.4.1"]]}
-             :1.3.0 {:dependencies [[org.clojure/clojure "1.3.0"]]}
-             :1.4.0 {:dependencies [[org.clojure/clojure "1.4.0"]]}
-             :1.5.0 {:dependencies [[org.clojure/clojure "1.5.0-RC16"]]}}
+             :1.3.0 {:dependencies [[org.clojure/clojure "1.3.0"]      [org.clojure/java.jdbc "0.2.3"] [mysql/mysql-connector-java "5.1.22"]]}
+             :1.4.0 {:dependencies [[org.clojure/clojure "1.4.0"]      [org.clojure/java.jdbc "0.2.3"] [mysql/mysql-connector-java "5.1.22"]]}
+             :1.5.0 {:dependencies [[org.clojure/clojure "1.5.0-RC16"] [org.clojure/java.jdbc "0.2.3"] [mysql/mysql-connector-java "5.1.22"]]}}
   :aliases {"run-tests" ["with-profile" "1.3.0:1.4.0:1.5.0" "test"]
             "slamhound" ["run" "-m" "slam.hound"]}
   :jvm-opts ["-Dline.separator=\n"]
