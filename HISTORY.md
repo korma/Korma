@@ -1,4 +1,21 @@
-0.3.0.RC2
+0.3.0-RC5
+---------
+
+* support nested `korma.db/transaction` calls (josephwilk)
+* integrated with TravisCI
+
+0.3.0-RC4
+---------
+
+* MS Access db config helper function (Vadim Geshel)
+* bugfix in `do-query` w/ options (RingMan)
+
+0.3.0-RC3
+---------
+
+* .... lost track, sorry, too lazy to backfill the history here, at least today
+
+0.3.0-RC2
 ---------
 
 * Connection pool always returns a connection pool, use :make-pool? option to disable pool creation
