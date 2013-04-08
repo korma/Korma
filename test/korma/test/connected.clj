@@ -78,39 +78,67 @@
 (defn- random-string []
   (str (java.util.UUID/randomUUID)))
 
-(defn populate [num-users]
+(defn- reset-schema []
   (dorun
-   (map exec-raw schema))
+   (map exec-raw schema)))
+
+(defn- populate-states [data]
+  (insert state
+          (values (:state data))))
+
+(defn- populate-users
+  "add num-users to the database and to the `data` map"
+  [data num-users]
+  (reduce
+   (fn [data user-id]
+     (let [u {:id user-id
+              :name (random-string)
+              :age (rand-int 100)}]
+       (insert user
+               (values u))
+       (update-in data
+                  [:user]
+                  conj (assoc u :address []))))
+   data
+   (range num-users)))
+
+(defn- populate-addresses
+  "add up to max-addresses-per-user addresses to each user. ensure that at least one user has no addresses at all"
+  [data max-addresses-per-user]
+  (assoc data
+    :user (vec
+           (cons
+            (first (:user data))
+            (map
+             (fn [user]
+               (let [addrs (doall
+                            (for [n (range (rand-int max-addresses-per-user))]
+                              (let [a {:user-id (:id user)
+                                       :street (random-string)
+                                       :number (subs (random-string) 0 10)
+                                       :city (random-string)
+                                       :zip (str (rand-int 10000))
+                                       :state-id (-> data :state rand-nth :id)}
+                                    inserted (insert address (values a))
+                                    ;; insert returns a map with a single key
+                                    ;; the key depends on the underlying database, but the
+                                    ;; value is the generated value of the key column
+                                    inserted-id (first (vals inserted))
+                                    a (assoc a :id inserted-id)]
+                                a)))]
+                 (assoc user :address (vec addrs))))
+             (rest (:user data)))))))
+
+(defn populate
+  "populate the test database with random data and return a data structure that mirrors the data inserted into the database."
+  [num-users]
+  (reset-schema)
   (with-naming dash-naming-strategy
     (with-delimiters
-      (let [data (atom initial-data)]
-        (insert state
-                (values (:state @data)))
-        (doseq [n (range (max 1 num-users))]
-          (let [u {:id n
-                   :name (random-string)
-                   :age (rand-int 100)}]
-            (insert user
-                    (values u))
-            (swap! data
-                   update-in [:user] conj
-                   (assoc u :address []))))
-        (doseq [ ;; make sure one of the users has
-                ;; no addresses
-                u (drop 1 (:user @data))
-                n (range (rand-int 10))]
-          (let [a {:user-id (:id u)
-                   :street (random-string)
-                   :number (subs (random-string) 0 10)
-                   :city (random-string)
-                   :zip (str (rand-int 10000))
-                   :state-id (-> @data :state rand-nth :id)}
-                inserted (insert address (values a))
-                inserted-id (first (vals inserted))
-                a (assoc a :id inserted-id)]
-            (swap! data update-in [:address] conj a)
-            (swap! data update-in [:user (:id u) :address] conj a)))
-        @data))))
+      (-> initial-data
+          populate-states
+          (populate-users num-users)
+          (populate-addresses 10)))))
 
 (def ^:dynamic *data*)
 
@@ -143,7 +171,7 @@
                  (where {:id [in user-ids]})
                  (with-batch address
                    (with-batch state))))
-     "`with-data` should return the same data as `with`")))
+     "`with-batch` should return the same data as `with`")))
 
 (defn- getenv [s]
   (or (System/getenv s)
@@ -162,7 +190,7 @@
         (map
          #(update-in % [:address] doall))
         doall))
-      (println "benchmarking with `with-data`")
+      (println "benchmarking with `with-batch`")
       (cr/quick-bench
        (select user
                (where {:id [in user-ids]})
