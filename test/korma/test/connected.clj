@@ -86,7 +86,7 @@
       (let [data (atom initial-data)]
         (insert state
                 (values (:state @data)))
-        (doseq [n (range (max 1 (rand-int num-users)))]
+        (doseq [n (range (max 1 num-users))]
           (let [u {:id n
                    :name (random-string)
                    :age (rand-int 100)}]
