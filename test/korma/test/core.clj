@@ -8,6 +8,8 @@
 (defdb test-db-opts (postgres {:db "korma" :user "korma" :password "kormapass" :delimiters "" :naming {:fields string/upper-case}}))
 (defdb test-db (postgres {:db "korma" :user "korma" :password "kormapass"}))
 
+(defdb mem-db (h2 {:db "mem:test"}))
+
 (defentity delims
   (database test-db-opts))
 
@@ -177,6 +179,13 @@
              (select user2
                      (with email)))))))
 
+(deftest with-many-batch
+  (is (= "dry run :: SELECT \"users\".* FROM \"users\" :: []\ndry run :: SELECT \"email\".* FROM \"email\" WHERE (\"email\".\"users_id\" IN (?)) :: [1]\n"
+         (with-out-str
+           (dry-run
+            (select user2
+                    (with-batch email))))) ))
+
 (deftest with-one
   (sql-only
     (is (= "SELECT \"address\".\"state\", \"users\".\"name\" FROM \"users\" LEFT JOIN \"address\" ON \"users\".\"id\" = \"address\".\"users_id\""
@@ -263,6 +272,14 @@
            (with-out-str
              (select user2
                      (with email
+                       (where (like :email "%@gmail.com"))))))
+
+         "dry run :: SELECT \"users\".* FROM \"users\" :: []\ndry run :: SELECT \"email\".* FROM \"email\" WHERE \"email\".\"email\" LIKE ? AND (\"email\".\"users_id\" IN (?)) :: [%@gmail.com 1]\n"
+
+         (dry-run
+           (with-out-str
+             (select user2
+                     (with-batch email
                        (where (like :email "%@gmail.com")))))))))
 
 (deftest modifiers

@@ -17,7 +17,8 @@
                                   [gui-diff "0.4.0"]
                                   [postgresql "9.0-801.jdbc4"]
                                   [slamhound "1.3.1"]
-                                  [mysql/mysql-connector-java "5.1.22"]]
+                                  [mysql/mysql-connector-java "5.1.22"]
+                                  [criterium "0.3.1"]]
                    :plugins [[codox "0.6.4"]
                              [jonase/eastwood "0.0.2"]
                              [lein-localrepo "0.4.1"]]}
