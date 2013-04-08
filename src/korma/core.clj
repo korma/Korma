@@ -772,22 +772,9 @@
       (throw (Exception. (str "No relationship defined for table: " (:table sub-ent)))))))
 
 (defmacro with-batch
-  "Add a related entity to the given select query. If the entity has a relationship
-  type of :belongs-to or :has-one, the requested fields will be returned directly in
-  the result map. If the entity is a :has-many, a second query will be executed lazily
-  and a key of the entity name will be assoc'd with a vector of the results.
-
-  (defentity email (entity-fields :email))
-  (defentity user (has-many email))
-  (select user
-    (with email) => [{:name \"chris\" :email [{email: \"c@c.com\"}]} ...
-
-  With can also take a body that will further refine the relation:
-  (select user
-     (with address
-        (with state)
-        (fields :address.city :state.state)
-        (where {:address.zip x})))"
+  "Add a related entity. This behaves like `with`, except that, for has-many relationships,
+   it runs a single query to get relations of all fetched rows. This is faster than regular `with`
+   but it doesn't support many of the additional options (order, limit, offset, group, having)"
   [query ent & body]
   `(with-batch* ~query ~ent (fn [q#]
                               (-> q#
