@@ -438,7 +438,9 @@
     results
     (if-let [trans (seq (-> query :ent :transforms))]
       (let [trans-fn (apply comp trans)]
-        (if (vector? results) (map trans-fn results) (trans-fn results)))
+        (if (sequential? results)
+          (map trans-fn results)
+          (trans-fn results)))
       results)))
 
 (defn- apply-prepares
@@ -678,6 +680,7 @@
 
 (defn- with-later [rel query ent body-fn]
   (let [fk (:fk rel)
+        fk-key (:fk-key rel)
         pk (get-in query [:ent :pk])
         table (keyword (eng/table-alias ent))]
     (post-query query 
@@ -685,7 +688,7 @@
                          #(assoc % table
                                  (select ent
                                          (body-fn)
-                                         (where {fk (get % pk)})))))))
+                                         (where {fk-key (get % pk)})))))))
 
 (defn- with-now [rel query ent body-fn]
   (let [table (if (:alias rel)
@@ -756,7 +759,7 @@
                   (let [fks (map #(get % pk) rows)
                         child-rows (select ent
                                            (body-fn)
-                                           (where {fk [in fks]})
+                                           (where {fk-key [in fks]})
                                            (ensure-valid-subquery))
                         child-rows-by-pk (group-by fk-key child-rows)]
                     (map #(assoc %
