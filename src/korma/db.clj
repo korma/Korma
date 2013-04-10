@@ -210,7 +210,7 @@
 
 (defn- ->naming-strategy [{:keys [keys fields]}]
   {:keyword keys
-   :identifier fields})
+   :entity fields})
 
 (defmacro with-db
   "Execute all queries within the body using the given db spec"
