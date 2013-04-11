@@ -3,7 +3,6 @@
   (:require [korma.sql.engine :as eng]
             [korma.sql.fns :as sfns]
             [korma.sql.utils :as utils]
-            [korma.config :as conf]
             [clojure.set :as set]
             [clojure.string :as string]
             [korma.db :as db])
@@ -734,23 +733,26 @@
                         (-> q#
                             ~@body))))
 
+
+(defn- ensure-valid-subquery [q]
+  (if (some
+       not-empty
+       (vals
+        (select-keys q [:order
+                        :group
+                        :limit
+                        :offset
+                        :having
+                        :modifiers])))
+    (throw (Exception. (format "`with-batch` supports only `where` and `fields` options, no sorting, grouping, limits, offsets, modifiers")))
+    q))
+
 (defn- with-later-batch [rel query ent body-fn]
   (let [fk (:fk rel)
         fk-key (:fk-key rel)
         pk (get-in query [:ent :pk])
         table (keyword (eng/table-alias ent))
-        ensure-valid-subquery (fn [q]
-                                (if (some
-                                     not-empty
-                                     (vals
-                                      (select-keys q [:order
-                                                      :group
-                                                      :limit
-                                                      :offset
-                                                      :having
-                                                      :modifiers])))
-                                  (throw (Exception. (format "`with-batch` supports only `where` and `fields` options, no sorting, grouping, limits, offsets, modifiers")))
-                                  q))]
+        ]
     (post-query query
                 (fn [rows]
                   (let [fks (map #(get % pk) rows)
