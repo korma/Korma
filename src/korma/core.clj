@@ -736,6 +736,13 @@
                         (-> q#
                             ~@body))))
 
+(defn- ensure-fields
+  "ensure that fields in fs are included in the query's result set"
+  [query fs]
+  (let [[first-cur] (:fields query)]
+    (if (= first-cur ::*)
+      query
+      (update-in query [:fields] utils/vconcat fs))))
 
 (defn- ensure-valid-subquery [q]
   (if (some
@@ -754,14 +761,14 @@
   (let [fk (:fk rel)
         fk-key (:fk-key rel)
         pk (get-in query [:ent :pk])
-        table (keyword (eng/table-alias ent))
-        ]
+        table (keyword (eng/table-alias ent))]
     (post-query query
                 (fn [rows]
                   (let [fks (map #(get % pk) rows)
                         child-rows (select ent
                                            (body-fn)
                                            (where {fk-key [in fks]})
+                                           (ensure-fields [fk-key])
                                            (ensure-valid-subquery))
                         child-rows-by-pk (group-by fk-key child-rows)]
                     (map #(assoc %

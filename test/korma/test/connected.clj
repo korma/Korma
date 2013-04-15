@@ -159,11 +159,19 @@
      (= [u]
         (select user
                 (where {:id (:id u)})
-                (with address))))))
+                (with address)))))
+  (doseq [u (:user *data*)]
+    (is
+     (= [(update-in u [:address]
+                    (fn [addrs]
+                      (map #(select-keys % [:street :city]) addrs)))]
+        (select user
+                (where {:id (:id u)})
+                (with address
+                      (fields :street :city)))))))
 
 (deftest test-one-to-many-batch
-  (when false
-    (let [user-ids (map :id (:user *data*))]
+  (let [user-ids (map :id (:user *data*))]
     (is
      (=  (select user
                  (where {:id [in user-ids]})
@@ -173,7 +181,20 @@
                  (where {:id [in user-ids]})
                  (with-batch address
                    (with-batch state))))
-     "`with-batch` should return the same data as `with`"))))
+     "`with-batch` should return the same data as `with`")
+    (is
+     (=  (select user
+                 (where {:id [in user-ids]})
+                 (with address
+                       ;; with-batch will add the foreign key 
+                       (fields :user-id :street :city)
+                       (with state)))
+         (select user
+                 (where {:id [in user-ids]})
+                 (with-batch address
+                   (fields :street :city)
+                   (with-batch state))))
+     "`with-batch` should return the same data as `with` when using explicit projection")))
 
 (defn- getenv [s]
   (or (System/getenv s)
