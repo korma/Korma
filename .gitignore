@@ -7,3 +7,4 @@ pom.xml
 /target/
 *.iml
 /.idea
+.DS_Store

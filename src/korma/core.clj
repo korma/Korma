@@ -58,7 +58,7 @@
                    :fields {}
                    :where []
                    :results :keys}))
-  
+
 (defn delete* 
   "Create an empty delete query. Ent can either be an entity defined by defentity,
   or a string of the table name"
@@ -66,7 +66,7 @@
   (make-query ent {:type :delete
                    :where []
                    :results :keys}))
-  
+
 (defn insert* 
   "Create an empty insert query. Ent can either be an entity defined by defentity,
   or a string of the table name"
@@ -342,10 +342,10 @@
   [query agg alias & [group-by]]
   `(let [q# ~query]
      (bind-query q#
-       (let [res# (fields q# [(-> q# ~(eng/parse-aggregate agg)) ~alias])]
-         (if ~group-by
-           (group res# ~group-by)
-           res#)))))
+                 (let [res# (fields q# [(-> q# ~(eng/parse-aggregate agg)) ~alias])]
+                   (if ~group-by
+                     (group res# ~group-by)
+                     res#)))))
 
 (defn queries
   "Adds a group of queries to a union, union-all or intersect"
@@ -437,7 +437,9 @@
     results
     (if-let [trans (seq (-> query :ent :transforms))]
       (let [trans-fn (apply comp trans)]
-        (if (vector? results) (map trans-fn results) (trans-fn results)))
+        (if (sequential? results)
+          (map trans-fn results)
+          (trans-fn results)))
       results)))
 
 (defn- apply-prepares
@@ -462,17 +464,17 @@
         sql (:sql-str query)
         params (:params query)]
     (cond
-      (:sql query) sql
-      (= *exec-mode* :sql) sql
-      (= *exec-mode* :query) query
-      (= *exec-mode* :dry-run) (do
-                                 (println "dry run ::" sql "::" (vec params))
-                                 (let [pk (-> query :ent :pk)
-                                       results (apply-posts query [{pk 1}])]
-                                   (first results)
-                                   results))
-      :else (let [results (db/do-query query)]
-              (apply-transforms query (apply-posts query results))))))
+     (:sql query) sql
+     (= *exec-mode* :sql) sql
+     (= *exec-mode* :query) query
+     (= *exec-mode* :dry-run) (do
+                                (println "dry run ::" sql "::" (vec params))
+                                (let [pk (-> query :ent :pk)
+                                      results (apply-posts query [{pk 1}])]
+                                  (first results)
+                                  results))
+     :else (let [results (db/do-query query)]
+             (apply-transforms query (apply-posts query results))))))
 
 (defn exec-raw
   "Execute a raw SQL string, supplying whether results should be returned. `sql` can either be
@@ -521,8 +523,10 @@
    :join-table join-table})
 
 (defn- get-db-keys [parent child]
-  {:pk (raw (eng/prefix parent (:pk parent)))
-   :fk (raw (eng/prefix child (default-fk-name parent)))})
+  (let [fk-key (default-fk-name parent)]
+    {:pk (raw (eng/prefix parent (:pk parent)))
+     :fk (raw (eng/prefix child fk-key))
+     :fk-key fk-key}))
 
 (defn- db-keys-and-foreign-ent [type ent sub-ent opts]
   (case type
@@ -532,8 +536,9 @@
 
 (defn create-relation [ent sub-ent type opts]
   (let [[db-keys foreign-ent] (db-keys-and-foreign-ent type ent sub-ent opts)
-        fk-override (when (:fk opts)
-                      {:fk (raw (eng/prefix foreign-ent (:fk opts)))})]
+        fk-override (when-let [fk-key (:fk opts)]
+                      {:fk (raw (eng/prefix foreign-ent fk-key))
+                       :fk-key fk-key})]
     (merge {:table (:table sub-ent)
             :alias (:alias sub-ent)
             :rel-type type}
@@ -644,7 +649,7 @@
   the body."
   [ent & body]
   `(let [e# (-> (create-entity ~(name ent))
-              ~@body)]
+                ~@body)]
      (def ~ent e#)))
 
 ;;*****************************************************
@@ -674,6 +679,7 @@
 
 (defn- with-later [rel query ent body-fn]
   (let [fk (:fk rel)
+        fk-key (:fk-key rel)
         pk (get-in query [:ent :pk])
         table (keyword (eng/table-alias ent))]
     (post-query query 
@@ -681,7 +687,7 @@
                          #(assoc % table
                                  (select ent
                                          (body-fn)
-                                         (where {fk (get % pk)})))))))
+                                         (where {fk-key (get % pk)})))))))
 
 (defn- with-now [rel query ent body-fn]
   (let [table (if (:alias rel)
@@ -729,3 +735,59 @@
   `(with* ~query ~ent (fn [q#]
                         (-> q#
                             ~@body))))
+
+(defn- ensure-fields
+  "ensure that fields in fs are included in the query's result set"
+  [query fs]
+  (let [[first-cur] (:fields query)]
+    (if (= first-cur ::*)
+      query
+      (update-in query [:fields] utils/vconcat fs))))
+
+(defn- ensure-valid-subquery [q]
+  (if (some
+       not-empty
+       (vals
+        (select-keys q [:order
+                        :group
+                        :limit
+                        :offset
+                        :having
+                        :modifiers])))
+    (throw (Exception. (format "`with-batch` supports only `where` and `fields` options, no sorting, grouping, limits, offsets, modifiers")))
+    q))
+
+(defn- with-later-batch [rel query ent body-fn]
+  (let [fk (:fk rel)
+        fk-key (:fk-key rel)
+        pk (get-in query [:ent :pk])
+        table (keyword (eng/table-alias ent))]
+    (post-query query
+                (fn [rows]
+                  (let [fks (map #(get % pk) rows)
+                        child-rows (select ent
+                                           (body-fn)
+                                           (where {fk-key [in fks]})
+                                           (ensure-fields [fk-key])
+                                           (ensure-valid-subquery))
+                        child-rows-by-pk (group-by fk-key child-rows)]
+                    (map #(assoc %
+                            table (get child-rows-by-pk (get % pk)))
+                         rows))))))
+
+(defn with-batch* [query sub-ent body-fn]
+  (let [rel (get-rel (:ent query) sub-ent)]
+    (case (:rel-type rel)
+      (:has-one :belongs-to) (with* query sub-ent body-fn)
+      :has-many              (with-later-batch rel query sub-ent body-fn)
+      :many-to-many          (with* query sub-ent body-fn)
+      (throw (Exception. (str "No relationship defined for table: " (:table sub-ent)))))))
+
+(defmacro with-batch
+  "Add a related entity. This behaves like `with`, except that, for has-many relationships,
+   it runs a single query to get relations of all fetched rows. This is faster than regular `with`
+   but it doesn't support many of the additional options (order, limit, offset, group, having)"
+  [query ent & body]
+  `(with-batch* ~query ~ent (fn [q#]
+                              (-> q#
+                                  ~@body))))
