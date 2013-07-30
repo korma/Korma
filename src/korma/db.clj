@@ -7,7 +7,7 @@
 (defonce _default (atom nil))
 
 (defn default-connection
-  "Set the database connection that Korma should use by default when no 
+  "Set the database connection that Korma should use by default when no
   alternative is specified."
   [conn]
   (conf/merge-defaults (:options conn))
@@ -16,11 +16,14 @@
 (defn connection-pool
   "Create a connection pool for the given database spec."
   [{:keys [subprotocol subname classname user password
-           excess-timeout idle-timeout minimum-pool-size maximum-pool-size]
+           excess-timeout idle-timeout minimum-pool-size maximum-pool-size
+           test-connection-query test-connection-on-checkout]
     :or {excess-timeout (* 30 60)
          idle-timeout (* 3 60 60)
          minimum-pool-size 3
-         maximum-pool-size 15}
+         maximum-pool-size 15
+         test-connection-query nil
+         test-connection-on-checkout false}
     :as spec}]
   {:datasource (doto (ComboPooledDataSource.)
                  (.setDriverClass classname)
@@ -30,7 +33,9 @@
                  (.setMaxIdleTimeExcessConnections excess-timeout)
                  (.setMaxIdleTime idle-timeout)
                  (.setMinPoolSize minimum-pool-size)
-                 (.setMaxPoolSize maximum-pool-size))})
+                 (.setMaxPoolSize maximum-pool-size)
+                 (.setTestConnectionOnCheckout test-connection-on-checkout)
+                 (.setPreferredTestQuery test-connection-query))})
 
 (defn delay-pool
   "Return a delay for creating a connection pool for the given spec."
@@ -115,7 +120,7 @@
   (merge {:classname "com.microsoft.sqlserver.jdbc.SQLServerDriver" ; must be in classpath
           :subprotocol "sqlserver"
           :subname (str "//" host ":" port ";database=" db ";user=" user ";password=" password)
-          :make-pool? make-pool?} 
+          :make-pool? make-pool?}
          opts))
 
 (defn msaccess
