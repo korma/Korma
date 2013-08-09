@@ -61,7 +61,7 @@ And include log4j in your project.clj:
 
 (select users
   (where {:usersname "chris"}))
-;; executes: SELECT * FROM users WHERE (users.usersname = 'chris)'
+;; executes: SELECT * FROM users WHERE (users.usersname = 'chris')
 
 (select users 
   (where {:active true})
