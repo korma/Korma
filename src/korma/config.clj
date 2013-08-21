@@ -1,8 +1,8 @@
 (ns korma.config)
 
-(def options (atom {:delimiters ["\"" "\""]
-                    :naming {:fields identity
-                             :keys identity}}))
+(defonce options (atom {:delimiters ["\"" "\""]
+                        :naming {:fields identity
+                        :keys identity}}))
 
 (defn- ->delimiters [cs]
   (if cs
