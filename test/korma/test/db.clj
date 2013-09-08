@@ -18,7 +18,9 @@
    :excess-timeout 99
    :idle-timeout 88
    :minimum-pool-size 5
-   :maximum-pool-size 20})
+   :maximum-pool-size 20
+   :test-connection-on-checkout true
+   :test-connection-query "SELECT 1"})
 
 (deftest connection-pooling-default-test
   (let [pool (connection-pool db-config-with-defaults)
@@ -31,7 +33,8 @@
     (is (= 1800 (.getMaxIdleTimeExcessConnections datasource)))
     (is (= 10800 (.getMaxIdleTime datasource)))
     (is (= 3 (.getMinPoolSize datasource)))
-    (is (= 15 (.getMaxPoolSize datasource)))))
+    (is (= 15 (.getMaxPoolSize datasource)))
+    (is (= false (.isTestConnectionOnCheckout datasource)))))
 
 (deftest connection-pooling-test
   (let [pool (connection-pool db-config-with-options-set)
@@ -39,7 +42,9 @@
     (is (= 99 (.getMaxIdleTimeExcessConnections datasource)))
     (is (= 88 (.getMaxIdleTime datasource)))
     (is (= 5 (.getMinPoolSize datasource)))
-    (is (= 20 (.getMaxPoolSize datasource)))))
+    (is (= 20 (.getMaxPoolSize datasource)))
+    (is (= (:test-connection-query db-config-with-options-set) (.getPreferredTestQuery datasource)))
+    (is (= true (.isTestConnectionOnCheckout datasource)))))
 
 (deftest spec-with-missing-keys-returns-itself
   (defdb valid {:datasource :from-app-server})
