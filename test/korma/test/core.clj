@@ -7,11 +7,16 @@
 
 (defdb test-db-opts (postgres {:db "korma" :user "korma" :password "kormapass" :delimiters "" :naming {:fields string/upper-case}}))
 (defdb test-db (postgres {:db "korma" :user "korma" :password "kormapass"}))
+(defdb test-db-alias (postgres {:db "korma" :user "korma" :password "kormapass" :alias-delimiter " "}))
 
 (defdb mem-db (h2 {:db "mem:test"}))
 
 (defentity delims
   (database test-db-opts))
+
+(defentity alias-entity
+  (table :alias :a)
+  (database test-db-alias))
 
 (defentity users)
 (defentity state)
@@ -304,6 +309,18 @@
   (sql-only
     (is (= "SELECT DELIMS.* FROM DELIMS"
            (select delims)))))
+
+(deftest alias-delimiter-options
+  (sql-only
+    (is (= "SELECT \"a\".* FROM \"alias\" \"a\""
+           (select alias-entity)))))
+
+(deftest alias-delimiter-options-with-fields
+  (sql-only
+    (is (= "SELECT \"a\".\"foo\" \"a\", \"a\".\"bar\" \"b\" FROM \"alias\" \"a\""
+           (select
+            alias-entity
+            (fields [:foo :a] [:bar :b]))))))
 
 (deftest false-set-in-update
   (sql-only

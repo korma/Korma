@@ -2,7 +2,8 @@
 
 (defonce options (atom {:delimiters ["\"" "\""]
                         :naming {:fields identity
-                        :keys identity}}))
+                                 :keys identity}
+                        :alias-delimiter " AS "}))
 
 (defn- ->delimiters [cs]
   (if cs
@@ -16,9 +17,10 @@
           :fields identity}
          strategy))
 
-(defn extract-options [{:keys [naming delimiters subprotocol]}]
+(defn extract-options [{:keys [naming delimiters subprotocol alias-delimiter]}]
   {:naming (->naming naming)
    :delimiters (->delimiters delimiters)
+   :alias-delimiter (or alias-delimiter " AS ")
    :subprotocol subprotocol})
 
 (defn set-delimiters
