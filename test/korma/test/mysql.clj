@@ -63,3 +63,8 @@
      (update users-live-mysql (set-fields {:name "THIAGO"}) (where {:name "thiago"}))))
 
   (clean-korma-db))
+
+(deftest mysql-delim-options
+  (sql-only
+    (is (= (update users-mysql (set-fields {:field "value"}))
+           "UPDATE `users-mysql` SET `field` = ?"))))
