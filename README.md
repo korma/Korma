@@ -11,7 +11,7 @@ Tasty SQL for Clojure.
 Simply add Korma as a dependency to your lein project:
 
 ```clojure
-[korma "0.3.0-RC5"]
+[korma "0.3.0-RC6"]
 ```
 
 ## Docs and Real Usage
