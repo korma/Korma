@@ -1,3 +1,13 @@
+0.3.0-RC6
+---------
+* Options for IdleConnectionTestPeriod and TestConnectionOnCheckin (federkasten)
+* defonce config options to prevent issues with MySQL delimiters (cosmi)
+* README cleanup (writa)
+* Can now run a test query on checkout for connection verification (joekarl)
+* Introduced alias-delimiter option to choose word for alias (ktsujister and Ringman)
+* Fixed issue with set-fields not applying db delimiters (mjtodd)
+* Made korma.sql.engine/bind-params public for incubator (sgrove)
+
 0.3.0-RC5
 ---------
 
