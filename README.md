@@ -89,7 +89,7 @@ And include log4j in your project.clj:
 
 
 (defentity address
- (table-fields :street :city :zip))
+ (entity-fields :street :city :zip))
 
 (defentity users
  (has-one address))
