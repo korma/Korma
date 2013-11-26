@@ -32,6 +32,10 @@
 (defentity users-alias
   (table :users :u))
 
+(defentity users-with-entity-fields
+  (table :users)
+  (entity-fields :id :username))
+
 (defentity ^{:private true} blah (pk :cool) (has-many users {:fk :cool_id}))
 
 (deftest test-defentity-accepts-metadata
@@ -55,6 +59,8 @@
          "SELECT \"users\".* FROM \"users\""
          (select users-alias)
          "SELECT \"u\".* FROM \"users\" AS \"u\""
+         (select users-with-entity-fields)
+         "SELECT \"users\".\"id\", \"users\".\"username\" FROM \"users\""
          (select users
                  (fields :id :username))
          "SELECT \"users\".\"id\", \"users\".\"username\" FROM \"users\""
@@ -507,12 +513,10 @@
 (declare mtm1 mtm2)
 
 (defentity mtm1
-  (entity-fields :field1)
   (many-to-many mtm2 :mtm1_mtm2 {:lfk :mtm1_id
                                  :rfk :mtm2_id}))
 
 (defentity mtm2
-  (entity-fields :field2)
   (many-to-many mtm1 :mtm1_mtm2 {:lfk :mtm2_id
                                  :rfk :mtm1_id}))
 
@@ -553,11 +557,9 @@
 (declare mtmdk1 mtmdk2)
 
 (defentity mtmdk1
-  (entity-fields :field1)
   (many-to-many mtmdk2 :mtmdk1_mtmdk2))
 
 (defentity mtmdk2
-  (entity-fields :field2)
   (many-to-many mtmdk1 :mtmdk1_mtmdk2))
 
 (deftest many-to-many-default-keys

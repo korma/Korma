@@ -36,19 +36,21 @@
          (merge ~'this-query ~m)))))
 
 (defn select* 
-  "Create an empty select query. Ent can either be an entity defined by defentity,
+  "Create a select query with fields provided in Ent.  If fields are not provided,
+  create an empty select query. Ent can either be an entity defined by defentity,
   or a string of the table name"
   [ent]
-  (make-query ent {:type :select
-                   :fields [::*]
-                   :from [(:ent this-query)]
-                   :modifiers []
-                   :joins []
-                   :where []
-                   :order []
-                   :aliases #{}
-                   :group []
-                   :results :results}))
+  (let [default-fields (not-empty (:fields ent))]
+    (make-query ent {:type :select
+                     :fields (or default-fields [::*])
+                     :from [(:ent this-query)]
+                     :modifiers []
+                     :joins []
+                     :where []
+                     :order []
+                     :aliases #{}
+                     :group []
+                     :results :results})))
 
 (defn update* 
   "Create an empty update query. Ent can either be an entity defined by defentity,
@@ -607,7 +609,7 @@
   "Set the fields to be retrieved by default in select queries for the
   entity."
   [ent & fields]
-  (update-in ent [:fields] utils/vconcat (map #(eng/prefix ent %) fields)))
+  (update-in ent [:fields] utils/vconcat fields))
 
 (defn table
   "Set the name of the table and an optional alias to be used for the entity. 
