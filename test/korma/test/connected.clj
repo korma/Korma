@@ -40,22 +40,14 @@
 (defentity user
   (table :users)
   (has-many address {:fk :user-id})
-  (entity-fields
-   :name :age)
-
   (transform
    #(update-in % [:address] (partial sort-by :id))))
 
 (defentity address
   (belongs-to user {:fk :user-id})
-  (belongs-to state)
-  
-  (entity-fields
-   :number :street :city :zip))
+  (belongs-to state))
 
-(defentity state
-  (entity-fields
-   :name))
+(defentity state)
 
 (def initial-data
   {:state
