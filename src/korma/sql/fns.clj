@@ -23,6 +23,8 @@
 (defn pred-<= [k v]     (infix k "<=" v))
 (defn pred-like [k v]   (infix k "LIKE" v))
 
+(defn pred-exists [v]   (wrapper "EXISTS" v))
+
 (defn pred-between [k [v1 v2]]
   (trinary k "BETWEEN" v1 "AND" v2))
 

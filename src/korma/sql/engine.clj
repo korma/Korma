@@ -161,6 +161,7 @@
                  'or 'korma.sql.fns/pred-or
                  'not 'korma.sql.fns/pred-not
                  'in 'korma.sql.fns/pred-in
+                 'exists 'korma.sql.fns/pred-exists
                  'not-in 'korma.sql.fns/pred-not-in
                  'between 'korma.sql.fns/pred-between
                  '> 'korma.sql.fns/pred->
