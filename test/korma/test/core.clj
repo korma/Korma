@@ -1,5 +1,6 @@
 (ns korma.test.core
-  (:require [clojure.string :as string])
+  (:require [clojure.string :as string]
+            [clojure.java.jdbc :as jdbc])
   (:use clojure.test
         korma.config
         korma.core
@@ -650,3 +651,18 @@
                                                                         :c 3})))
                                            (order :a)))))))
 
+(defentity state2 (transform identity))
+(defentity address2 (belongs-to state2))
+
+(deftest test-belongs-to-with-transform-fn-for-subentity
+    (is (= (str "dry run :: SELECT \"address2\".* FROM \"address2\" :: []\n"
+                "dry run :: SELECT \"state2\".* FROM \"state2\" WHERE (\"state2\".\"id\" = ?) :: [1]\n")
+           (with-out-str (dry-run (select address2 (with state2)))))))
+
+(defentity address3 (transform identity))
+(defentity user3 (has-one address3))
+
+(deftest test-has-one-with-transform-fn-for-subentity
+  (is (= (str "dry run :: SELECT \"user3\".* FROM \"user3\" :: []\n"
+              "dry run :: SELECT \"address3\".* FROM \"address3\" WHERE (\"address3\".\"user3_id\" = ?) :: [1]\n")
+         (with-out-str (dry-run (select user3 (with address3)))))))
