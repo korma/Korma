@@ -680,8 +680,7 @@
     (merge-query query neue)))
 
 (defn- with-later [rel query ent body-fn]
-  (let [fk (:fk rel)
-        fk-key (:fk-key rel)
+  (let [fk-key (:fk-key rel)
         pk (get-in query [:ent :pk])
         table (keyword (eng/table-alias ent))]
     (post-query query 
