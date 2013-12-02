@@ -471,8 +471,12 @@
      (= *exec-mode* :query) query
      (= *exec-mode* :dry-run) (do
                                 (println "dry run ::" sql "::" (vec params))
-                                (let [pk (-> query :ent :pk)
-                                      results (apply-posts query [{pk 1}])]
+                                (let [result-keys (conj (->> query :ent :rel vals
+                                                             (map deref)
+                                                             (filter (comp #{:belongs-to} :rel-type))
+                                                             (map :fk-key))
+                                                        (-> query :ent :pk))
+                                      results (apply-posts query [(zipmap result-keys (repeat 1))])]
                                   (first results)
                                   results))
      :else (let [results (db/do-query query)]
