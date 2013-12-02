@@ -679,7 +679,7 @@
                  (update-in [:group] #(force-prefix sub-ent %)))]
     (merge-query query neue)))
 
-(defn- with-later [rel query ent body-fn]
+(defn- with-one-to-many [rel query ent body-fn]
   (let [fk-key (:fk-key rel)
         pk (get-in query [:ent :pk])
         table (keyword (eng/table-alias ent))]
@@ -690,7 +690,7 @@
                                          (body-fn)
                                          (where {fk-key (get % pk)})))))))
 
-(defn- with-now [rel query ent body-fn]
+(defn- with-one-to-one [rel query ent body-fn]
   (let [table (if (:alias rel)
                 [(:table ent) (:alias ent)]
                 (:table ent))
@@ -710,8 +710,8 @@
 (defn with* [query sub-ent body-fn]
   (let [rel (get-rel (:ent query) sub-ent)]
     (case (:rel-type rel)
-      (:has-one :belongs-to) (with-now rel query sub-ent body-fn)
-      :has-many              (with-later rel query sub-ent body-fn)
+      (:has-one :belongs-to) (with-one-to-one rel query sub-ent body-fn)
+      :has-many              (with-one-to-many rel query sub-ent body-fn)
       :many-to-many          (with-many-to-many rel query sub-ent body-fn)
       (throw (Exception. (str "No relationship defined for table: " (:table sub-ent)))))))
 
