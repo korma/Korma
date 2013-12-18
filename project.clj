@@ -12,8 +12,9 @@
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [c3p0/c3p0 "0.9.1.2"]
                  [org.clojure/java.jdbc "0.2.3"]]
+
+  :min-lein-version "2.0.0"
   
-  ;;Lein2 - the way of the future
   :profiles {:dev {:dependencies [[com.h2database/h2 "1.3.164"]
                                   [gui-diff "0.4.0"]
                                   [postgresql "9.0-801.jdbc4"]
@@ -40,8 +41,4 @@
                                     [criterium "0.3.1"]]}}
   :aliases {"run-tests" ["with-profile" "1.3.0:1.4.0:1.5.0" "test"]
             "slamhound" ["run" "-m" "slam.hound"]}
-  :jvm-opts ["-Dline.separator=\n"]
-
-  ;; Lein1 - will be removed at some point
-  :dev-dependencies [[com.h2database/h2 "1.3.164"]
-                     [postgresql "9.0-801.jdbc4"]])
+  :jvm-opts ["-Dline.separator=\n"])
