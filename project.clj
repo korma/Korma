@@ -25,17 +25,14 @@
                              [jonase/eastwood "0.0.2"]
                              [lein-localrepo "0.4.1"]]}
              :1.3 {:dependencies [[org.clojure/clojure "1.3.0"]
-                                  [org.clojure/java.jdbc "0.2.3"]
                                   [mysql/mysql-connector-java "5.1.22"]
                                   [com.h2database/h2 "1.3.164"]
                                   [criterium "0.3.1"]]}
              :1.4 {:dependencies [[org.clojure/clojure "1.4.0"]
-                                  [org.clojure/java.jdbc "0.2.3"]
                                   [mysql/mysql-connector-java "5.1.22"]
                                   [com.h2database/h2 "1.3.164"]
                                   [criterium "0.3.1"]]}
              :1.5 {:dependencies [[org.clojure/clojure "1.5.1"]
-                                  [org.clojure/java.jdbc "0.2.3"]
                                   [mysql/mysql-connector-java "5.1.22"]
                                   [com.h2database/h2 "1.3.164"]
                                   [criterium "0.3.1"]]}}
