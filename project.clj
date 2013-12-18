@@ -8,12 +8,13 @@
                     korma.sql.utils]
           :src-dir-uri "https://github.com/korma/Korma/blob/master"
           :src-linenum-anchor-prefix "L"}
+
+  :dependencies [[org.clojure/clojure "1.5.1"]
+                 [c3p0/c3p0 "0.9.1.2"]
+                 [org.clojure/java.jdbc "0.2.3"]]
   
   ;;Lein2 - the way of the future
-  :profiles {:user {:dependencies [[org.clojure/clojure "1.5.1"]
-                                   [c3p0/c3p0 "0.9.1.2"]
-                                   [org.clojure/java.jdbc "0.2.3"]]}
-             :dev {:dependencies [[com.h2database/h2 "1.3.164"]
+  :profiles {:dev {:dependencies [[com.h2database/h2 "1.3.164"]
                                   [gui-diff "0.4.0"]
                                   [postgresql "9.0-801.jdbc4"]
                                   [slamhound "1.3.1"]
@@ -42,8 +43,5 @@
   :jvm-opts ["-Dline.separator=\n"]
 
   ;; Lein1 - will be removed at some point
-  :dependencies [[org.clojure/clojure "1.5.1"]
-                 [c3p0/c3p0 "0.9.1.2"]
-                 [org.clojure/java.jdbc "0.2.3"]]
   :dev-dependencies [[com.h2database/h2 "1.3.164"]
                      [postgresql "9.0-801.jdbc4"]])
