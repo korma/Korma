@@ -62,12 +62,12 @@ And include log4j in your project.clj:
 ;; executes: SELECT * FROM users
 
 (select users
-  (fields :usersname :id))
-;; executes: SELECT users.usersname, users.id FROM users
+  (fields :username :id))
+;; executes: SELECT users.username, users.id FROM users
 
 (select users
-  (where {:usersname "chris"}))
-;; executes: SELECT * FROM users WHERE (users.usersname = 'chris')
+  (where {:username "chris"}))
+;; executes: SELECT * FROM users WHERE (users.username = 'chris')
 
 (select users 
   (where {:active true})
@@ -77,21 +77,21 @@ And include log4j in your project.clj:
 ;; executes: SELECT * FROM users WHERE (users.active = TRUE) ORDER BY users.created DESC LIMIT 5 OFFSET 3
 
 (select users
-  (where (or (= :usersname "chris")
+  (where (or (= :username "chris")
              (= :email "chris@chris.com"))))
-;; executes: SELECT * FROM users WHERE (users.usersname = 'chris' OR users.email = 'chris@chris.com')
+;; executes: SELECT * FROM users WHERE (users.username = 'chris' OR users.email = 'chris@chris.com')
 
 (select users
-  (where {:usersname [like "chris"]
+  (where {:username [like "chris"]
           :status "active"
           :location [not= nil]))
-;; executes SELECT * FROM users WHERE (users.usersname LIKE 'chris' AND users.status = 'active' AND users.location IS NOT NULL)
+;; executes SELECT * FROM users WHERE (users.username LIKE 'chris' AND users.status = 'active' AND users.location IS NOT NULL)
 
 (select users
-  (where (or {:usersname "chris"
+  (where (or {:username "chris"
               :first "chris"}
              {:email [like "%@chris.com"]})))
-;; executes: SELECT * FROM users WHERE ((users.usersname = 'chris' AND users.first = 'chris') OR users.email LIKE '%@chris.com)'
+;; executes: SELECT * FROM users WHERE ((users.username = 'chris' AND users.first = 'chris') OR users.email LIKE '%@chris.com)'
 
 
 (defentity address
