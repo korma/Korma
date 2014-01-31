@@ -1,3 +1,7 @@
+0.3.0
+-----
+No changes since the sixth release candidate.
+
 0.3.0-RC6
 ---------
 * Options for IdleConnectionTestPeriod and TestConnectionOnCheckin (federkasten)
