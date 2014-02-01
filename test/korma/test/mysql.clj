@@ -1,6 +1,6 @@
 (ns korma.test.mysql
   (:require [korma.mysql :as mysql]
-            [clojure.java.jdbc :as jdbc])
+            [clojure.java.jdbc.deprecated :as jdbc])
   (:use clojure.test
         korma.config
         korma.core
