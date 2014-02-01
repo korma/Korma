@@ -2,7 +2,6 @@
   (:require [clojure.string :as string]
             [clojure.walk :as walk]
             [korma.config :as conf]
-            [korma.sql.engine :as user]
             [korma.sql.utils :as utils]))
 
 ;;*****************************************************
