@@ -118,6 +118,21 @@
           :make-pool? make-pool?}
          opts))
 
+(defn vertica
+  "Create a database specification for a vertica database. Opts should include keys
+  for :db, :user, and :password. You can also optionally set host and port.
+  Delimiters are automatically set to \"`\"."
+  [{:keys [host port db make-pool?]
+    :or {host "localhost", port 5433, db "", make-pool? true}
+    :as opts}]
+  (merge {:classname "com.vertica.jdbc.Driver" ; must be in classpath
+          :subprotocol "vertica"
+          :subname (str "//" host ":" port "/" db)
+          :delimiters "\""
+          :make-pool? make-pool?}
+         opts))
+
+
 (defn mssql
   "Create a database specification for a mssql database. Opts should include keys
   for :db, :user, and :password. You can also optionally set host and port."
