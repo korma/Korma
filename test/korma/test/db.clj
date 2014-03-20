@@ -1,7 +1,7 @@
 (ns korma.test.db
   (:use [clojure.test :only [deftest is testing]]
         [korma.db :only [connection-pool defdb get-connection h2
-                         msaccess mssql mysql odbc oracle postgres sqlite3]]))
+                         msaccess mssql mysql odbc oracle postgres sqlite3 vertica]]))
 
 
 (def db-config-with-defaults
@@ -109,6 +109,28 @@
             :delimiters "`"
             :make-pool? false}
            (mysql {:host "host"
+                   :port "port"
+                   :db "db"
+                   :make-pool? false})))))
+
+(deftest test-vertica
+  (testing "vertica - defaults"
+    (is (= {:classname "com.vertica.jdbc.Driver"
+            :subprotocol "vertica"
+            :subname "//localhost:5433/"
+            :delimiters "\""
+            :make-pool? true}
+           (vertica {}))))
+  (testing "vertica - options selected"
+    (is (= {:db "db"
+            :port "port"
+            :host "host"
+            :classname "com.vertica.jdbc.Driver"
+            :subprotocol "vertica"
+            :subname "//host:port/db"
+            :delimiters "\""
+            :make-pool? false}
+           (vertica {:host "host"
                    :port "port"
                    :db "db"
                    :make-pool? false})))))
