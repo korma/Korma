@@ -1,6 +1,8 @@
-0.3.0
------
-No changes since the sixth release candidate.
+0.3.0-RC7
+---------
+* Upgrade java.jdbc to 0.3, use deprecated namespace (MerelyAPseudonym)
+* Add support for HP Vertica (Chris Benninger)
+* Add transform fn support to one-to-one relations (Immo Heikkinen)
 
 0.3.0-RC6
 ---------
