@@ -27,7 +27,8 @@
                                    [criterium "0.3.1"]]}
              :1.3 {:dependencies [[org.clojure/clojure "1.3.0"]]}
              :1.4 {:dependencies [[org.clojure/clojure "1.4.0"]]}
-             :1.5 {:dependencies [[org.clojure/clojure "1.5.1"]]}}
+             :1.5 {:dependencies [[org.clojure/clojure "1.5.1"]]}
+             :1.6 {:dependencies [[org.clojure/clojure "1.6.0-RC4"]]}}
   :aliases {"run-tests" ["with-profile" "1.3:1.4:1.5" "test"]
             "slamhound" ["run" "-m" "slam.hound"]}
   :jvm-opts ["-Dline.separator=\n"])
