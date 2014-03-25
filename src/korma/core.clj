@@ -1,6 +1,7 @@
 (ns korma.core
   "Core querying and entity functions"
-  (:require [korma.sql.engine :as eng]
+  (:require [korma.config :as conf]
+            [korma.sql.engine :as eng]
             [korma.sql.fns :as sfns]
             [korma.sql.utils :as utils]
             [clojure.set :as set]
@@ -694,14 +695,27 @@
                                          (body-fn)
                                          (where {fk-key (get % pk)})))))))
 
+(defn- make-key-unique [->key m k n]
+  (let [unique-key (if (= n 1) k (keyword (->key (str (name k) "_" n))))]
+    (if (contains? m unique-key)
+      (recur ->key m k (inc n))
+      unique-key)))
+
+(defn- merge-with-unique-keys [->key m1 m2]
+  (reduce (fn [m [k v]] (assoc m (make-key-unique ->key m k 1) v)) m1 m2))
+
+(defn- get-key-naming-strategy [query]
+  (get-in (or (:options query) @conf/options) [:naming :keys]))
+
 (defn- with-one-to-one-later [entity-key subentity-key query ent body-fn]
   (post-query query
               (partial map
-                       #(merge % (first
-                                   (select ent
-                                           (body-fn)
-                                           (where {subentity-key (get % entity-key)})))))))
-
+                #(merge-with-unique-keys (get-key-naming-strategy query)
+                                         %
+                                         (first
+                                           (select ent
+                                             (body-fn)
+                                             (where {subentity-key (get % entity-key)})))))))
 
 (defn- with-has-one-later [rel query ent body-fn]
   (with-one-to-one-later (get-in query [:ent :pk]) (:fk-key rel) query ent body-fn))
