@@ -1,3 +1,7 @@
+0.3.0-RC8
+---------
+* Ensure fields are not overriden when using transform fn on subentity of one-to-one relation
+
 0.3.0-RC7
 ---------
 * Upgrade java.jdbc to 0.3, use deprecated namespace (MerelyAPseudonym)
@@ -24,12 +28,16 @@
 ---------
 
 * MS Access db config helper function (Vadim Geshel)
-* bugfix in `do-query` w/ options (RingMan)
+* bugfix in `do-query` w/ options (David Kettering)
 
 0.3.0-RC3
 ---------
 
-* .... lost track, sorry, too lazy to backfill the history here, at least today
+* Add db-spec creator for ODBC connections (David Kettering)
+* Add stdev aggregate (David Kettering)
+* Parenthesize multiple JOIN expressions (David Kettering)
+* Use optional AS keyword in alias clauses (David Kettering)
+* Use <> instead of != in relational comparisons (David Kettering)
 
 0.3.0-RC2
 ---------
