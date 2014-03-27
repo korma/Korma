@@ -191,9 +191,9 @@
 (deftest with-many
   (with-out-str
     (dry-run
-     (is (= [{:id 1 :email [{:id 1}]}]
-            (select user2
-                    (with email)))))))
+      (is (= [{:id 1 :email [{:id 1}]}]
+             (select user2
+                     (with email)))))))
 
 (deftest with-many-batch
   (is (= "dry run :: SELECT \"users\".* FROM \"users\" :: []\ndry run :: SELECT \"email\".* FROM \"email\" WHERE (\"email\".\"users_id\" IN (?)) :: [1]\n"
@@ -310,11 +310,12 @@
         (select user2 (modifier "TOP 5")))))
 
 (deftest delimiters
-  (set-delimiters "`")
-  (sql-only
-   (is (= "SELECT `users`.* FROM `users`"
-          (select user2))))
-  (set-delimiters "\""))
+  (let [delimiters (:delimiters @options)]
+    (set-delimiters "`")
+    (sql-only
+      (is (= "SELECT `users`.* FROM `users`"
+             (select user2))))
+    (apply set-delimiters delimiters)))
 
 (deftest naming-delim-options
   (sql-only
