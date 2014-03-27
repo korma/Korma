@@ -11,6 +11,11 @@
 
 (defdb mem-db (h2 {:db "mem:test"}))
 
+(use-fixtures :once
+  (fn [f]
+    (default-connection mem-db)
+    (f)))
+
 (defentity delims
   (database test-db-opts))
 
