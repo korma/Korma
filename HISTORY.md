@@ -1,3 +1,7 @@
+0.3.0
+-----
+No changes since the previous release candidate.
+
 0.3.0-RC8
 ---------
 * Ensure fields are not overriden when using transform fn on subentity of one-to-one relation
