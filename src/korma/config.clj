@@ -24,8 +24,8 @@
    :subprotocol subprotocol})
 
 (defn set-delimiters
-  "Set the global default for field delimiters in connections. Delimiters can either be
-  a string or a vector of the start and end:
+  "Set the global default for field delimiters in connections. Delimiters can
+  either be a string or a vector of the start and end:
 
   (set-delimiters \"`\")
   (set-delimiters [\"[\" \"]\"])"

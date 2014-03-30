@@ -241,7 +241,8 @@
 
   Where can also take a map at any point and will create a clause that compares keys
   to values. The value can be a vector with one of the above predicate functions 
-  describing how the key is related to the value: (where query {:name [like \"chris\"})"
+  describing how the key is related to the value:
+    (where query {:name [like \"chris\"})"
   [query form]
   (where-or-having-form #'where* query form))
 
@@ -258,11 +259,13 @@
 
   Available predicates: and, or, =, not=, <, >, <=, >=, in, like, not, between
 
-  Having can also take a map at any point and will create a clause that compares keys
-  to values. The value can be a vector with one of the above predicate functions
-  describing how the key is related to the value: (having query {:name [like \"chris\"})
+  Having can also take a map at any point and will create a clause that compares
+  keys to values. The value can be a vector with one of the above predicate
+  functions describing how the key is related to the value:
+    (having query {:name [like \"chris\"})
 
-  Having only works if you have an aggregation, using it without one will cause an error."
+  Having only works if you have an aggregation, using it without one will cause
+  an error."
   [query form]
   (where-or-having-form #'having* query form))
 
@@ -275,8 +278,8 @@
   (update-in query [:order] conj [field (or dir :ASC)]))
 
 (defn values
-  "Add records to an insert clause. values can either be a vector of maps or a single
-  map.
+  "Add records to an insert clause. values can either be a vector of maps or a
+  single map.
   
   (values query [{:name \"john\"} {:name \"ed\"}])"
   [query values]
@@ -314,8 +317,8 @@
      `(join* ~query ~type ~table (eng/pred-map ~(eng/parse-where clause)))))
 
 (defn post-query
-  "Add a function representing a query that should be executed for each result in a select.
-  This is done lazily over the result set."
+  "Add a function representing a query that should be executed for each result
+  in a select. This is done lazily over the result set."
   [query post]
   (update-in query [:post-queries] conj post))
 
@@ -372,9 +375,9 @@
   `(sqlfn* (quote ~func) ~@params))
 
 (defmacro subselect
-  "Create a subselect clause to be used in queries. This works exactly like (select ...)
-  execept it will wrap the query in ( .. ) and make sure it can be used in any current
-  query:
+  "Create a subselect clause to be used in queries. This works exactly like
+  (select ...) execept it will wrap the query in ( .. ) and make sure it can be
+  used in any current query:
 
   (select users
     (where {:id [in (subselect users2 (fields :id))]}))"
@@ -403,8 +406,8 @@
 ;;*****************************************************
 
 (defmacro sql-only
-  "Wrap around a set of queries so that instead of executing, each will return a string of the SQL 
-  that would be used."
+  "Wrap around a set of queries so that instead of executing, each will return a
+  string of the SQL that would be used."
   [& body]
   `(binding [*exec-mode* :sql]
      ~@body))
@@ -484,9 +487,10 @@
              (apply-transforms query (apply-posts query results))))))
 
 (defn exec-raw
-  "Execute a raw SQL string, supplying whether results should be returned. `sql` can either be
-  a string or a vector of the sql string and its params. You can also optionally
-  provide the connection to execute against as the first parameter.
+  "Execute a raw SQL string, supplying whether results should be returned. `sql`
+  can either be a string or a vector of the sql string and its params. You can
+  also optionally provide the connection to execute against as the first
+  parameter.
 
   (exec-raw [\"SELECT * FROM users WHERE age > ?\" [5]] :results)"
   [conn? & [sql with-results?]]
@@ -822,9 +826,10 @@
       (throw (Exception. (str "No relationship defined for table: " (:table sub-ent)))))))
 
 (defmacro with-batch
-  "Add a related entity. This behaves like `with`, except that, for has-many relationships,
-   it runs a single query to get relations of all fetched rows. This is faster than regular `with`
-   but it doesn't support many of the additional options (order, limit, offset, group, having)"
+  "Add a related entity. This behaves like `with`, except that, for has-many
+   relationships, it runs a single query to get relations of all fetched rows.
+   This is faster than regular `with` but it doesn't support many of the
+   additional options (order, limit, offset, group, having)"
   [query ent & body]
   `(with-batch* ~query ~ent (fn [q#]
                               (-> q#

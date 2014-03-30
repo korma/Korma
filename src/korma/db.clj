@@ -60,12 +60,13 @@
         db))))
 
 (defn create-db
-  "Create a db connection object manually instead of using defdb. This is often useful for
-  creating connections dynamically, and probably should be followed up with:
+  "Create a db connection object manually instead of using defdb. This is often
+   useful for creating connections dynamically, and probably should be followed
+   up with:
 
-  (default-connection my-new-conn)
+   (default-connection my-new-conn)
 
-  If the spec includes `:make-pool? true` makes a connection pool from the spec."
+   If the spec includes `:make-pool? true` makes a connection pool from the spec."
   [spec]
   {:pool (if (:make-pool? spec)
            (delay-pool spec)
@@ -73,16 +74,17 @@
    :options (conf/extract-options spec)})
 
 (defmacro defdb
-  "Define a database specification. The last evaluated defdb will be used by default
-  for all queries where no database is specified by the entity."
+  "Define a database specification. The last evaluated defdb will be used by
+  default for all queries where no database is specified by the entity."
   [db-name spec]
   `(let [spec# ~spec]
      (defonce ~db-name (create-db spec#))
      (default-connection ~db-name)))
 
 (defn postgres
-  "Create a database specification for a postgres database. Opts should include keys
-  for :db, :user, and :password. You can also optionally set host and port."
+  "Create a database specification for a postgres database. Opts should include
+  keys for :db, :user, and :password. You can also optionally set host and
+  port."
   [{:keys [host port db make-pool?]
     :or {host "localhost", port 5432, db "", make-pool? true}
     :as opts}]
@@ -172,8 +174,8 @@
          opts))
 
 (defn sqlite3
-  "Create a database specification for a SQLite3 database. Opts should include a key
-  for :db which is the path to the database file."
+  "Create a database specification for a SQLite3 database. Opts should include a
+  key for :db which is the path to the database file."
   [{:keys [db make-pool?]
     :or {db "sqlite.db", make-pool? true}
     :as opts}]
