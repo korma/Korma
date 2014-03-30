@@ -1,6 +1,6 @@
 (ns korma.test.mysql
-  (:require [korma.mysql :as mysql]
-            [clojure.java.jdbc.deprecated :as jdbc])
+  (:require [clojure.java.jdbc.deprecated :as jdbc]
+            [korma.mysql :as mysql])
   (:use clojure.test
         korma.config
         korma.core
@@ -14,20 +14,20 @@
 
 (deftest test-mysql-count
   (sql-only
-    (are [result query] (= result query)
-      "SELECT COUNT(*) AS `cnt` FROM `users-mysql` GROUP BY `users-mysql`.`id`"
-      (select users-mysql (aggregate (mysql/count :*) :cnt :id))
+   (are [result query] (= result query)
+        "SELECT COUNT(*) AS `cnt` FROM `users-mysql` GROUP BY `users-mysql`.`id`"
+        (select users-mysql (aggregate (mysql/count :*) :cnt :id))
 
-      "SELECT COUNT(`users-non-mysql`.*) AS `cnt` FROM `users-non-mysql` GROUP BY `users-non-mysql`.`id`"
-      (select users-non-mysql (aggregate (count :*) :cnt :id))
+        "SELECT COUNT(`users-non-mysql`.*) AS `cnt` FROM `users-non-mysql` GROUP BY `users-non-mysql`.`id`"
+        (select users-non-mysql (aggregate (count :*) :cnt :id))
 
-      "SELECT COUNT(*) AS `cnt` FROM `users-mysql` GROUP BY `users-mysql`.`id` HAVING (`users-mysql`.`id` = ?)"
-      (select users-mysql
-             (aggregate (mysql/count :*) :cnt :id)
-             (having {:id 5}))
+        "SELECT COUNT(*) AS `cnt` FROM `users-mysql` GROUP BY `users-mysql`.`id` HAVING (`users-mysql`.`id` = ?)"
+        (select users-mysql
+                (aggregate (mysql/count :*) :cnt :id)
+                (having {:id 5}))
 
-      "SELECT COUNT(`users-mysql`.`id`) AS `cnt` FROM `users-mysql`"
-      (select users-mysql (aggregate (mysql/count :id) :cnt)))))
+        "SELECT COUNT(`users-mysql`.`id`) AS `cnt` FROM `users-mysql`"
+        (select users-mysql (aggregate (mysql/count :id) :cnt)))))
 
 
 (defentity users-no-db-specified (database (create-db {:delimiters "`"})))
@@ -59,12 +59,12 @@
 
   (transaction
    (insert users-live-mysql (values {:name "thiago"}))
-    (transaction
-     (update users-live-mysql (set-fields {:name "THIAGO"}) (where {:name "thiago"}))))
+   (transaction
+    (update users-live-mysql (set-fields {:name "THIAGO"}) (where {:name "thiago"}))))
 
   (clean-korma-db))
 
 (deftest mysql-delim-options
   (sql-only
-    (is (= (update users-mysql (set-fields {:field "value"}))
-           "UPDATE `users-mysql` SET `field` = ?"))))
+   (is (= (update users-mysql (set-fields {:field "value"}))
+          "UPDATE `users-mysql` SET `field` = ?"))))

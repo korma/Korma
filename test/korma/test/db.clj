@@ -131,9 +131,9 @@
             :delimiters "\""
             :make-pool? false}
            (vertica {:host "host"
-                   :port "port"
-                   :db "db"
-                   :make-pool? false})))))
+                     :port "port"
+                     :db "db"
+                     :make-pool? false})))))
 
 (deftest test-mssql
   (testing "mssql - defaults"

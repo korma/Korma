@@ -1,12 +1,12 @@
 (ns korma.core
   "Core querying and entity functions"
-  (:require [korma.config :as conf]
+  (:require [clojure.set :as set]
+            [clojure.string :as string]
+            [korma.config :as conf]
+            [korma.db :as db]
             [korma.sql.engine :as eng]
             [korma.sql.fns :as sfns]
-            [korma.sql.utils :as utils]
-            [clojure.set :as set]
-            [clojure.string :as string]
-            [korma.db :as db])
+            [korma.sql.utils :as utils])
   (:use [korma.sql.engine :only [bind-query]]))
 
 (def ^{:dynamic true} *exec-mode* false)

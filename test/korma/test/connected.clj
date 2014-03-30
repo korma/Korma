@@ -178,7 +178,7 @@
      (=  (select user
                  (where {:id [in user-ids]})
                  (with address
-                       ;; with-batch will add the foreign key 
+                       ;; with-batch will add the foreign key
                        (fields :user-id :street :city)
                        (with state)))
          (select user
@@ -221,4 +221,3 @@
                  (select user
                          (with-batch address
                            banned))))))
-

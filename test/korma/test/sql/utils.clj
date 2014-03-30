@@ -9,4 +9,3 @@
     (is (= "1" (left-assoc (list 1)))))
   (testing "left-assoc with multiple items"
     (is (= "(((1)2)3)4" (left-assoc (list 1 2 3 4))))))
-

@@ -47,14 +47,14 @@
         sub (utils/sub-query? v)
         pred (utils/pred? v)]
     (cond
-      generated generated
-      pred (apply pred args)
-      func (let [vs (comma-values args)]
-             (format func vs))
-      sub (do
-            (swap! *bound-params* utils/vconcat (:params sub))
-            (utils/wrap (:sql-str sub)))
-      :else (pred-map v))))
+     generated generated
+     pred (apply pred args)
+     func (let [vs (comma-values args)]
+            (format func vs))
+     sub (do
+           (swap! *bound-params* utils/vconcat (:params sub))
+           (utils/wrap (:sql-str sub)))
+     :else (pred-map v))))
 
 (defn table-alias [{:keys [table alias]}]
   (or alias table))
@@ -67,14 +67,14 @@
 
 (defn field-identifier [field]
   (cond
-    (map? field) (map-val field)
-    (string? field) field
-    (= "*" (name field)) "*"
-    :else (let [field-name (name field)
-                parts (string/split field-name #"\.")]
-            (if-not (next parts)
-              (delimit-str field-name)
-              (string/join "." (map delimit-str parts))))))
+   (map? field) (map-val field)
+   (string? field) field
+   (= "*" (name field)) "*"
+   :else (let [field-name (name field)
+               parts (string/split field-name #"\.")]
+           (if-not (next parts)
+             (delimit-str field-name)
+             (string/join "." (map delimit-str parts))))))
 
 (defn prefix [ent field]
   (let [field-name (field-identifier field)
@@ -82,10 +82,10 @@
                                    (not (*bound-aliases* field))
                                    (= -1 (.indexOf field-name ".")))]
     (if not-already-prefixed?
-        (let [table (if (string? ent)
-                      ent
-                      (table-alias ent))]
-          (str (table-identifier table) "." field-name))
+      (let [table (if (string? ent)
+                    ent
+                    (table-alias ent))]
+        (str (table-identifier table) "." field-name))
       field-name)))
 
 (defn try-prefix [v]
@@ -100,15 +100,15 @@
          (delimit-str (name alias)))))
 
 (defn field-str [v]
-    (let [[fname alias] (if (vector? v)
-                          v
-                          [v nil])
-          fname (cond
-                  (map? fname) (map-val fname)
-                  *bound-table* (prefix *bound-table* fname)
-                  :else (field-identifier fname))
-          alias-str (alias-clause alias)]
-      (str fname alias-str)))
+  (let [[fname alias] (if (vector? v)
+                        v
+                        [v nil])
+        fname (cond
+               (map? fname) (map-val fname)
+               *bound-table* (prefix *bound-table* fname)
+               :else (field-identifier fname))
+        alias-str (alias-clause alias)]
+    (str fname alias-str)))
 
 (defn coll-str [v]
   (wrap-values v))
@@ -117,9 +117,9 @@
   (if (utils/special-map? v)
     (map-val v)
     (let [tstr (cond
-                 (string? v) v
-                 (map? v) (:table v)
-                 :else (name v))]
+                (string? v) v
+                (map? v) (:table v)
+                :else (name v))]
       (table-identifier tstr))))
 
 (defn parameterize [v]
@@ -129,13 +129,13 @@
 
 (defn str-value [v]
   (cond
-    (map? v) (map-val v)
-    (keyword? v) (field-str v)
-    (nil? v) "NULL"
-    (true? v) "TRUE"
-    (false? v) "FALSE"
-    (coll? v) (coll-str v)
-    :else (parameterize v)))
+   (map? v) (map-val v)
+   (keyword? v) (field-str v)
+   (nil? v) "NULL"
+   (true? v) "TRUE"
+   (false? v) "FALSE"
+   (coll? v) (coll-str v)
+   :else (parameterize v)))
 
 (defn not-nil? [& vs]
   (every? #(not (nil? %)) vs))
@@ -213,7 +213,7 @@
                        [pred-= v])
         pred? (predicates func)
         func (if pred?
-               (resolve pred?) 
+               (resolve pred?)
                func)]
     (func k value)))
 
@@ -221,7 +221,7 @@
   (if (and (map? m)
            (not (utils/special-map? m)))
     (apply pred-and (doall (map pred-vec m)))
-   m))
+    m))
 
 (defn parse-where [form]
   (if (string? form)
@@ -254,18 +254,18 @@
 ;;*****************************************************
 
 (defn kv-clause [pair]
-    (map-val (pred-vec pair)))
+  (map-val (pred-vec pair)))
 
 (defn from-table [v & [already-aliased?]]
   (cond
-    (string? v) (table-str v)
-    (vector? v) (let [[table alias] v]
-                  (str (from-table table :aliased) (alias-clause alias)))
-    (map? v) (if (:table v)
-               (let [{:keys [table alias]} v]
-                 (str (table-str table) (when-not already-aliased? (alias-clause alias))))
-               (map-val v))
-    :else (table-str v)))
+   (string? v) (table-str v)
+   (vector? v) (let [[table alias] v]
+                 (str (from-table table :aliased) (alias-clause alias)))
+   (map? v) (if (:table v)
+              (let [{:keys [table alias]} v]
+                (str (table-str table) (when-not already-aliased? (alias-clause alias))))
+              (map-val v))
+   :else (table-str v)))
 
 (defn join-clause [join-type table on-clause]
   (let [join-type (string/upper-case (name join-type))
@@ -320,7 +320,7 @@
                     clauses (map set= fields)
                     clauses-str (utils/comma-separated clauses)
                     neue-sql (str " SET " clauses-str)]
-    (update-in query [:sql-str] str neue-sql))))
+                (update-in query [:sql-str] str neue-sql))))
 
 (defn sql-joins [query]
   (let [clauses (for [[type table clause] (:joins query)]
@@ -396,7 +396,7 @@
      :union (-> query sql-union sql-order)
      :union-all (-> query sql-union-all sql-order)
      :intersect (-> query sql-intersect sql-order)
-     :select (-> query 
+     :select (-> query
                  sql-select
                  sql-joins
                  sql-where
@@ -404,12 +404,12 @@
                  sql-having
                  sql-order
                  sql-limit-offset)
-     :update (-> query 
+     :update (-> query
                  sql-update
                  sql-set
                  sql-where)
-     :delete (-> query 
+     :delete (-> query
                  sql-delete
                  sql-where)
-     :insert (-> query 
+     :insert (-> query
                  sql-insert))))

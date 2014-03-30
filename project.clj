@@ -14,7 +14,7 @@
                  [org.clojure/java.jdbc "0.3.3"]]
 
   :min-lein-version "2.0.0"
-  
+
   :profiles {:dev {:dependencies [[gui-diff "0.4.0"]
                                   [postgresql "9.0-801.jdbc4"]
                                   [slamhound "1.3.1"]

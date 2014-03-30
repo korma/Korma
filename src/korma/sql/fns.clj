@@ -28,9 +28,9 @@
 
 (def pred-= eng/pred-=)
 (defn pred-not= [k v] (cond
-                        (and k v) (infix k "<>" v)
-                        k         (infix k "IS NOT" v)
-                        v         (infix v "IS NOT" k)))
+                       (and k v) (infix k "<>" v)
+                       k         (infix k "IS NOT" v)
+                       v         (infix v "IS NOT" k)))
 
 ;;*****************************************************
 ;; Aggregates
@@ -38,7 +38,7 @@
 
 (defn- subprotocol [query]
   (let [default (get-in @db/_default [:options :subprotocol])]
-     (or (get-in query [:db :options :subprotocol]) default)))
+    (or (get-in query [:db :options :subprotocol]) default)))
 
 (defn agg-count [query v]
   (if (= "mysql" (subprotocol query))
