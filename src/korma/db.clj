@@ -244,13 +244,17 @@
 (defmacro with-db
   "Execute all queries within the body using the given db spec"
   [db & body]
-  `(jdbc/with-connection (get-connection ~db)
-     ~@body))
+  `(let [connection# @_default]
+     (try
+       (default-connection ~db)
+       ~@body
+       (finally
+         (default-connection connection#)))))
 
 (defn do-query [{:keys [db options] :as query}]
   (let [options (or options @conf/options)]
     (jdbc/with-naming-strategy (->naming-strategy (:naming options))
       (if (jdbc/find-connection)
         (exec-sql query)
-        (with-db (or db @_default)
+        (jdbc/with-connection (get-connection (or db @_default))
           (exec-sql query))))))
