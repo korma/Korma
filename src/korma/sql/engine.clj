@@ -220,7 +220,7 @@
 (defn pred-map [m]
   (if (and (map? m)
            (not (utils/special-map? m)))
-    (apply pred-and (doall (map pred-vec m)))
+    (apply pred-and (doall (map pred-vec (sort m))))
     m))
 
 (defn parse-where [form]
@@ -300,7 +300,7 @@
 (def noop-query "DO 0")
 
 (defn sql-insert [query]
-  (let [ins-keys (keys (first (:values query)))
+  (let [ins-keys (sort (keys (first (:values query))))
         keys-clause (utils/comma-separated (map field-identifier ins-keys))
         ins-values (insert-values-clause ins-keys (:values query))
         values-clause (utils/comma-separated ins-values)
@@ -315,7 +315,7 @@
 
 (defn sql-set [query]
   (bind-query {}
-              (let [fields (for [[k v] (:set-fields query)]
+              (let [fields (for [[k v] (sort (:set-fields query))]
                              [(utils/generated (field-identifier k)) (utils/generated (str-value v))])
                     clauses (map set= fields)
                     clauses-str (utils/comma-separated clauses)
