@@ -64,15 +64,7 @@
 
   (clean-korma-db))
 
-(comment
-  "Fix me
-
-   This doesn't actually work. Fields in SET are not delimited using delimiters from entity db options
-   but from global config options instead.
-
-   Test used to pass because global delimiters where set in korma.test.core/set-delimiters"
-
-  (deftest mysql-delim-options
-    (sql-only
-      (is (= (update users-mysql (set-fields {:field "value"}))
-             "UPDATE `users-mysql` SET `field` = ?")))))
+(deftest mysql-delim-options
+  (sql-only
+   (is (= (update users-mysql (set-fields {:field "value"}))
+          "UPDATE `users-mysql` SET `field` = ?"))))
