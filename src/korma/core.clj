@@ -686,10 +686,14 @@
         (update-in [:group] #(force-prefix sub-ent %))
         (merge-query query))))
 
+(defn assoc-db-to-entity [ent]
+  (assoc ent :db (or (:db ent) (assoc @db/_default :options @korma.config/options))))
+
 (defn- with-one-to-many [rel query ent body-fn]
   (let [fk-key (:fk-key rel)
         pk (get-in query [:ent :pk])
-        table (keyword (eng/table-alias ent))]
+        table (keyword (eng/table-alias ent))
+        ent (assoc-db-to-entity ent)]
     (post-query query
                 (partial map
                          #(assoc % table
@@ -710,14 +714,15 @@
   (get-in (or (:options query) @conf/options) [:naming :keys]))
 
 (defn- with-one-to-one-later [entity-key subentity-key query ent body-fn]
-  (post-query query
-              (partial map
-                       #(merge-with-unique-keys (get-key-naming-strategy query)
-                                                %
-                                                (first
-                                                 (select ent
-                                                         (body-fn)
-                                                         (where {subentity-key (get % entity-key)})))))))
+  (let [ent (assoc-db-to-entity ent)]
+    (post-query query
+                (partial map
+                         #(merge-with-unique-keys (get-key-naming-strategy query)
+                                                  %
+                                                  (first
+                                                   (select ent
+                                                           (body-fn)
+                                                           (where {subentity-key (get % entity-key)}))))))))
 
 (defn- with-has-one-later [rel query ent body-fn]
   (with-one-to-one-later (get-in query [:ent :pk]) (:fk-key rel) query ent body-fn))
@@ -734,7 +739,8 @@
 
 (defn- with-many-to-many [{:keys [lfk rfk rpk join-table]} query ent body-fn]
   (let [pk (get-in query [:ent :pk])
-        table (keyword (eng/table-alias ent))]
+        table (keyword (eng/table-alias ent))
+        ent (assoc-db-to-entity ent)]
     (post-query query (partial map
                                #(assoc % table
                                        (select ent
