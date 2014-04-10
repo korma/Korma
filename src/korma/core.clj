@@ -677,14 +677,14 @@
           query
           [:aliases :fields :group :joins :order :params :post-queries :where]))
 
-(defn- make-sub-query [query sub-ent body-fn]
+(defn- make-sub-query [sub-ent body-fn]
   (let [sub-query (select* sub-ent)]
-    (-> sub-query
-        (bind-query (body-fn sub-query))
-        (update-in [:fields] #(force-prefix sub-ent %))
-        (update-in [:order] #(force-prefix sub-ent %))
-        (update-in [:group] #(force-prefix sub-ent %))
-        (merge-query query))))
+    (bind-query sub-query
+                (-> sub-query
+                    (body-fn)
+                    (update-in [:fields] #(force-prefix sub-ent %))
+                    (update-in [:order] #(force-prefix sub-ent %))
+                    (update-in [:group] #(force-prefix sub-ent %))))))
 
 (defn assoc-db-to-entity [ent]
   (assoc ent :db (or (:db ent) (assoc @db/_default :options @korma.config/options))))
@@ -731,12 +731,16 @@
                                                              (body-fn)
                                                              (where {sub-ent-key (get ent ent-key)})))))))))
 
-(defn- with-one-to-one-now [rel query ent body-fn]
-  (let [table (if (:alias rel)
-                [(:table ent) (:alias ent)]
-                (:table ent))
-        query (join query table (= (:pk rel) (:fk rel)))]
-    (make-sub-query query ent body-fn)))
+(defn- with-one-to-one-now [rel query sub-ent body-fn]
+  (let [table (if (:alias rel) [(:table sub-ent) (:alias sub-ent)] (:table sub-ent))
+        [ent-key sub-ent-key] (get-join-keys rel (:ent query) sub-ent)]
+    (bind-query query
+                (merge-query
+                  (make-sub-query sub-ent body-fn)
+                  (join query
+                        table
+                        (= (raw (eng/prefix sub-ent sub-ent-key))
+                           (raw (eng/prefix (:ent query) ent-key))))))))
 
 (defn- with-many-to-many [{:keys [lfk rfk rpk join-table]} query ent body-fn]
   (let [pk (get-in query [:ent :pk])
@@ -753,8 +757,8 @@
   (let [{:keys [rel-type] :as rel} (get-rel (:ent query) sub-ent)
         transforms (seq (:transforms sub-ent))]
     (cond
-      (and (not transforms)
-           (#{:belongs-to :has-one} rel-type)) (with-one-to-one-now rel query sub-ent body-fn)
+      (and (#{:belongs-to :has-one} rel-type)
+           (not transforms))     (with-one-to-one-now rel query sub-ent body-fn)
       (#{:belongs-to :has-one} rel-type) (with-one-to-one-later rel query sub-ent body-fn)
       (= :has-many rel-type)     (with-one-to-many rel query sub-ent body-fn)
       (= :many-to-many rel-type) (with-many-to-many rel query sub-ent body-fn)

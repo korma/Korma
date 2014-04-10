@@ -204,7 +204,7 @@
 
 (deftest with-one
   (sql-only
-   (is (= "SELECT \"address\".\"state\", \"users\".\"name\" FROM \"users\" LEFT JOIN \"address\" ON \"users\".\"id\" = \"address\".\"users_id\""
+   (is (= "SELECT \"address\".\"state\", \"users\".\"name\" FROM \"users\" LEFT JOIN \"address\" ON \"address\".\"users_id\" = \"users\".\"id\""
           (select user2
                   (with address)
                   (fields :address.state :name))))))
@@ -260,12 +260,12 @@
   (sql-only
    (are [result query] (= result query)
 
-        "SELECT \"users\".*, \"address\".\"id\" FROM \"users\" LEFT JOIN \"address\" ON \"users\".\"id\" = \"address\".\"users_id\""
+        "SELECT \"users\".*, \"address\".\"id\" FROM \"users\" LEFT JOIN \"address\" ON \"address\".\"users_id\" = \"users\".\"id\""
         (select user2
                 (fields :*)
                 (with address (fields :id)))
 
-        "SELECT \"users\".*, \"address\".*, \"state\".* FROM (\"users\" LEFT JOIN \"address\" ON \"users\".\"id\" = \"address\".\"users_id\") LEFT JOIN \"state\" ON \"state\".\"id\" = \"address\".\"state_id\" WHERE (\"state\".\"state\" = ?) AND (\"address\".\"id\" > ?)"
+        "SELECT \"users\".*, \"address\".*, \"state\".* FROM (\"users\" LEFT JOIN \"address\" ON \"address\".\"users_id\" = \"users\".\"id\") LEFT JOIN \"state\" ON \"state\".\"id\" = \"address\".\"state_id\" WHERE (\"state\".\"state\" = ?) AND (\"address\".\"id\" > ?)"
         (select user2
                 (fields :*)
                 (with address
@@ -656,6 +656,10 @@
                                                                        :c 3})))
                                            (order :a)))))))
 
+;;*****************************************************
+;; Transformers for one-to-one relations
+;;****************************************************
+
 (defentity state2 (transform identity))
 (defentity address2 (belongs-to state2))
 
@@ -671,3 +675,37 @@
   (is (= (str "dry run :: SELECT \"user3\".* FROM \"user3\" :: []\n"
               "dry run :: SELECT \"address3\".* FROM \"address3\" WHERE (\"address3\".\"user3_id\" = ?) :: [1]\n")
          (with-out-str (dry-run (select user3 (with address3)))))))
+
+;;*****************************************************
+;; Delimiters for one-to-one joins
+;;****************************************************
+
+(defdb mysql-db (mysql {}))
+
+(defentity state-with-db
+  (database mysql-db)
+  (table :state))
+
+(defentity address-with-db
+  (database mysql-db)
+  (table :address)
+  (belongs-to state-with-db))
+
+(defentity user-with-db
+  (database mysql-db)
+  (table :user)
+  (has-one address-with-db))
+
+(deftest test-correct-delimiters-for-one-to-one-joins
+  (testing "correct delimiters are used in belongs-to joins"
+    (is (= "SELECT `address`.*, `state`.* FROM `address` LEFT JOIN `state` ON `state`.`id` = `address`.`state_id` WHERE (`state`.`status` = ?) ORDER BY `address`.`id` ASC"
+           (sql-only (select address-with-db
+                             (with state-with-db
+                                   (where {:status 1}))
+                             (order :id))))))
+  (testing "correct delimiters are used in has-one joins"
+    (is (= "SELECT `user`.*, `address`.* FROM `user` LEFT JOIN `address` ON `address`.`user_id` = `user`.`id` WHERE (`address`.`status` = ?) ORDER BY `user`.`id` ASC"
+           (sql-only (select user-with-db
+                             (with address-with-db
+                                   (where {:status 1}))
+                             (order :id)))))))
