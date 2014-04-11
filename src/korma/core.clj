@@ -727,8 +727,8 @@
 (defn- with-has-one-later [rel query ent body-fn]
   (with-one-to-one-later (get-in query [:ent :pk]) (:fk-key rel) query ent body-fn))
 
-(defn- with-belongs-to-later  [rel query ent body-fn]
-  (with-one-to-one-later (:fk-key rel) (get-in query [:ent :pk]) query ent body-fn))
+(defn- with-belongs-to-later [rel query ent body-fn]
+  (with-one-to-one-later (:fk-key rel) (:pk ent) query ent body-fn))
 
 (defn- with-one-to-one-now [rel query ent body-fn]
   (let [table (if (:alias rel)
