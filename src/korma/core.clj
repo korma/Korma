@@ -713,22 +713,23 @@
 (defn- get-key-naming-strategy [query]
   (get-in (or (:options query) @conf/options) [:naming :keys]))
 
-(defn- with-one-to-one-later [entity-key subentity-key query ent body-fn]
-  (let [ent (assoc-db-to-entity ent)]
+(defn- get-join-keys [rel ent sub-ent]
+  (case (:rel-type rel)
+    :has-one    [(:pk ent) (:fk-key rel)]
+    :belongs-to [(:fk-key rel) (:pk sub-ent)]))
+
+(defn- with-one-to-one-later [rel query sub-ent body-fn]
+  (let [sub-ent (assoc-db-to-entity sub-ent)
+        [ent-key sub-ent-key] (get-join-keys rel (:ent query) sub-ent)]
     (post-query query
                 (partial map
-                         #(merge-with-unique-keys (get-key-naming-strategy query)
-                                                  %
-                                                  (first
-                                                   (select ent
-                                                           (body-fn)
-                                                           (where {subentity-key (get % entity-key)}))))))))
-
-(defn- with-has-one-later [rel query ent body-fn]
-  (with-one-to-one-later (get-in query [:ent :pk]) (:fk-key rel) query ent body-fn))
-
-(defn- with-belongs-to-later [rel query ent body-fn]
-  (with-one-to-one-later (:fk-key rel) (:pk ent) query ent body-fn))
+                         (fn [ent]
+                           (merge-with-unique-keys (get-key-naming-strategy query)
+                                                   ent
+                                                   (first
+                                                     (select sub-ent
+                                                             (body-fn)
+                                                             (where {sub-ent-key (get ent ent-key)})))))))))
 
 (defn- with-one-to-one-now [rel query ent body-fn]
   (let [table (if (:alias rel)
@@ -752,16 +753,13 @@
   (let [{:keys [rel-type] :as rel} (get-rel (:ent query) sub-ent)
         transforms (seq (:transforms sub-ent))]
     (cond
-     (and (not transforms)
-          (#{:belongs-to :has-one} rel-type)) (with-one-to-one-now
-                                                rel query sub-ent body-fn)
-          (= :belongs-to rel-type)   (with-belongs-to-later
-                                       rel query sub-ent body-fn)
-          (= :has-one rel-type)      (with-has-one-later rel query sub-ent body-fn)
-          (= :has-many rel-type)     (with-one-to-many rel query sub-ent body-fn)
-          (= :many-to-many rel-type) (with-many-to-many rel query sub-ent body-fn)
-          :else (throw (Exception. (str "No relationship defined for table: "
-                                        (:table sub-ent)))))))
+      (and (not transforms)
+           (#{:belongs-to :has-one} rel-type)) (with-one-to-one-now rel query sub-ent body-fn)
+      (#{:belongs-to :has-one} rel-type) (with-one-to-one-later rel query sub-ent body-fn)
+      (= :has-many rel-type)     (with-one-to-many rel query sub-ent body-fn)
+      (= :many-to-many rel-type) (with-many-to-many rel query sub-ent body-fn)
+      :else (throw (Exception. (str "No relationship defined for table: "
+                                    (:table sub-ent)))))))
 
 (defmacro with
   "Add a related entity to the given select query. If the entity has a relationship
