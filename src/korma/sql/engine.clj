@@ -129,13 +129,11 @@
 
 (defn str-value [v]
   (cond
-   (map? v) (map-val v)
-   (keyword? v) (field-str v)
-   (nil? v) "NULL"
-   (true? v) "TRUE"
-   (false? v) "FALSE"
-   (coll? v) (coll-str v)
-   :else (parameterize v)))
+    (map? v) (map-val v)
+    (keyword? v) (field-str v)
+    (nil? v) "NULL"
+    (coll? v) (coll-str v)
+    :else (parameterize v)))
 
 (defn not-nil? [& vs]
   (every? #(not (nil? %)) vs))

@@ -82,7 +82,7 @@
                  (order :created)
                  (limit 5)
                  (offset 3))
-         "SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"active\" = TRUE) ORDER BY \"users\".\"created\" ASC LIMIT 5 OFFSET 3")))
+         "SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"active\" = ?) ORDER BY \"users\".\"created\" ASC LIMIT 5 OFFSET 3")))
 
 (deftest update-function
   (is (= "UPDATE \"users\" SET \"first\" = ?, \"last\" = ? WHERE (\"users\".\"id\" = ?)"
@@ -335,16 +335,16 @@
            (fields [:foo :a] [:bar :b]))))))
 
 (deftest false-set-in-update
-  (sql-only
-   (are [result query] (= result query)
-        "UPDATE \"users\" SET \"blah\" = FALSE"
-        (update user2 (set-fields {:blah false}))
+  (query-only
+    (are [result query] (= result (select-keys query [:sql-str :params]))
+         {:sql-str "UPDATE \"users\" SET \"blah\" = ?" :params [false]}
+         (update user2 (set-fields {:blah false}))
 
-        "UPDATE \"users\" SET \"blah\" = NULL"
-        (update user2 (set-fields {:blah nil}))
+         {:sql-str "UPDATE \"users\" SET \"blah\" = NULL" :params []}
+         (update user2 (set-fields {:blah nil}))
 
-        "UPDATE \"users\" SET \"blah\" = TRUE"
-        (update user2 (set-fields {:blah true})))))
+         {:sql-str "UPDATE \"users\" SET \"blah\" = ?" :params [true]}
+         (update user2 (set-fields {:blah true})))))
 
 (deftest raws
   (sql-only
