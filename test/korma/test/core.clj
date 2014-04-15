@@ -367,6 +367,27 @@
                 (where {:id [in (subselect users
                                            (where {:age [> 5]}))]})))
 
+       "SELECT \"state\".* FROM \"state\" WHERE EXISTS((SELECT \"address\".* FROM \"address\" WHERE ((\"address\".\"id\" > ?) AND \"address\".\"state_id\" = \"state\".\"id\")))"
+       (sql-only
+         (select state
+                 (where (exists (subselect address 
+                                           (where (and {:id [> 5]} (= :state_id :state.id))))))))
+
+       "SELECT \"state\".* FROM \"state\" WHERE (EXISTS((SELECT \"address\".* FROM \"address\" WHERE ((\"address\".\"id\" > ?) AND \"address\".\"state_id\" = \"state\".\"id\"))) AND NOT(EXISTS((SELECT \"address\".* FROM \"address\" WHERE ((\"address\".\"id\" < ?) OR \"address\".\"state_id\" <> \"state\".\"id\")))))"
+       (sql-only
+         (select state
+                 (where (and (exists (subselect address 
+                                           (where (and {:id [> 5]} (= :state_id :state.id)))))
+                             (not (exists (subselect address
+                                           (where (or  {:id [< 10]} (not= :state_id :state.id))))))))))
+
+       "SELECT \"state\".* FROM \"state\" WHERE EXISTS((SELECT \"address\".* FROM \"address\" WHERE ((\"address\".\"id\" > ?) AND NOT(EXISTS((SELECT \"users\".* FROM \"users\" WHERE \"address\".\"user_id\" = \"users\".\"id\"))))))"
+       (sql-only
+         (select state
+                 (where (exists (subselect address 
+                                           (where (and {:id [> 5]} 
+                                                       (not (exists (subselect user2 (where (= :address.user_id :id))))))))))))
+
        "SELECT \"users\".* FROM \"users\", (SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"age\" > ?)) AS \"u2\""
        (sql-only
         (select users
