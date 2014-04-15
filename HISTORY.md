@@ -1,3 +1,10 @@
+0.3.1
+-----
+* SQL generation is now deterministic across Clojure versions
+* Fix for using wrong delimiters in JOIN query for has-one and belongs-to relations
+* Fix join columns used for fetching belongs-to relation when subentity is not using default primary key and has transform fn defined
+* Fix for losing db connection or using wrong connection when lazily fetching subentities (David Raphael)
+
 0.3.0
 -----
 No changes since the previous release candidate.
