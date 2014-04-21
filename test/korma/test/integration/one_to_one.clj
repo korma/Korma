@@ -21,7 +21,7 @@
 
 (def schema
   ["drop table if exists \"state\";"
-   "drop table if exists \"users\";"
+   "drop table if exists \"user\";"
    "drop table if exists \"address\";"
    "create table \"state\" (\"state_id\" varchar(20),
                          \"name\" varchar(100));"
