@@ -1,7 +1,7 @@
 (ns korma.test.db
   (:use [clojure.test :only [deftest is testing]]
         [korma.db :only [connection-pool defdb get-connection h2
-                         msaccess mssql mysql odbc oracle postgres sqlite3 vertica]]))
+                         msaccess mssql mysql odbc oracle postgres sqlite3 vertica firebird]]))
 
 
 (def db-config-with-defaults
@@ -52,6 +52,28 @@
 
 
 ;;; DB spec creation fns
+
+(deftest test-firebird
+  (testing "firebirdsql - defaults"
+    (is (= {:classname "org.firebirdsql.jdbc.FBDriver"
+            :subprotocol "firebirdsql"
+            :subname "localhost/3050:?encoding=UTF8"
+            :make-pool? true}
+           (firebird {}))))
+  (testing "firebirdsql - options selected"
+    (is (= {:db "db"
+            :port "port"
+            :host "host"
+            :classname "org.firebirdsql.jdbc.FBDriver"
+            :subprotocol "firebirdsql"
+            :encoding "NONE"
+            :subname "host/port:db?encoding=NONE"
+            :make-pool? false}
+           (firebird {:host "host"
+                      :port "port"
+                      :db "db"
+                      :encoding "NONE"
+                      :make-pool? false})))))
 
 (deftest test-postgres
   (testing "postgres - defaults"
