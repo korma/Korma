@@ -81,6 +81,18 @@
      (defonce ~db-name (create-db spec#))
      (default-connection ~db-name)))
 
+(defn firebird
+  "Create a database specification for a FirebirdSQL database. Opts should include
+  keys for :db, :user, :password. You can also optionally set host, port, make-pool? and encoding"
+  [{:keys [host port db make-pool? encoding]
+    :or {host "localhost", port 3050, db "", make-pool? true, encoding "UTF8"}
+    :as opts}]
+  (merge {:classname "org.firebirdsql.jdbc.FBDriver" ; must be in classpath
+          :subprotocol "firebirdsql"
+          :subname (str host "/" port ":" db "?encoding=" encoding)
+          :make-pool? make-pool?}
+         opts))
+
 (defn postgres
   "Create a database specification for a postgres database. Opts should include
   keys for :db, :user, and :password. You can also optionally set host and
