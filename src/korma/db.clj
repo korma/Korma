@@ -6,6 +6,8 @@
 
 (defonce _default (atom nil))
 
+(def ^:dynamic *current-db* nil)
+
 (defn default-connection
   "Set the database connection that Korma should use by default when no
   alternative is specified."
@@ -256,17 +258,14 @@
 (defmacro with-db
   "Execute all queries within the body using the given db spec"
   [db & body]
-  `(let [connection# @_default]
-     (try
-       (default-connection ~db)
-       ~@body
-       (finally
-         (default-connection connection#)))))
+  `(binding [*current-db* ~db]
+     (jdbc/with-connection (korma.db/get-connection ~db)
+       ~@body)))
 
 (defn do-query [{:keys [db options] :as query}]
   (let [options (or options @conf/options)]
     (jdbc/with-naming-strategy (->naming-strategy (:naming options))
       (if (jdbc/find-connection)
         (exec-sql query)
-        (jdbc/with-connection (get-connection (or db @_default))
+        (with-db (or db @_default)
           (exec-sql query))))))

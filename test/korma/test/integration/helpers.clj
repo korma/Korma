@@ -20,6 +20,9 @@
 (defn mem-db []
   (kdb/create-db (kdb/h2 {:db "mem:korma_test"})))
 
+(defn mem-db-2 []
+  (kdb/create-db (kdb/h2 {:db "mem:korma_test_2"})))
+
 (defmacro with-delimiters [& body]
   `(let [delimiters# (:delimiters @kconfig/options)]
      (try
