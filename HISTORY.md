@@ -1,3 +1,11 @@
+0.3.2
+-----
+* Support EXISTS keyword (pocket7878)
+* Add helper for creating FirebirdSQL connection (ls4f)
+* Fix concurrency issue on with-db (David Raphael)
+* Use bind parameters for boolean values
+* Fix error message for missing db connection when lazily fetching subentities
+
 0.3.1
 -----
 * SQL generation is now deterministic across Clojure versions
