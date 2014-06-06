@@ -687,10 +687,11 @@
                     (update-in [:group] #(force-prefix sub-ent %))))))
 
 (defn assoc-db-to-entity [ent]
-  (let [db (or db/*current-db* @db/_default)]
-    (if (or (db :ent) (not db))
-      ent
-      (database ent (assoc db :options @korma.config/options)))))
+  (if (:db ent)
+    ent
+    (if-let [db (or db/*current-db* @db/_default)]
+      (database ent (assoc db :options @korma.config/options))
+      ent)))
 
 (defn- with-one-to-many [rel query ent body-fn]
   (let [fk-key (:fk-key rel)
