@@ -12,8 +12,6 @@
   `(jdbc/with-connection (kdb/get-connection ~db)
      ~@body))
 
-(def ^:dynamic *data*)
-
 (deftest fails-with-old-style-with-db
   (testing "with-db without setting @_default in with-db binding"
     (kdb/default-connection nil)
