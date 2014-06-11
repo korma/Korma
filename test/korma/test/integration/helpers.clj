@@ -7,42 +7,16 @@
             [korma.db :as kdb])
   (:use clojure.test))
 
-(defn underscores->dashes [n]
-  (-> n string/lower-case (.replaceAll "_" "-") keyword))
-
-(defn dashes->underscores [n]
-  (-> n name (.replaceAll "-" "_")))
-
-(def dash-naming-strategy
-  "naming strategy that converts clojure-style names (with dashes) to sql-style names (with udnerscores)"
-  {:keys underscores->dashes :fields dashes->underscores})
-
-(defmacro with-delimiters [& body]
-  `(let [delimiters# (:delimiters @kconfig/options)]
-     (try
-       (kconfig/set-delimiters "\"" "\"")
-       ~@body
-       (finally
-         (apply kconfig/set-delimiters delimiters#)))))
-
-(defmacro with-naming [strategy & body]
-  `(let [naming# (:naming @kconfig/options)]
-     (try
-       (kconfig/set-naming ~strategy)
-       ~@body
-       (finally
-         (kconfig/set-naming naming#)))))
-
 (declare user address state)
 
 (kcore/defentity user
   (kcore/table :users)
-  (kcore/has-many address {:fk :user-id})
+  (kcore/has-many address {:fk :user_id})
   (kcore/transform
    #(update-in % [:address] (partial sort-by :id))))
 
 (kcore/defentity address
-  (kcore/belongs-to user {:fk :user-id})
+  (kcore/belongs-to user {:fk :user_id})
   (kcore/belongs-to state))
 
 (kcore/defentity state)
@@ -100,12 +74,12 @@
              (fn [user]
                (let [addrs (doall
                             (for [n (range (rand-int max-addresses-per-user))]
-                              (let [a {:user-id (:id user)
+                              (let [a {:user_id (:id user)
                                        :street (random-string)
                                        :number (subs (random-string) 0 10)
                                        :city (random-string)
                                        :zip (str (rand-int 10000))
-                                       :state-id (-> data :state rand-nth :id)}
+                                       :state_id (-> data :state rand-nth :id)}
                                     inserted (kcore/insert address (kcore/values a))
                                     ;; insert returns a map with a single key
                                     ;; the key depends on the underlying database, but the
@@ -120,9 +94,7 @@
   "populate the test database with random data and return a data structure that mirrors the data inserted into the database."
   [num-users]
   (reset-schema)
-  (with-naming dash-naming-strategy
-    (with-delimiters
-      (-> initial-data
-          populate-states
-          (populate-users num-users)
-          (populate-addresses 10)))))
+  (-> initial-data
+      populate-states
+      (populate-users num-users)
+      (populate-addresses 10)))

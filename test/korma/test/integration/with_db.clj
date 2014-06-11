@@ -14,9 +14,9 @@
 
 (deftest with-db-success
   (testing "with-db with setting *current-db* in with-db binding"
+    (kdb/with-db (mem-db) (populate 2))
     (is (> (count (:address (first (kdb/with-db (mem-db)
-                                     (with-naming dash-naming-strategy
-                                       (kcore/select user (kcore/with address)))))))) 1)))
+                                     (kcore/select user (kcore/with address))))))) 1)))
 
 (defn delete-some-rows-from-db []
   (kcore/delete address))

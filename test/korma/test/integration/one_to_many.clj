@@ -6,45 +6,19 @@
         korma.core
         korma.db))
 
-(defn underscores->dashes [n]
-  (-> n string/lower-case (.replaceAll "_" "-") keyword))
-
-(defn dashes->underscores [n]
-  (-> n name (.replaceAll "-" "_")))
-
-(def dash-naming-strategy
-  "naming strategy that converts clojure-style names (with dashes) to sql-style names (with udnerscores)"
-  {:keys underscores->dashes :fields dashes->underscores})
-
 (defn mem-db []
   (create-db (h2 {:db "mem:one_to_many_test"})))
-
-(defmacro with-delimiters [& body]
-  `(let [delimiters# (:delimiters @options)]
-     (try
-       (set-delimiters "\"" "\"")
-       ~@body
-       (finally
-         (apply set-delimiters delimiters#)))))
-
-(defmacro with-naming [strategy & body]
-  `(let [naming# (:naming @options)]
-     (try
-       (set-naming ~strategy)
-       ~@body
-       (finally
-         (set-naming naming#)))))
 
 (declare user address state)
 
 (defentity user
   (table :users)
-  (has-many address {:fk :user-id})
+  (has-many address {:fk :user_id})
   (transform
    #(update-in % [:address] (partial sort-by :id))))
 
 (defentity address
-  (belongs-to user {:fk :user-id})
+  (belongs-to user {:fk :user_id})
   (belongs-to state))
 
 (defentity state)
@@ -102,12 +76,12 @@
              (fn [user]
                (let [addrs (doall
                             (for [n (range (rand-int max-addresses-per-user))]
-                              (let [a {:user-id (:id user)
+                              (let [a {:user_id (:id user)
                                        :street (random-string)
                                        :number (subs (random-string) 0 10)
                                        :city (random-string)
                                        :zip (str (rand-int 10000))
-                                       :state-id (-> data :state rand-nth :id)}
+                                       :state_id (-> data :state rand-nth :id)}
                                     inserted (insert address (values a))
                                     ;; insert returns a map with a single key
                                     ;; the key depends on the underlying database, but the
@@ -122,12 +96,10 @@
   "populate the test database with random data and return a data structure that mirrors the data inserted into the database."
   [num-users]
   (reset-schema)
-  (with-naming dash-naming-strategy
-    (with-delimiters
-      (-> initial-data
-          populate-states
-          (populate-users num-users)
-          (populate-addresses 10)))))
+  (-> initial-data
+      populate-states
+      (populate-users num-users)
+      (populate-addresses 10)))
 
 (def ^:dynamic *data*)
 
@@ -136,9 +108,7 @@
     (with-db (mem-db)
       (transaction
        (binding [*data* (populate 100)]
-         (with-delimiters
-           (with-naming dash-naming-strategy
-             (t))))
+         (t))
        (rollback)))))
 
 (deftest test-one-to-many
@@ -179,7 +149,7 @@
                  (where {:id [in user-ids]})
                  (with address
                        ;; with-batch will add the foreign key
-                       (fields :user-id :street :city)
+                       (fields :user_id :street :city)
                        (with state)))
          (select user
                  (where {:id [in user-ids]})
