@@ -242,7 +242,7 @@
   Where can also take a map at any point and will create a clause that compares keys
   to values. The value can be a vector with one of the above predicate functions
   describing how the key is related to the value:
-    (where query {:name [like \"chris\"})"
+    (where query {:name [like \"chris\"]})"
   [query form]
   (where-or-having-form #'where* query form))
 
