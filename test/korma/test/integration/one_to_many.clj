@@ -1,4 +1,4 @@
-(ns korma.test.connected
+(ns korma.test.integration.one-to-many
   (:require [clojure.string :as string]
             [criterium.core :as cr])
   (:use clojure.test
