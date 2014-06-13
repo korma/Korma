@@ -6,6 +6,12 @@
   (:use clojure.test
         korma.test.integration.helpers))
 
+(defn mem-db []
+  (kdb/create-db (kdb/h2 {:db "mem:with_db_test"})))
+
+(defn mem-db-2 []
+  (kdb/create-db (kdb/h2 {:db "mem:with_db_test_2"})))
+
 (deftest with-db-success
   (testing "with-db with setting *current-db* in with-db binding"
     (is (> (count (:address (first (kdb/with-db (mem-db)

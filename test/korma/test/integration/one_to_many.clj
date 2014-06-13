@@ -17,7 +17,7 @@
   {:keys underscores->dashes :fields dashes->underscores})
 
 (defn mem-db []
-  (create-db (h2 {:db "mem:korma_test"})))
+  (create-db (h2 {:db "mem:one_to_many_test"})))
 
 (defmacro with-delimiters [& body]
   `(let [delimiters# (:delimiters @options)]
