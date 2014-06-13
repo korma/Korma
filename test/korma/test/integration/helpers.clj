@@ -1,25 +1,20 @@
 (ns korma.test.integration.helpers
-  (:require [clojure.string :as string]
-            [clojure.java.jdbc.deprecated :as jdbc]
-            [criterium.core :as cr]
-            [korma.config :as kconfig]
-            [korma.core :as kcore]
-            [korma.db :as kdb])
-  (:use clojure.test))
+  (:use clojure.test
+        korma.core))
 
 (declare user address state)
 
-(kcore/defentity user
-  (kcore/table :users)
-  (kcore/has-many address {:fk :user_id})
-  (kcore/transform
+(defentity user
+  (table :users)
+  (has-many address {:fk :user_id})
+  (transform
    #(update-in % [:address] (partial sort-by :id))))
 
-(kcore/defentity address
-  (kcore/belongs-to user {:fk :user_id})
-  (kcore/belongs-to state))
+(defentity address
+  (belongs-to user {:fk :user_id})
+  (belongs-to state))
 
-(kcore/defentity state)
+(defentity state)
 
 (def initial-data
   {:state
@@ -41,11 +36,11 @@
 
 (defn- reset-schema []
   (dorun
-   (map kcore/exec-raw schema)))
+   (map exec-raw schema)))
 
 (defn- populate-states [data]
-  (kcore/insert state
-          (kcore/values (:state data))))
+  (insert state
+          (values (:state data))))
 
 (defn- populate-users
   "add num-users to the database and to the `data` map"
@@ -55,8 +50,8 @@
      (let [u {:id user-id
               :name (random-string)
               :age (rand-int 100)}]
-       (kcore/insert user
-               (kcore/values u))
+       (insert user
+               (values u))
        (update-in data
                   [:user]
                   conj (assoc u :address []))))
@@ -80,7 +75,7 @@
                                        :city (random-string)
                                        :zip (str (rand-int 10000))
                                        :state_id (-> data :state rand-nth :id)}
-                                    inserted (kcore/insert address (kcore/values a))
+                                    inserted (insert address (values a))
                                     ;; insert returns a map with a single key
                                     ;; the key depends on the underlying database, but the
                                     ;; value is the generated value of the key column
