@@ -686,8 +686,8 @@
                     (update-in [:order] #(force-prefix sub-ent %))
                     (update-in [:group] #(force-prefix sub-ent %))))))
 
-(defn assoc-db-to-entity [ent]
-  (if-let [db (or (:db ent) db/*current-db* @db/_default)]
+(defn assoc-db-to-entity [query ent]
+  (if-let [db (or (:db ent) (:db query) db/*current-db*)]
     (database ent db)
     ent))
 
@@ -695,7 +695,7 @@
   (let [fk-key (:fk-key rel)
         pk (get-in query [:ent :pk])
         table (keyword (eng/table-alias ent))
-        ent (assoc-db-to-entity ent)]
+        ent (assoc-db-to-entity query ent)]
     (post-query query
                 (partial map
                          #(assoc % table
@@ -721,7 +721,7 @@
     :belongs-to [(:fk-key rel) (:pk sub-ent)]))
 
 (defn- with-one-to-one-later [rel query sub-ent body-fn]
-  (let [sub-ent (assoc-db-to-entity sub-ent)
+  (let [sub-ent (assoc-db-to-entity query sub-ent)
         [ent-key sub-ent-key] (get-join-keys rel (:ent query) sub-ent)]
     (post-query query
                 (partial map
@@ -747,7 +747,7 @@
 (defn- with-many-to-many [{:keys [lfk rfk rpk join-table]} query ent body-fn]
   (let [pk (get-in query [:ent :pk])
         table (keyword (eng/table-alias ent))
-        ent (assoc-db-to-entity ent)]
+        ent (assoc-db-to-entity query ent)]
     (post-query query (partial map
                                #(assoc % table
                                        (select ent

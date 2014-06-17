@@ -23,18 +23,16 @@
 (defn- setup-db []
   (with-db mem-db
     (dorun (map exec-raw schema))
-    (insert user (values {:id 1 :name "Foo"}))
-    (insert email (values {:id 1 :user_id 1 :email_address "foo@bar.org"}))))
+    (insert user (values {:id 1 :name "Chris"}))
+    (insert email (values {:id 1 :user_id 1 :email_address "chris@email.com"}))))
 
 (use-fixtures :once (fn [f]
                       (default-connection nil)
                       (setup-db)
                       (f)))
 
-
-(deftest throws-no-valid-db-connection-for-subentity-without-connection
-  (is (thrown-with-msg? Exception #"No valid DB connection selected"
-                        (dorun
-                          (select user
-                            (database mem-db)
-                            (with email))))))
+(deftest use-database-from-parent-when-fetching-children
+  (is (= [{:id 1 :name "Chris" :email [{:id 1 :user_id 1 :email_address "chris@email.com"}]}]
+         (select user
+           (database mem-db)
+           (with email)))))
