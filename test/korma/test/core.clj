@@ -348,8 +348,8 @@
 
 (deftest raws
   (sql-only
-   (is "SELECT \"users\".* FROM \"users\" WHERE ROWNUM >= ?"
-       (= (select user2 (where {(raw "ROWNUM") [>= 5]}))))))
+   (is (= "SELECT \"users\".* FROM \"users\" WHERE (ROWNUM >= ?)"
+          (select user2 (where {(raw "ROWNUM") [>= 5]}))))))
 
 (deftest pk-dry-run
   (let [result (with-out-str
