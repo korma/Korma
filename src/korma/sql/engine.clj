@@ -219,7 +219,7 @@
 (defn pred-map [m]
   (if (and (map? m)
            (not (utils/special-map? m)))
-    (apply pred-and (doall (map pred-vec (sort m))))
+    (apply pred-and (doall (map pred-vec (sort-by (comp str key) m))))
     m))
 
 (defn parse-where [form]

@@ -348,8 +348,13 @@
 
 (deftest raws
   (sql-only
-   (is (= "SELECT \"users\".* FROM \"users\" WHERE (ROWNUM >= ?)"
-          (select user2 (where {(raw "ROWNUM") [>= 5]}))))))
+    (are [result query] (= result query)
+         "SELECT \"users\".* FROM \"users\" WHERE (ROWNUM >= ?)"
+         (select user2 (where {(raw "ROWNUM") [>= 5]}))
+
+         "SELECT \"users\".* FROM \"users\" WHERE (MONTH(create_date) = ? AND YEAR(create_date) = ?)"
+         (select user2 (where {(raw "YEAR(create_date)")  2013
+                               (raw "MONTH(create_date)") 12})))))
 
 (deftest pk-dry-run
   (let [result (with-out-str
