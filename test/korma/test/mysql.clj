@@ -1,5 +1,5 @@
 (ns korma.test.mysql
-  (:require [clojure.java.jdbc.deprecated :as jdbc]
+  (:require [clojure.java.jdbc :as jdbc]
             [korma.mysql :as mysql])
   (:use clojure.test
         korma.config
@@ -43,14 +43,12 @@
   {:connection-uri "jdbc:mysql://localhost/?user=root"})
 
 (defn- setup-korma-db []
-  (jdbc/with-connection mysql-uri
-    (jdbc/do-commands "CREATE DATABASE IF NOT EXISTS korma;"
-                      "USE korma;"
-                      "CREATE TABLE IF NOT EXISTS `users-live-mysql` (name varchar(200));")))
+  (jdbc/db-do-commands mysql-uri "CREATE DATABASE IF NOT EXISTS korma;"
+                                 "USE korma;"
+                                 "CREATE TABLE IF NOT EXISTS `users-live-mysql` (name varchar(200));"))
 
 (defn- clean-korma-db []
-  (jdbc/with-connection mysql-uri
-    (jdbc/do-commands "DROP DATABASE korma;")))
+  (jdbc/db-do-commands mysql-uri "DROP DATABASE korma;"))
 
 (deftest test-nested-transactions-work
   (setup-korma-db)
