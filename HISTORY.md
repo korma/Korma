@@ -1,3 +1,9 @@
+0.3.3
+-----
+* Fix regression in 0.3.2 causing NPE when fetching relations and default connection hasn't been set
+* Fix exception with multiple raws in where clause
+* Use db from main query when fetching children with no db specified
+
 0.3.2
 -----
 * Support EXISTS keyword (pocket7878)
