@@ -1,12 +1,13 @@
 (ns korma.db
   "Functions for creating and managing database specifications."
-  (:require [clojure.java.jdbc.deprecated :as jdbc]
+  (:require [clojure.java.jdbc :as jdbc]
             [korma.config :as conf])
   (:import (com.mchange.v2.c3p0 ComboPooledDataSource)))
 
 (defonce _default (atom nil))
 
 (def ^:dynamic *current-db* nil)
+(def ^:dynamic *current-conn* nil)
 
 (defn default-connection
   "Set the database connection that Korma should use by default when no
@@ -214,21 +215,19 @@
 (defmacro transaction
   "Execute all queries within the body in a single transaction."
   [& body]
-  `(if (jdbc/find-connection)
-     (jdbc/transaction ~@body)
-     (jdbc/with-connection (get-connection @_default)
-       (jdbc/transaction
-        ~@body))))
+  `(jdbc/with-db-transaction [conn# (or *current-conn* (get-connection @_default))]
+     (binding [*current-conn* conn#]
+       ~@body)))
 
 (defn rollback
   "Tell this current transaction to rollback."
   []
-  (jdbc/set-rollback-only))
+  (jdbc/db-set-rollback-only! *current-conn*))
 
 (defn is-rollback?
   "Returns true if the current transaction will be rolled back"
   []
-  (jdbc/is-rollback-only))
+  (jdbc/db-is-rollback-only *current-conn*))
 
 (defn- handle-exception [e sql params]
   (if-not (instance? java.sql.SQLException e)
@@ -241,31 +240,28 @@
       (jdbc/print-sql-exception e)))
   (throw e))
 
-(defn- exec-sql [{:keys [results sql-str params]}]
-  (try
-    (case results
-      :results (jdbc/with-query-results rs (apply vector sql-str params)
-                 (vec rs))
-      :keys (jdbc/do-prepared-return-keys sql-str params)
-      (jdbc/do-prepared sql-str params))
-    (catch Exception e
-      (handle-exception e sql-str params))))
-
-(defn- ->naming-strategy [{:keys [keys fields]}]
-  {:keyword keys
-   :entity fields})
+(defn- exec-sql [{:keys [results sql-str params options]}]
+  (let [{:keys [keys]} (:naming (or options @conf/options))]
+    (try
+      (case results
+        :results (jdbc/query *current-conn*
+                             (apply vector sql-str params)
+                             :identifiers keys)
+        :keys (jdbc/db-do-prepared-return-keys *current-conn* sql-str params)
+        (jdbc/db-do-prepared *current-conn* sql-str params))
+      (catch Exception e
+        (handle-exception e sql-str params)))))
 
 (defmacro with-db
   "Execute all queries within the body using the given db spec"
   [db & body]
-  `(binding [*current-db* ~db]
-     (jdbc/with-connection (korma.db/get-connection ~db)
+  `(jdbc/with-db-connection [conn# (korma.db/get-connection ~db)]
+     (binding [*current-db* ~db
+               *current-conn* conn#]
        ~@body)))
 
-(defn do-query [{:keys [db options] :as query}]
-  (let [options (or options @conf/options)]
-    (jdbc/with-naming-strategy (->naming-strategy (:naming options))
-      (if (jdbc/find-connection)
-        (exec-sql query)
-        (with-db (or db @_default)
-          (exec-sql query))))))
+(defn do-query [{:keys [db] :as query}]
+  (if *current-conn*
+    (exec-sql query)
+    (with-db (or db @_default)
+      (exec-sql query))))
