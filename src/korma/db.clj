@@ -213,11 +213,18 @@
          opts))
 
 (defmacro transaction
-  "Execute all queries within the body in a single transaction."
+  "Execute all queries within the body in a single transaction.
+  Optionally takes as a first argument a map to specify the :isolation and :read-only? properties of the transaction."
+  {:arglists '([body] [options & body])}
   [& body]
-  `(jdbc/with-db-transaction [conn# (or *current-conn* (get-connection @_default))]
-     (binding [*current-conn* conn#]
-       ~@body)))
+  (let [options (first body)
+        check-options (and (-> body rest seq)
+                           (map? options))
+        {:keys [isolation read-only?]} (when check-options options)
+        body (if check-options (rest body) body)]
+    `(jdbc/with-db-transaction [conn# (or *current-conn* (get-connection @_default)) :isolation ~isolation :read-only? ~read-only?]
+       (binding [*current-conn* conn#]
+         ~@body))))
 
 (defn rollback
   "Tell this current transaction to rollback."
