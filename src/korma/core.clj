@@ -60,7 +60,7 @@
   (make-query ent {:type :update
                    :fields {}
                    :where []
-                   :results :keys}))
+                   :post-queries [first]}))
 
 (defn delete*
   "Create an empty delete query. Ent can either be an entity defined by defentity,
@@ -124,6 +124,7 @@
 (defmacro update
   "Creates an update query, applies any modifying functions in the body and then
   executes it. `ent` is either a string or an entity created by defentity.
+  Returns number of updated rows as provided by the JDBC driver.
 
   ex: (update user
         (set-fields {:name \"chris\"})
@@ -439,7 +440,7 @@
 
 (defn- apply-transforms
   [query results]
-  (if (= (:type query) :delete)
+  (if (#{:delete :update} (:type query))
     results
     (if-let [trans (-> query :ent :transforms seq)]
       (let [trans-fn (apply comp trans)]
