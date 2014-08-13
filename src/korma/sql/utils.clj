@@ -46,9 +46,6 @@
 (defn wrap [v]
   (str "(" v ")"))
 
-(defn wrap-all [vs]
-  (wrap (comma-separated vs)))
-
 (defn left-assoc [vs]
   (loop [ret "" [v & vs] vs]
     (cond

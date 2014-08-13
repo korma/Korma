@@ -252,9 +252,6 @@
 ;; Clauses
 ;;*****************************************************
 
-(defn kv-clause [pair]
-  (map-val (pred-vec pair)))
-
 (defn from-table [v & [already-aliased?]]
   (cond
    (string? v) (table-str v)
