@@ -1,8 +1,15 @@
 (ns korma.test.db
-  (:use [clojure.test :only [deftest is testing]]
+  (:use [clojure.test :only [deftest is testing use-fixtures]]
+        [korma.core :only [exec-raw]]
         [korma.db :only [connection-pool defdb get-connection h2
-                         msaccess mssql mysql odbc oracle postgres sqlite3 vertica firebird]]))
+                         msaccess mssql mysql odbc oracle postgres sqlite3 vertica firebird default-connection transaction]]))
 
+(defdb mem-db (h2 {:db "mem:test"}))
+
+(use-fixtures :once
+  (fn [f]
+    (default-connection mem-db)
+    (f)))
 
 (def db-config-with-defaults
   {:classname "org.h2.Driver"
@@ -248,3 +255,9 @@
             :subname "db"
             :make-pool? false}
            (h2 {:db "db" :make-pool? false})))))
+
+(deftest transaction-options
+  (testing "if transaction macro respects isolation levels"
+    (is (not= (transaction {:isolation :repeatable-read} (exec-raw "CALL LOCK_MODE()" :results))
+              (transaction {:isolation :read-committed} (exec-raw "CALL LOCK_MODE()" :results))))
+    (is (thrown? Exception (transaction {:isolation :no-such-isolation} (exec-raw "CALL LOCK_MODE()" :results))))))
