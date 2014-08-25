@@ -291,29 +291,37 @@
 (defn join* [query type table clause]
   (update-in query [:joins] conj [type table clause]))
 
-(defn add-joins [query ent rel]
-  (if-let [join-table (:join-table rel)]
-    (-> query
-        (join* :left join-table (sfns/pred-= (:lpk rel) @(:lfk rel)))
-        (join* :left ent (sfns/pred-= @(:rfk rel) (:rpk rel))))
-    (join* query :left ent (sfns/pred-= (:pk rel) (:fk rel)))))
+(defn add-joins 
+  ([query ent rel]
+     (add-joins query ent rel :left))
+  ([query ent rel type]
+     (if-let [join-table (:join-table rel)]
+       (-> query
+           (join* type join-table (sfns/pred-= (:lpk rel) @(:lfk rel)))
+           (join* type ent (sfns/pred-= @(:rfk rel) (:rpk rel))))
+       (join* query type ent (sfns/pred-= (:pk rel) (:fk rel))))))
 
 (defmacro join
-  "Add a join clause to a select query, specifying the table name to
-  join and the predicate to join on. If the relationship uses a join
+  "Add a join clause to a select query, specifying an entity defined by defentity, or the table name to
+  join and the predicate to join on. If the entity relationship uses a join
   table then two clauses will be added. Otherwise, only one clause
   will be added.
 
   (join query addresses)
+  (join query :right addresses)
   (join query addresses (= :addres.users_id :users.id))
   (join query :right addresses (= :address.users_id :users.id))"
+  {:arglists '([query ent] [query type ent] [query table clause] [query type table clause])}
   ([query ent]
-     `(let [q# ~query
-            e# ~ent
-            rel# (get-rel (:ent q#) e#)]
-        (add-joins q# e# rel#)))
-  ([query table clause]
-     `(join* ~query :left ~table (eng/pred-map ~(eng/parse-where clause))))
+     `(join ~query :left ~ent))
+  ([query type-or-table ent-or-clause]
+     `(if (entity? ~ent-or-clause) 
+        (let [q# ~query
+              e# ~ent-or-clause
+              rel# (get-rel (:ent q#) e#)
+              type# ~type-or-table]
+          (add-joins q# e# rel# type#))
+        (join ~query :left ~type-or-table ~ent-or-clause)))
   ([query type table clause]
      `(join* ~query ~type ~table (eng/pred-map ~(eng/parse-where clause)))))
 
@@ -502,9 +510,12 @@
 ;; Entities
 ;;*****************************************************
 
+(defn entity? [x] (= (type x) ::Entity))
+
 (defn create-entity
   "Create an entity representing a table in a database."
   [table]
+  ^{:type ::Entity}
   {:table table
    :name table
    :pk :id

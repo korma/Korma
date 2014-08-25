@@ -256,6 +256,18 @@
           (select user2
                   (join address))))))
 
+(deftest left-join-ent-directly
+  (sql-only
+   (is (= "SELECT \"users\".* FROM \"users\" LEFT JOIN \"address\" ON \"users\".\"id\" = \"address\".\"users_id\""
+          (select user2
+                  (join :left address))))))
+
+(deftest inner-join-ent-directly
+  (sql-only
+   (is (= "SELECT \"users\".* FROM \"users\" INNER JOIN \"address\" ON \"users\".\"id\" = \"address\".\"users_id\""
+          (select user2
+                  (join :inner address))))))
+
 (deftest new-with
   (sql-only
    (are [result query] (= result query)
