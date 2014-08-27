@@ -1,3 +1,10 @@
+0.4.0
+-----
+* Stop using deprecated implementaiton of [clojure.java.jdbc](https://github.com/clojure/java.jdbc) (@scttnlsn)
+* Return number of updated rows
+* Add support for read-only transactions and transactions with a specific isolation level (@ls4f)
+* Add support for joining entities using a specific join type (@starks67)
+
 0.3.3
 -----
 * Fix regression in 0.3.2 causing NPE when fetching relations and default connection hasn't been set
