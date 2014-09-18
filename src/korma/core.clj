@@ -142,9 +142,12 @@
   (make-query-then-exec #'delete* body ent))
 
 (defmacro insert
-  "Creates an insert query, applies any modifying functions in the body and then
-  executes it. `ent` is either a string or an entity created by defentity. Inserts
-  return the last inserted id.
+  "Creates an insert query, applies any modifying functions in the body
+  and then executes it. `ent` is either a string or an entity created by
+  defentity. The return value is the last inserted item, but its
+  representation is dependent on the database driver used
+  (e.g. postgresql returns the full row as a hash while MySQL and MSSQL
+  both return a {:generated_key <ID>} hash)
 
   ex: (insert user
         (values [{:name \"chris\"} {:name \"john\"}]))"
