@@ -24,6 +24,7 @@
    :subname "mem:db_connectivity_test_db"
    :excess-timeout 99
    :idle-timeout 88
+   :initial-pool-size 10
    :minimum-pool-size 5
    :maximum-pool-size 20
    :test-connection-on-checkout true
@@ -48,6 +49,7 @@
         datasource (:datasource pool)]
     (is (= 99 (.getMaxIdleTimeExcessConnections datasource)))
     (is (= 88 (.getMaxIdleTime datasource)))
+    (is (= 10 (.getInitialPoolSize datasource)))
     (is (= 5 (.getMinPoolSize datasource)))
     (is (= 20 (.getMaxPoolSize datasource)))
     (is (= (:test-connection-query db-config-with-options-set) (.getPreferredTestQuery datasource)))
