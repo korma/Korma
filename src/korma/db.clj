@@ -19,13 +19,15 @@
 (defn connection-pool
   "Create a connection pool for the given database spec."
   [{:keys [subprotocol subname classname user password
-           excess-timeout idle-timeout minimum-pool-size maximum-pool-size
+           excess-timeout idle-timeout
+           initial-pool-size minimum-pool-size maximum-pool-size
            test-connection-query
            idle-connection-test-period
            test-connection-on-checkin
            test-connection-on-checkout]
     :or {excess-timeout (* 30 60)
          idle-timeout (* 3 60 60)
+         initial-pool-size 3
          minimum-pool-size 3
          maximum-pool-size 15
          test-connection-query nil
@@ -40,6 +42,7 @@
                  (.setPassword password)
                  (.setMaxIdleTimeExcessConnections excess-timeout)
                  (.setMaxIdleTime idle-timeout)
+                 (.setInitialPoolSize initial-pool-size)
                  (.setMinPoolSize minimum-pool-size)
                  (.setMaxPoolSize maximum-pool-size)
                  (.setIdleConnectionTestPeriod idle-connection-test-period)
