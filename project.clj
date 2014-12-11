@@ -11,7 +11,7 @@
 
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [c3p0/c3p0 "0.9.1.2"]
-                 [org.clojure/java.jdbc "0.3.5"]]
+                 [org.clojure/java.jdbc "0.3.6"]]
 
   :min-lein-version "2.0.0"
 
