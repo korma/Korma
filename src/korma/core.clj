@@ -68,7 +68,7 @@
   [ent]
   (make-query ent {:type :delete
                    :where []
-                   :results :keys}))
+                   :post-queries [first]}))
 
 (defn insert*
   "Create an empty insert query. Ent can either be an entity defined by defentity,
@@ -135,6 +135,7 @@
 (defmacro delete
   "Creates a delete query, applies any modifying functions in the body and then
   executes it. `ent` is either a string or an entity created by defentity.
+  Returns number of deleted rows as provided by the JDBC driver.
 
   ex: (delete user
         (where {:id 7}))"
