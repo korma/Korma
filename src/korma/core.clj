@@ -590,7 +590,7 @@
   is on the sub-entity with the format table_id: user.id = address.user_id
   Can optionally pass a map with a :fk key to explicitly set the foreign key.
 
-  (has-one users address {:fk :addressID})"
+  (has-one users address {:fk :userId})"
   [ent sub-ent & [opts]]
   `(rel ~ent (var ~sub-ent) :has-one ~opts))
 
