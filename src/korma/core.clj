@@ -1,5 +1,6 @@
 (ns korma.core
   "Core querying and entity functions"
+  (:refer-clojure :exclude [update])
   (:require [clojure.set :as set]
             [clojure.string :as string]
             [korma.config :as conf]
@@ -295,7 +296,7 @@
 (defn join* [query type table clause]
   (update-in query [:joins] conj [type table clause]))
 
-(defn add-joins 
+(defn add-joins
   ([query ent rel]
      (add-joins query ent rel :left))
   ([query ent rel type]
@@ -319,7 +320,7 @@
   ([query ent]
      `(join ~query :left ~ent))
   ([query type-or-table ent-or-clause]
-     `(if (entity? ~ent-or-clause) 
+     `(if (entity? ~ent-or-clause)
         (let [q# ~query
               e# ~ent-or-clause
               rel# (get-rel (:ent q#) e#)
