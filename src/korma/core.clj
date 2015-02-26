@@ -571,10 +571,10 @@
 
 (defn rel [ent sub-ent type opts]
   (let [var-name (-> sub-ent meta :name)
-        cur-ns *ns*]
+        var-ns (-> sub-ent meta :ns)]
     (assoc-in ent [:rel (name var-name)]
               (delay
-               (let [resolved (ns-resolve cur-ns var-name)
+               (let [resolved (ns-resolve var-ns var-name)
                      sub-ent (when resolved (deref sub-ent))]
                  (when-not (map? sub-ent)
                    (throw (Exception. (format "Entity used in relationship does not exist: %s" (name var-name)))))
