@@ -1,7 +1,8 @@
 (ns korma.test.db
-  (:use [clojure.test :only [deftest is testing use-fixtures]]
+  (:use [clojure.string :only [upper-case lower-case]]
+        [clojure.test :only [deftest is testing use-fixtures]]
         [korma.core :only [exec-raw]]
-        [korma.db :only [connection-pool defdb get-connection h2
+        [korma.db :only [connection-pool defdb get-connection h2 create-db with-db
                          msaccess mssql mysql odbc oracle postgres sqlite3 vertica firebird default-connection transaction]]))
 
 (defdb mem-db (h2 {:db "mem:test"}))
@@ -29,6 +30,9 @@
    :maximum-pool-size 20
    :test-connection-on-checkout true
    :test-connection-query "SELECT 1"})
+
+(def lower-upper {:keys lower-case :fields upper-case})
+(def upper-upper {:keys upper-case :fields upper-case})
 
 (deftest connection-pooling-default-test
   (let [pool (connection-pool db-config-with-defaults)
@@ -263,3 +267,15 @@
     (is (not= (transaction {:isolation :repeatable-read} (exec-raw "CALL LOCK_MODE()" :results))
               (transaction {:isolation :read-committed} (exec-raw "CALL LOCK_MODE()" :results))))
     (is (thrown? Exception (transaction {:isolation :no-such-isolation} (exec-raw "CALL LOCK_MODE()" :results))))))
+
+(deftest db-specific-naming
+  (testing "if default database naming is actually used"
+    (is (not (nil? (do (-> {:db "mem:test-lower-upper-naming" :naming lower-upper} h2 create-db default-connection)
+                       (-> (exec-raw "SELECT COUNT(*) AS COUNT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'dummy_table'" :results) first :count)))))
+    (is (not (nil? (do (-> {:db "mem:test-upper-upper-naming" :naming upper-upper} h2 create-db default-connection)
+                       (-> (exec-raw "SELECT COUNT(*) AS COUNT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'dummy_table'" :results) first :COUNT))))))
+  (testing "if with-db uses the specific naming"
+    (-> {:db "mem:test-lower-upper-naming" :naming lower-upper} h2 create-db default-connection)
+    (is (-> (exec-raw "SELECT COUNT(*) AS COUNT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'dummy_table'" :results) first :count nil? not))
+    (is (with-db (-> {:db "mem:test-db-specific-naming" :naming upper-upper} h2 create-db)
+          (-> (exec-raw "SELECT COUNT(*) AS COUNT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'dummy_table'" :results) first :COUNT nil? not)))))

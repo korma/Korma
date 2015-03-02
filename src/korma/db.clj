@@ -251,7 +251,7 @@
   (throw e))
 
 (defn- exec-sql [{:keys [results sql-str params options]}]
-  (let [{:keys [keys]} (:naming (or options @conf/options))]
+  (let [{:keys [keys]} (:naming (or options (:options *current-db*) @conf/options))]
     (try
       (case results
         :results (jdbc/query *current-conn*
