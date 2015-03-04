@@ -34,6 +34,13 @@
   (has-one address)
   (has-many email))
 
+(create-ns 'f)
+(intern 'f 'friend (create-entity "friend"))
+
+(defentity users-with-friend
+  (table :users)
+  (has-one f/friend))
+
 (defentity users-alias
   (table :users :u))
 
@@ -66,6 +73,8 @@
          "SELECT \"u\".* FROM \"users\" AS \"u\""
          (select users-with-entity-fields)
          "SELECT \"users\".\"id\", \"users\".\"username\" FROM \"users\""
+         (select users-with-friend (with f/friend))
+         "SELECT \"users\".*, \"friend\".* FROM \"users\" LEFT JOIN \"friend\" ON \"friend\".\"users_id\" = \"users\".\"id\""
          (select users
                  (fields :id :username))
          "SELECT \"users\".\"id\", \"users\".\"username\" FROM \"users\""
