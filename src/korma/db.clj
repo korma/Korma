@@ -239,28 +239,14 @@
   []
   (jdbc/db-is-rollback-only *current-conn*))
 
-(defn- handle-exception [e sql params]
-  (if-not (instance? java.sql.SQLException e)
-    (.printStackTrace e)
-    (do
-      (when-let [ex (.getNextException e)]
-        (handle-exception ex sql params))
-      (println "Failure to execute query with SQL:")
-      (println sql " :: " params)
-      (jdbc/print-sql-exception e)))
-  (throw e))
-
 (defn- exec-sql [{:keys [results sql-str params options]}]
   (let [{:keys [keys]} (:naming (or options (:options *current-db*) @conf/options))]
-    (try
-      (case results
-        :results (jdbc/query *current-conn*
-                             (apply vector sql-str params)
-                             :identifiers keys)
-        :keys (jdbc/db-do-prepared-return-keys *current-conn* sql-str params)
-        (jdbc/db-do-prepared *current-conn* sql-str params))
-      (catch Exception e
-        (handle-exception e sql-str params)))))
+    (case results
+      :results (jdbc/query *current-conn*
+                           (apply vector sql-str params)
+                           :identifiers keys)
+      :keys (jdbc/db-do-prepared-return-keys *current-conn* sql-str params)
+      (jdbc/db-do-prepared *current-conn* sql-str params))))
 
 (defmacro with-db
   "Execute all queries within the body using the given db spec"
