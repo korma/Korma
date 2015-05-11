@@ -1,4 +1,5 @@
 (ns korma.test.core
+  (:refer-clojure :exclude [update])
   (:require [clojure.string :as string])
   (:use clojure.test
         korma.config

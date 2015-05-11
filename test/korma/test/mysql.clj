@@ -1,4 +1,5 @@
 (ns korma.test.mysql
+  (:refer-clojure :exclude [update])
   (:require [clojure.java.jdbc :as jdbc]
             [korma.mysql :as mysql])
   (:use clojure.test

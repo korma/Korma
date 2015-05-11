@@ -1,4 +1,5 @@
 (ns korma.test.integration.update
+  (:refer-clojure :exclude [update])
   (:require [clojure.string])
   (:use clojure.test
         [korma.db :only [defdb h2 default-connection]]

@@ -1,4 +1,5 @@
 (ns korma.test.integration.helpers
+  (:refer-clojure :exclude [update])
   (:use clojure.test
         korma.core))
 

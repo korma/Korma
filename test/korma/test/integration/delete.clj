@@ -1,4 +1,5 @@
 (ns korma.test.integration.delete
+  (:refer-clojure :exclude [update])
   (:use clojure.test
         korma.core
         korma.db

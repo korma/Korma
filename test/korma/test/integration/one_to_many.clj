@@ -1,4 +1,5 @@
 (ns korma.test.integration.one-to-many
+  (:refer-clojure :exclude [update])
   (:require [clojure.string :as string]
             [criterium.core :as cr])
   (:use clojure.test
