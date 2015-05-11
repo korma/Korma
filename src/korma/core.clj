@@ -280,8 +280,10 @@
   field should be a keyword of the field name, dir is ASC by default.
 
   (order query :created :asc)"
-  [query field & [dir]]
-  (update-in query [:order] conj [field (or dir :ASC)]))
+  ([query field dir]
+    (update-in query [:order] conj [field (or dir :ASC)]))
+  ([query field]
+    (order query field :ASC)))
 
 (defn values
   "Add records to an insert clause. values can either be a vector of maps or a
