@@ -46,7 +46,7 @@
 (defn- setup-korma-db []
   (jdbc/db-do-commands mysql-uri "CREATE DATABASE IF NOT EXISTS korma;"
                                  "USE korma;"
-                                 "CREATE TABLE IF NOT EXISTS `users-live-mysql` (name varchar(200) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_bin');"))
+                                 "CREATE TABLE IF NOT EXISTS `users-live-mysql` (name varchar(200));"))
 
 (defn- clean-korma-db []
   (jdbc/db-do-commands mysql-uri "DROP DATABASE korma;"))
@@ -67,14 +67,3 @@
   (sql-only
    (is (= (update users-mysql (set-fields {:field "value"}))
           "UPDATE `users-mysql` SET `field` = ?"))))
-
-(deftest test-non-ascii-character
-  (setup-korma-db)
-  (defdb live-db-mysql (mysql {:db "korma" :user "root" :properties {"useUnicode" true "characterEncoding" "utf8"}}))
-  (defentity users-live-mysql (database live-db-mysql))
-
-  (insert users-live-mysql (values {:name "コーマ"})) ; "コーマ" is "Korma" in Japanese
-  (is (= '({:name "コーマ"})
-         (select users-live-mysql)))
-
-  (clean-korma-db))

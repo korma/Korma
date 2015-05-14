@@ -1,7 +1,6 @@
 (ns korma.db
   "Functions for creating and managing database specifications."
   (:require [clojure.java.jdbc :as jdbc]
-            [clojure.string]
             [korma.config :as conf])
   (:import (com.mchange.v2.c3p0 ComboPooledDataSource)))
 
@@ -17,18 +16,9 @@
   (conf/merge-defaults (:options conn))
   (reset! _default conn))
 
-(defn- properties->query-string
-  [o]
-  (if (empty? o)
-    ""
-    (->> o
-         (map (fn [[k v]] (str k "=" v)))
-         (clojure.string/join "&")
-         (str "?"))))
-
 (defn connection-pool
   "Create a connection pool for the given database spec."
-  [{:keys [subprotocol subname classname user password properties
+  [{:keys [subprotocol subname classname user password
            excess-timeout idle-timeout
            initial-pool-size minimum-pool-size maximum-pool-size
            test-connection-query
@@ -43,12 +33,11 @@
          test-connection-query nil
          idle-connection-test-period 0
          test-connection-on-checkin false
-         test-connection-on-checkout false
-         properties {}}
+         test-connection-on-checkout false}
     :as spec}]
   {:datasource (doto (ComboPooledDataSource.)
                  (.setDriverClass classname)
-                 (.setJdbcUrl (str "jdbc:" subprotocol ":" subname (properties->query-string properties)))
+                 (.setJdbcUrl (str "jdbc:" subprotocol ":" subname))
                  (.setUser user)
                  (.setPassword password)
                  (.setMaxIdleTimeExcessConnections excess-timeout)
