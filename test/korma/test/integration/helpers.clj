@@ -35,7 +35,7 @@
 (defn- random-string []
   (str (java.util.UUID/randomUUID)))
 
-(defn- reset-schema []
+(defn reset-schema []
   (dorun
    (map exec-raw schema)))
 

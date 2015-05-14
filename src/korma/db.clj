@@ -16,9 +16,15 @@
   (conf/merge-defaults (:options conn))
   (reset! _default conn))
 
+(defn- as-properties [m]
+  (let [p (java.util.Properties.)]
+    (doseq [[k v] m]
+      (.setProperty p (name k) (str v)))
+    p))
+
 (defn connection-pool
   "Create a connection pool for the given database spec."
-  [{:keys [subprotocol subname classname user password
+  [{:keys [subprotocol subname classname
            excess-timeout idle-timeout
            initial-pool-size minimum-pool-size maximum-pool-size
            test-connection-query
@@ -38,8 +44,15 @@
   {:datasource (doto (ComboPooledDataSource.)
                  (.setDriverClass classname)
                  (.setJdbcUrl (str "jdbc:" subprotocol ":" subname))
-                 (.setUser user)
-                 (.setPassword password)
+                 (.setProperties (as-properties (dissoc spec
+                                                        :make-pool? :classname :subprotocol :subname
+                                                        :naming :delimiters :alias-delimiter
+                                                        :excess-timeout :idle-timeout
+                                                        :initial-pool-size :minimum-pool-size :maximum-pool-size
+                                                        :test-connection-query
+                                                        :idle-connection-test-period
+                                                        :test-connection-on-checkin
+                                                        :test-connection-on-checkout)))
                  (.setMaxIdleTimeExcessConnections excess-timeout)
                  (.setMaxIdleTime idle-timeout)
                  (.setInitialPoolSize initial-pool-size)
@@ -97,7 +110,7 @@
           :subprotocol "firebirdsql"
           :subname (str host "/" port ":" db "?encoding=" encoding)
           :make-pool? make-pool?}
-         opts))
+         (dissoc opts :host :port :db :encoding)))
 
 (defn postgres
   "Create a database specification for a postgres database. Opts should include
@@ -110,7 +123,7 @@
           :subprotocol "postgresql"
           :subname (str "//" host ":" port "/" db)
           :make-pool? make-pool?}
-         opts))
+         (dissoc opts :host :port :db)))
 
 (defn oracle
   "Create a database specification for an Oracle database. Opts should include keys
@@ -122,7 +135,7 @@
           :subprotocol "oracle:thin"
           :subname (str "@" host ":" port)
           :make-pool? make-pool?}
-         opts))
+         (dissoc opts :host :port)))
 
 (defn mysql
   "Create a database specification for a mysql database. Opts should include keys
@@ -136,7 +149,7 @@
           :subname (str "//" host ":" port "/" db)
           :delimiters "`"
           :make-pool? make-pool?}
-         opts))
+         (dissoc opts :host :port :db)))
 
 (defn vertica
   "Create a database specification for a vertica database. Opts should include keys
@@ -150,7 +163,7 @@
           :subname (str "//" host ":" port "/" db)
           :delimiters "\""
           :make-pool? make-pool?}
-         opts))
+         (dissoc opts :host :port :db)))
 
 
 (defn mssql
@@ -163,7 +176,7 @@
           :subprotocol "sqlserver"
           :subname (str "//" host ":" port ";database=" db ";user=" user ";password=" password)
           :make-pool? make-pool?}
-         opts))
+         (dissoc opts :host :port :db)))
 
 (defn msaccess
   "Create a database specification for a Microsoft Access database. Opts
@@ -177,7 +190,7 @@
                         (when (.endsWith db ".accdb") ", *.accdb")
                         ")};Dbq=" db)
           :make-pool? make-pool?}
-         opts))
+         (dissoc opts :db)))
 
 (defn odbc
   "Create a database specification for an ODBC DSN. Opts
@@ -189,7 +202,7 @@
           :subprotocol "odbc"
           :subname dsn
           :make-pool? make-pool?}
-         opts))
+         (dissoc opts :dsn)))
 
 (defn sqlite3
   "Create a database specification for a SQLite3 database. Opts should include a
@@ -201,7 +214,7 @@
           :subprotocol "sqlite"
           :subname db
           :make-pool? make-pool?}
-         opts))
+         (dissoc opts :db)))
 
 (defn h2
   "Create a database specification for a h2 database. Opts should include a key
@@ -213,7 +226,7 @@
           :subprotocol "h2"
           :subname db
           :make-pool? make-pool?}
-         opts))
+         (dissoc opts :db)))
 
 (defmacro transaction
   "Execute all queries within the body in a single transaction.
