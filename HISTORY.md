@@ -1,3 +1,15 @@
+0.4.1
+-----
+* Fix warnings when using Clojure 1.7 (glittershark)
+* Bump clojure/java.jdbc version to 0.3.6
+* Add possibility to set initial pool size for connection pool (AKurilin)
+* Add support for driver properties when using connection pool (federkasten)
+* Return number of deleted rows
+* Honor db specific options when using `with-db` (ls4f)
+* Fix lazy namespace resolution of relations (juhov)
+* Fix arity of `order` (lokori)
+* Stop printing exceptions to \*out\*
+
 0.4.0
 -----
 * Stop using deprecated implementation of [clojure.java.jdbc](https://github.com/clojure/java.jdbc) (scttnlsn)
