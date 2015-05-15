@@ -6,7 +6,7 @@
 * Add support for driver properties when using connection pool (federkasten)
 * Return number of deleted rows
 * Honor db specific options when using `with-db` (ls4f)
-* Fix lazy namespace resolution of relations (juhov)
+* Fix lazy namespace resolution of relations (juhovh)
 * Fix arity of `order` (lokori)
 * Stop printing exceptions to \*out\*
 
