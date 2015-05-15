@@ -17,7 +17,7 @@ Simply add Korma as a dependency to your lein project:
 Note: korma depends on version 0.3.6 of jdbc, so if you have another dependency that requires a different version (like the migrations library [lobos](https://github.com/budu/lobos)), be sure to specify:
 
 ```clojure
-[org.clojure/java.jdbc "0.3.5"]
+[org.clojure/java.jdbc "0.3.6"]
 ```
 ## Docs and Real Usage
 
