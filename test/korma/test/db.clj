@@ -75,14 +75,16 @@
   (testing "firebirdsql - defaults"
     (is (= {:classname "org.firebirdsql.jdbc.FBDriver"
             :subprotocol "firebirdsql"
-            :subname "localhost/3050:?encoding=UTF8"
-            :make-pool? true}
+            :subname "localhost/3050:"
+            :make-pool? true
+            :encoding "UTF8"}
            (firebird {}))))
   (testing "firebirdsql - options selected"
     (is (= {:classname "org.firebirdsql.jdbc.FBDriver"
             :subprotocol "firebirdsql"
-            :subname "host/port:db?encoding=NONE"
-            :make-pool? false}
+            :subname "host/port:db"
+            :make-pool? false
+            :encoding "NONE"}
            (firebird {:host "host"
                       :port "port"
                       :db "db"
