@@ -1,7 +1,7 @@
 (ns korma.test.db
   (:use [clojure.string :only [upper-case lower-case]]
         [clojure.test :only [deftest is testing use-fixtures]]
-        [korma.core :only [exec-raw]]
+        [korma.core :only [exec-raw select]]
         [korma.db :only [connection-pool defdb get-connection h2 create-db with-db
                          msaccess mssql mysql odbc oracle postgres sqlite3 vertica firebird default-connection transaction]]))
 
@@ -35,6 +35,7 @@
 
 (def lower-upper {:keys lower-case :fields upper-case})
 (def upper-upper {:keys upper-case :fields upper-case})
+(def lower-lower {:keys lower-case :fields lower-case})
 
 (deftest connection-pooling-default-test
   (let [pool (connection-pool db-config-with-defaults)
@@ -254,12 +255,47 @@
 
 (deftest db-specific-naming
   (testing "if default database naming is actually used"
-    (is (not (nil? (do (-> {:db "mem:test-lower-upper-naming" :naming lower-upper} h2 create-db default-connection)
-                       (-> (exec-raw "SELECT COUNT(*) AS COUNT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'dummy_table'" :results) first :count)))))
-    (is (not (nil? (do (-> {:db "mem:test-upper-upper-naming" :naming upper-upper} h2 create-db default-connection)
-                       (-> (exec-raw "SELECT COUNT(*) AS COUNT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'dummy_table'" :results) first :COUNT))))))
+    (is (not (nil? (do (-> {:db "mem:test-lower-upper-naming" :naming lower-upper}
+                           h2
+                           create-db
+                           default-connection)
+                       (-> (exec-raw "SELECT COUNT(*) AS COUNT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'dummy_table'" :results)
+                           first
+                           :count)))))
+    (is (not (nil? (do (-> {:db "mem:test-upper-upper-naming" :naming upper-upper}
+                           h2
+                           create-db
+                           default-connection)
+                       (-> (exec-raw "SELECT COUNT(*) AS COUNT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'dummy_table'" :results)
+                           first
+                           :COUNT))))))
   (testing "if with-db uses the specific naming"
-    (-> {:db "mem:test-lower-upper-naming" :naming lower-upper} h2 create-db default-connection)
-    (is (-> (exec-raw "SELECT COUNT(*) AS COUNT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'dummy_table'" :results) first :count nil? not))
-    (is (with-db (-> {:db "mem:test-db-specific-naming" :naming upper-upper} h2 create-db)
-          (-> (exec-raw "SELECT COUNT(*) AS COUNT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'dummy_table'" :results) first :COUNT nil? not)))))
+    (-> {:db "mem:test-lower-upper-naming" :naming lower-upper}
+        h2
+        create-db
+        default-connection)
+    (is (-> (exec-raw "SELECT COUNT(*) AS COUNT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'dummy_table'" :results)
+            first
+            :count
+            nil?
+            not))
+    (is (with-db (-> {:db "mem:test-db-specific-naming" :naming upper-upper}
+                     h2
+                     create-db)
+          (-> (exec-raw "SELECT COUNT(*) AS COUNT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'dummy_table'" :results)
+              first
+              :COUNT
+              nil?
+              not))))
+  (testing "if with-db uses naming on fields"
+    (-> {:db "mem:test-lower-lower-naming" :naming lower-lower}
+        h2
+        create-db
+        default-connection)
+    (is (thrown? org.h2.jdbc.JdbcSQLException
+                 #"Schema \"information_schema\" not found"
+                 (select :information_schema.tables)))
+    (is (with-db (-> {:db "mem:test-db-specific-naming" :naming lower-upper}
+                     h2
+                     create-db)
+          (select :information_schema.tables)))))
