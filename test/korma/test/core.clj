@@ -484,6 +484,20 @@
        (sql-only
         (select subsel))))
 
+(deftest entity-with-belongs-to-subselect
+ (defentity subsel
+  (pk :subsel_id)
+  (table  (subselect "test") :subseltest))
+  (defentity ent
+   (table :ent)
+   (pk :ent_id)
+   (belongs-to subsel  {:fk :subsel_ent_id}))
+  (are  [result query]  (= result query)
+   "SELECT \"ent\".*, \"subseltest\".* FROM \"ent\" LEFT JOIN (SELECT \"test\".* FROM \"test\") AS \"subseltest\" ON \"subseltest\".\"subsel_id\" = \"ent\".\"subsel_ent_id\""
+   (sql-only
+    (select ent
+     (with subsel)))))
+
 (deftest multiple-aliases
   (defentity blahblah
     (table :blah :bb))
