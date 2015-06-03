@@ -7,12 +7,12 @@
 
 (defentity user
   (table :users)
-  (has-many address {:fk :user_id})
+  (has-many address (fk :user_id))
   (transform
    #(update-in % [:address] (partial sort-by :id))))
 
 (defentity address
-  (belongs-to user {:fk :user_id})
+  (belongs-to user (fk :user_id))
   (belongs-to state))
 
 (defentity state)

@@ -2,7 +2,7 @@
   (:require clojure.string)
   (:use clojure.test
         [korma.db :only [defdb h2 default-connection]]
-        [korma.core :only [defentity pk belongs-to has-one transform
+        [korma.core :only [defentity pk fk belongs-to has-one transform
                            exec-raw insert values select with]]))
 
 (defdb mem-db (h2 {:db "mem:one_to_one_test"}))
@@ -13,11 +13,11 @@
 
 (defentity address
   (pk :address_id)
-  (belongs-to state {:fk :id_of_state})
+  (belongs-to state (fk :id_of_state))
   (transform #(update-in % [:street] clojure.string/capitalize)))
 
 (defentity user
-  (has-one address {:fk :id_of_user}))
+  (has-one address (fk :id_of_user)))
 
 (def schema
   ["drop table if exists \"state\";"

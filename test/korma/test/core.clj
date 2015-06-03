@@ -49,7 +49,7 @@
   (table :users)
   (entity-fields :id :username))
 
-(defentity ^{:private true} blah (pk :cool) (has-many users {:fk :cool_id}))
+(defentity ^{:private true} blah (pk :cool) (has-many users (fk :cool_id)))
 
 (deftest test-defentity-accepts-metadata
   (is (= true (:private (meta #'blah)))))
@@ -75,7 +75,7 @@
         (select users-with-entity-fields)
         "SELECT \"users\".\"id\", \"users\".\"username\" FROM \"users\""
         (select users-with-friend (with f/friend))
-        "SELECT \"users\".*, \"friend\".* FROM \"users\" LEFT JOIN \"friend\" ON \"friend\".\"users_id\" = \"users\".\"id\""
+        "SELECT \"users\".*, \"friend\".* FROM \"users\" LEFT JOIN \"friend\" ON (\"friend\".\"users_id\" = \"users\".\"id\")"
         (select users
                 (fields :id :username))
         "SELECT \"users\".\"id\", \"users\".\"username\" FROM \"users\""
@@ -205,19 +205,92 @@
             (select user2
                     (with email)))))))
 
+(deftest with-has-many-composite-key
+  (defentity email-ck)
+  (defentity user-ck
+    (pk :id :id2)
+    (has-many email-ck (fk :uid :uid2)))
+  (is (= "dry run :: SELECT \"user-ck\".* FROM \"user-ck\" :: []\ndry run :: SELECT \"email-ck\".* FROM \"email-ck\" WHERE (\"email-ck\".\"uid\" = ? AND \"email-ck\".\"uid2\" = ?) :: [1 1]\n"
+      (with-out-str
+        (dry-run
+          (select user-ck
+                  (with email-ck)))))))
+
 (deftest with-many-batch
   (is (= "dry run :: SELECT \"users\".* FROM \"users\" :: []\ndry run :: SELECT \"email\".* FROM \"email\" WHERE (\"email\".\"users_id\" IN (?)) :: [1]\n"
          (with-out-str
            (dry-run
             (select user2
-                    (with-batch email))))) ))
+                    (with-batch email)))))))
+
+(deftest with-many-batch-composite-key
+  (defentity email-batch-ck
+    (table :email))
+  (defentity user-batch-ck
+    (table :users)
+    (pk :user_id1 :user_id2)
+    (has-many email-batch-ck
+              (fk :email_user_id1 :email_user_id2)))
+  (is (= "dry run :: SELECT \"users\".* FROM \"users\" :: []\ndry run :: SELECT \"email\".* FROM \"email\" WHERE ((\"email\".\"email_user_id1\" = ? AND \"email\".\"email_user_id2\" = ?)) :: [1 1]\n"
+         (with-out-str
+           (dry-run
+             (select user-batch-ck
+                     (with-batch email-batch-ck)))))))
 
 (deftest with-one
   (sql-only
-   (is (= "SELECT \"address\".\"state\", \"users\".\"name\" FROM \"users\" LEFT JOIN \"address\" ON \"address\".\"users_id\" = \"users\".\"id\""
+   (is (= "SELECT \"address\".\"state\", \"users\".\"name\" FROM \"users\" LEFT JOIN \"address\" ON (\"address\".\"users_id\" = \"users\".\"id\")"
           (select user2
                   (with address)
                   (fields :address.state :name))))))
+
+(deftest with-has-one-composite-key
+  (defentity address-ck)
+  (defentity user-ck
+    (pk :id :id2)
+    (has-one address-ck (fk :fkid :fkid2)))
+  (sql-only
+   (is (= (str "SELECT \"user-ck\".*, \"address-ck\".* FROM \"user-ck\" "
+               "LEFT JOIN \"address-ck\" ON (\"address-ck\".\"fkid\" = \"user-ck\".\"id\" "
+               "AND \"address-ck\".\"fkid2\" = \"user-ck\".\"id2\")")
+          (select user-ck
+                  (with address-ck))))))
+
+(deftest join-has-one-composite-key
+  (defentity address-ck)
+  (defentity user-ck
+    (pk :id :id2)
+    (has-one address-ck (fk :fkid :fkid2)))
+  (sql-only
+   (is (= (str "SELECT \"user-ck\".* FROM \"user-ck\" "
+               "LEFT JOIN \"address-ck\" ON (\"user-ck\".\"id\" = \"address-ck\".\"fkid\" "
+               "AND \"user-ck\".\"id2\" = \"address-ck\".\"fkid2\")")
+          (select user-ck
+                  (join address-ck))))))
+
+(deftest with-belongs-to-composite-key
+  (defentity user-ck
+    (pk :id :id2))
+  (defentity address-ck
+    (belongs-to user-ck (fk :fkid :fkid2)))
+  (sql-only
+   (is (= (str "SELECT \"address-ck\".*, \"user-ck\".* FROM \"address-ck\" "
+               "LEFT JOIN \"user-ck\" ON (\"user-ck\".\"id\" = \"address-ck\".\"fkid\" "
+               "AND \"user-ck\".\"id2\" = \"address-ck\".\"fkid2\")")
+          (select address-ck
+                  (with user-ck))))))
+
+(deftest join-belongs-to-composite-key
+  (defentity user-ck
+    (pk :id :id2))
+  (defentity address-ck
+    (belongs-to user-ck (fk :fkid :fkid2)))
+  (sql-only
+   (is (= (str "SELECT \"address-ck\".* FROM \"address-ck\" "
+               "LEFT JOIN \"user-ck\" ON (\"user-ck\".\"id\" = \"address-ck\".\"fkid\" "
+               "AND \"user-ck\".\"id2\" = \"address-ck\".\"fkid2\")")
+          (select address-ck
+                  (join user-ck))))))
 
 (deftest join-order
   (sql-only
@@ -262,19 +335,19 @@
 
 (deftest join-ent-directly
   (sql-only
-   (is (= "SELECT \"users\".* FROM \"users\" LEFT JOIN \"address\" ON \"users\".\"id\" = \"address\".\"users_id\""
+   (is (= "SELECT \"users\".* FROM \"users\" LEFT JOIN \"address\" ON (\"users\".\"id\" = \"address\".\"users_id\")"
           (select user2
                   (join address))))))
 
 (deftest left-join-ent-directly
   (sql-only
-   (is (= "SELECT \"users\".* FROM \"users\" LEFT JOIN \"address\" ON \"users\".\"id\" = \"address\".\"users_id\""
+   (is (= "SELECT \"users\".* FROM \"users\" LEFT JOIN \"address\" ON (\"users\".\"id\" = \"address\".\"users_id\")"
           (select user2
                   (join :left address))))))
 
 (deftest inner-join-ent-directly
   (sql-only
-   (is (= "SELECT \"users\".* FROM \"users\" INNER JOIN \"address\" ON \"users\".\"id\" = \"address\".\"users_id\""
+   (is (= "SELECT \"users\".* FROM \"users\" INNER JOIN \"address\" ON (\"users\".\"id\" = \"address\".\"users_id\")"
           (select user2
                   (join :inner address))))))
 
@@ -282,12 +355,12 @@
   (sql-only
    (are [result query] (= result query)
 
-        "SELECT \"users\".*, \"address\".\"id\" FROM \"users\" LEFT JOIN \"address\" ON \"address\".\"users_id\" = \"users\".\"id\""
+        "SELECT \"users\".*, \"address\".\"id\" FROM \"users\" LEFT JOIN \"address\" ON (\"address\".\"users_id\" = \"users\".\"id\")"
         (select user2
                 (fields :*)
                 (with address (fields :id)))
 
-        "SELECT \"users\".*, \"address\".*, \"state\".* FROM (\"users\" LEFT JOIN \"address\" ON \"address\".\"users_id\" = \"users\".\"id\") LEFT JOIN \"state\" ON \"state\".\"id\" = \"address\".\"state_id\" WHERE (\"state\".\"state\" = ?) AND (\"address\".\"id\" > ?)"
+        "SELECT \"users\".*, \"address\".*, \"state\".* FROM (\"users\" LEFT JOIN \"address\" ON (\"address\".\"users_id\" = \"users\".\"id\")) LEFT JOIN \"state\" ON (\"state\".\"id\" = \"address\".\"state_id\") WHERE (\"state\".\"state\" = ?) AND (\"address\".\"id\" > ?)"
         (select user2
                 (fields :*)
                 (with address
@@ -491,9 +564,9 @@
   (defentity ent
     (table :ent)
     (pk :ent_id)
-    (belongs-to subsel  {:fk :subsel_ent_id}))
+    (belongs-to subsel  (fk :subsel_ent_id)))
   (are  [result query]  (= result query)
-        "SELECT \"ent\".*, \"subseltest\".* FROM \"ent\" LEFT JOIN (SELECT \"test\".* FROM \"test\") AS \"subseltest\" ON \"subseltest\".\"subsel_id\" = \"ent\".\"subsel_ent_id\""
+        "SELECT \"ent\".*, \"subseltest\".* FROM \"ent\" LEFT JOIN (SELECT \"test\".* FROM \"test\") AS \"subseltest\" ON (\"subseltest\".\"subsel_id\" = \"ent\".\"subsel_ent_id\")"
         (sql-only
          (select ent
                  (with subsel)))))
@@ -565,36 +638,55 @@
   (are [query result] (= query result)
        (sql-only
         (select author-with-db (with book-with-db)))
-       "SELECT \"other\".\"author\".*, \"korma\".\"book\".* FROM \"other\".\"author\" LEFT JOIN \"korma\".\"book\" ON \"korma\".\"book\".\"id\" = \"other\".\"author\".\"book_id\""))
+       "SELECT \"other\".\"author\".*, \"korma\".\"book\".* FROM \"other\".\"author\" LEFT JOIN \"korma\".\"book\" ON (\"korma\".\"book\".\"id\" = \"other\".\"author\".\"book_id\")"))
 
 (deftest schemaname-on-tablename
   (are [query result] (= query result)
        (sql-only
         (select author-with-schema (with book-with-schema)))
-       "SELECT \"korma\".\"otherschema\".\"author\".*, \"korma\".\"myschema\".\"book\".* FROM \"korma\".\"otherschema\".\"author\" LEFT JOIN \"korma\".\"myschema\".\"book\" ON \"korma\".\"myschema\".\"book\".\"id\" = \"korma\".\"otherschema\".\"author\".\"book_id\""))
+       "SELECT \"korma\".\"otherschema\".\"author\".*, \"korma\".\"myschema\".\"book\".* FROM \"korma\".\"otherschema\".\"author\" LEFT JOIN \"korma\".\"myschema\".\"book\" ON (\"korma\".\"myschema\".\"book\".\"id\" = \"korma\".\"otherschema\".\"author\".\"book_id\")"))
 
 
 ;;*****************************************************
 ;; Many-to-Many relationships
 ;;*****************************************************
 
-(declare mtm1 mtm2)
+(declare mtm1 mtm2 mtm3 mtm4)
 
 (defentity mtm1
-  (many-to-many mtm2 :mtm1_mtm2 {:lfk :mtm1_id
-                                 :rfk :mtm2_id}))
+  (many-to-many mtm2 :mtm1_mtm2 (lfk :mtm1_id)
+                                (rfk :mtm2_id)))
 
 (defentity mtm2
-  (many-to-many mtm1 :mtm1_mtm2 {:lfk :mtm2_id
-                                 :rfk :mtm1_id}))
+  (many-to-many mtm1 :mtm1_mtm2 (lfk :mtm2_id)
+                                (rfk :mtm1_id)))
+
+(defentity mtm3
+  (pk :id31 :id32)
+  (many-to-many mtm4 :mtm3_mtm4 (lfk :mtm3_id31 :mtm3_id32)
+                                (rfk :mtm4_id41 :mtm4_id42)))
+
+(defentity mtm4
+  (pk :id41 :id42)
+  (many-to-many mtm3 :mtm3_mtm4 (lfk :mtm4_id41 :mtm4_id42)
+                                (rfk :mtm3_id31 :mtm3_id32)))
 
 (deftest test-many-to-many
   (is (= (str "dry run :: SELECT \"mtm2\".* FROM \"mtm2\" :: []\n"
               "dry run :: SELECT \"mtm1\".* FROM \"mtm1\" "
-              "INNER JOIN \"mtm1_mtm2\" ON \"mtm1_mtm2\".\"mtm1_id\" "
-              "= \"mtm1\".\"id\" "
+              "INNER JOIN \"mtm1_mtm2\" ON (\"mtm1_mtm2\".\"mtm1_id\" "
+              "= \"mtm1\".\"id\") "
               "WHERE (\"mtm1_mtm2\".\"mtm2_id\" = ?) :: [1]\n")
          (with-out-str (dry-run (select mtm2 (with mtm1)))))))
+
+(deftest test-many-to-many-composite-key
+  (is (= (str "dry run :: SELECT \"mtm4\".* FROM \"mtm4\" :: []\n"
+              "dry run :: SELECT \"mtm3\".* FROM \"mtm3\" "
+              "INNER JOIN \"mtm3_mtm4\" ON ("
+              "\"mtm3_mtm4\".\"mtm3_id31\" = \"mtm3\".\"id31\" AND "
+              "\"mtm3_mtm4\".\"mtm3_id32\" = \"mtm3\".\"id32\") "
+              "WHERE (\"mtm3_mtm4\".\"mtm4_id41\" = ? AND \"mtm3_mtm4\".\"mtm4_id42\" = ?) :: [1 1]\n")
+         (with-out-str (dry-run (select mtm4 (with mtm3)))))))
 
 (deftest test-many-to-many-reverse
   (is (= (str "dry run :: SELECT \"mtm1\".* FROM \"mtm1\" :: []\n"
@@ -604,21 +696,50 @@
               "WHERE (\"mtm1_mtm2\".\"mtm1_id\" = ?) :: [1]\n"))
       (with-out-str (dry-run (select mtm1 (with mtm2))))))
 
+(deftest test-many-to-many-reverse-composite-key
+  (is (= (str "dry run :: SELECT \"mtm3\".* FROM \"mtm3\" :: []\n"
+              "dry run :: SELECT \"mtm4\".* FROM \"mtm4\" "
+              "INNER JOIN \"mtm3_mtm4\" ON ("
+              "\"mtm3_mtm4\".\"mtm4_id41\" = \"mtm4\".\"id41\" AND "
+              "\"mtm3_mtm4\".\"mtm4_id42\" = \"mtm4\".\"id42\") "
+              "WHERE (\"mtm3_mtm4\".\"mtm3_id31\" = ? AND \"mtm3_mtm4\".\"mtm3_id32\" = ?) :: [1 1]\n")
+         (with-out-str (dry-run (select mtm3 (with mtm4)))))))
+
 (deftest test-many-to-many-join
   (is (= (str "dry run :: SELECT \"mtm2\".* FROM (\"mtm2\" "
               "LEFT JOIN \"mtm1_mtm2\" "
-              "ON \"mtm2\".\"id\" = \"mtm1_mtm2\".\"mtm2_id\") "
+              "ON (\"mtm2\".\"id\" = \"mtm1_mtm2\".\"mtm2_id\")) "
               "LEFT JOIN \"mtm1\" "
-              "ON \"mtm1_mtm2\".\"mtm1_id\" = \"mtm1\".\"id\" :: []\n")
+              "ON (\"mtm1_mtm2\".\"mtm1_id\" = \"mtm1\".\"id\") :: []\n")
          (with-out-str (dry-run (select mtm2 (join mtm1)))))))
+
+(deftest test-many-to-many-join-composite-key
+  (is (= (str "dry run :: SELECT \"mtm4\".* FROM (\"mtm4\" "
+              "LEFT JOIN \"mtm3_mtm4\" "
+              "ON (\"mtm4\".\"id41\" = \"mtm3_mtm4\".\"mtm4_id41\" "
+              "AND \"mtm4\".\"id42\" = \"mtm3_mtm4\".\"mtm4_id42\")) "
+              "LEFT JOIN \"mtm3\" "
+              "ON (\"mtm3_mtm4\".\"mtm3_id31\" = \"mtm3\".\"id31\" "
+              "AND \"mtm3_mtm4\".\"mtm3_id32\" = \"mtm3\".\"id32\") :: []\n")
+         (with-out-str (dry-run (select mtm4 (join mtm3)))))))
 
 (deftest test-many-to-many-join-reverse
   (is (= (str "dry run :: SELECT \"mtm1\".* FROM (\"mtm1\" "
               "LEFT JOIN \"mtm1_mtm2\" "
-              "ON \"mtm1\".\"id\" = \"mtm1_mtm2\".\"mtm1_id\") "
+              "ON (\"mtm1\".\"id\" = \"mtm1_mtm2\".\"mtm1_id\")) "
               "LEFT JOIN \"mtm2\" "
-              "ON \"mtm1_mtm2\".\"mtm2_id\" = \"mtm2\".\"id\" :: []\n")
+              "ON (\"mtm1_mtm2\".\"mtm2_id\" = \"mtm2\".\"id\") :: []\n")
          (with-out-str (dry-run (select mtm1 (join mtm2)))))))
+
+(deftest test-many-to-many-join-reverse-composite-key
+  (is (= (str "dry run :: SELECT \"mtm3\".* FROM (\"mtm3\" "
+              "LEFT JOIN \"mtm3_mtm4\" "
+              "ON (\"mtm3\".\"id31\" = \"mtm3_mtm4\".\"mtm3_id31\" "
+              "AND \"mtm3\".\"id32\" = \"mtm3_mtm4\".\"mtm3_id32\")) "
+              "LEFT JOIN \"mtm4\" "
+              "ON (\"mtm3_mtm4\".\"mtm4_id41\" = \"mtm4\".\"id41\" "
+              "AND \"mtm3_mtm4\".\"mtm4_id42\" = \"mtm4\".\"id42\") :: []\n")
+         (with-out-str (dry-run (select mtm3 (join mtm4)))))))
 
 ;; Entities with many-to-many relationships using default keys.
 
@@ -634,7 +755,7 @@
   (is (= (str "dry run :: SELECT \"mtmdk2\".* FROM \"mtmdk2\" :: []\n"
               "dry run :: SELECT \"mtmdk1\".* FROM \"mtmdk1\" "
               "INNER JOIN \"mtmdk1_mtmdk2\" "
-              "ON \"mtmdk1_mtmdk2\".\"mtmdk1_id\" = \"mtmdk1\".\"id\" "
+              "ON (\"mtmdk1_mtmdk2\".\"mtmdk1_id\" = \"mtmdk1\".\"id\") "
               "WHERE (\"mtmdk1_mtmdk2\".\"mtmdk2_id\" = ?) :: [1]\n")
          (with-out-str (dry-run (select mtmdk2 (with mtmdk1)))))))
 
@@ -642,24 +763,24 @@
   (is (= (str "dry run :: SELECT \"mtmdk1\".* FROM \"mtmdk1\" :: []\n"
               "dry run :: SELECT \"mtmdk2\".* FROM \"mtmdk2\" "
               "INNER JOIN \"mtmdk1_mtmdk2\" "
-              "ON \"mtmdk1_mtmdk2\".\"mtmdk2_id\" = \"mtmdk2\".\"id\" "
+              "ON (\"mtmdk1_mtmdk2\".\"mtmdk2_id\" = \"mtmdk2\".\"id\") "
               "WHERE (\"mtmdk1_mtmdk2\".\"mtmdk1_id\" = ?) :: [1]\n")
          (with-out-str (dry-run (select mtmdk1 (with mtmdk2)))))))
 
 (deftest test-many-to-many-default-keys-join
   (is (= (str "dry run :: SELECT \"mtm2\".* FROM (\"mtm2\" "
               "LEFT JOIN \"mtm1_mtm2\" "
-              "ON \"mtm2\".\"id\" = \"mtm1_mtm2\".\"mtm2_id\") "
+              "ON (\"mtm2\".\"id\" = \"mtm1_mtm2\".\"mtm2_id\")) "
               "LEFT JOIN \"mtm1\" "
-              "ON \"mtm1_mtm2\".\"mtm1_id\" = \"mtm1\".\"id\" :: []\n")
+              "ON (\"mtm1_mtm2\".\"mtm1_id\" = \"mtm1\".\"id\") :: []\n")
          (with-out-str (dry-run (select mtm2 (join mtm1)))))))
 
 (deftest test-many-to-many-default-keys-join-reverse
   (is (= (str "dry run :: SELECT \"mtm1\".* FROM (\"mtm1\" "
               "LEFT JOIN \"mtm1_mtm2\" "
-              "ON \"mtm1\".\"id\" = \"mtm1_mtm2\".\"mtm1_id\") "
+              "ON (\"mtm1\".\"id\" = \"mtm1_mtm2\".\"mtm1_id\")) "
               "LEFT JOIN \"mtm2\" "
-              "ON \"mtm1_mtm2\".\"mtm2_id\" = \"mtm2\".\"id\" :: []\n")
+              "ON (\"mtm1_mtm2\".\"mtm2_id\" = \"mtm2\".\"id\") :: []\n")
          (with-out-str (dry-run (select mtm1 (join mtm2)))))))
 
 
@@ -730,6 +851,14 @@
               "dry run :: SELECT \"state2\".* FROM \"state2\" WHERE (\"state2\".\"id\" = ?) :: [1]\n")
          (with-out-str (dry-run (select address2 (with state2)))))))
 
+(defentity state2-ck (transform identity) (pk :id :id2))
+(defentity address2-ck (belongs-to state2-ck (fk :sid :sid2)))
+
+(deftest test-belongs-to-with-transform-fn-for-subentity-composite-key
+  (is (= (str "dry run :: SELECT \"address2-ck\".* FROM \"address2-ck\" :: []\n"
+              "dry run :: SELECT \"state2-ck\".* FROM \"state2-ck\" WHERE (\"state2-ck\".\"id\" = ? AND \"state2-ck\".\"id2\" = ?) :: [1 1]\n")
+         (with-out-str (dry-run (select address2-ck (with state2-ck)))))))
+
 (defentity address3 (transform identity))
 (defentity user3 (has-one address3))
 
@@ -737,6 +866,14 @@
   (is (= (str "dry run :: SELECT \"user3\".* FROM \"user3\" :: []\n"
               "dry run :: SELECT \"address3\".* FROM \"address3\" WHERE (\"address3\".\"user3_id\" = ?) :: [1]\n")
          (with-out-str (dry-run (select user3 (with address3)))))))
+
+(defentity address3-ck (transform identity))
+(defentity user3-ck (pk :id :id2) (has-one address3-ck (fk :uid :uid2)))
+
+(deftest test-has-one-with-transform-fn-for-subentity-composite-key
+  (is (= (str "dry run :: SELECT \"user3-ck\".* FROM \"user3-ck\" :: []\n"
+              "dry run :: SELECT \"address3-ck\".* FROM \"address3-ck\" WHERE (\"address3-ck\".\"uid\" = ? AND \"address3-ck\".\"uid2\" = ?) :: [1 1]\n")
+         (with-out-str (dry-run (select user3-ck (with address3-ck)))))))
 
 ;;*****************************************************
 ;; Delimiters for one-to-one joins
@@ -760,13 +897,13 @@
 
 (deftest test-correct-delimiters-for-one-to-one-joins
   (testing "correct delimiters are used in belongs-to joins"
-    (is (= "SELECT `address`.*, `state`.* FROM `address` LEFT JOIN `state` ON `state`.`id` = `address`.`state_id` WHERE (`state`.`status` = ?) ORDER BY `address`.`id` ASC"
+    (is (= "SELECT `address`.*, `state`.* FROM `address` LEFT JOIN `state` ON (`state`.`id` = `address`.`state_id`) WHERE (`state`.`status` = ?) ORDER BY `address`.`id` ASC"
            (sql-only (select address-with-db
                              (with state-with-db
                                    (where {:status 1}))
                              (order :id))))))
   (testing "correct delimiters are used in has-one joins"
-    (is (= "SELECT `user`.*, `address`.* FROM `user` LEFT JOIN `address` ON `address`.`user_id` = `user`.`id` WHERE (`address`.`status` = ?) ORDER BY `user`.`id` ASC"
+    (is (= "SELECT `user`.*, `address`.* FROM `user` LEFT JOIN `address` ON (`address`.`user_id` = `user`.`id`) WHERE (`address`.`status` = ?) ORDER BY `user`.`id` ASC"
            (sql-only (select user-with-db
                              (with address-with-db
                                    (where {:status 1}))
