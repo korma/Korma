@@ -548,8 +548,8 @@
    :rpk (raw (eng/prefix child (:pk child)))
    :join-table join-table})
 
-(defn- get-db-keys [parent child {:keys [fk]}]
-  (let [fk-key (or fk (default-fk-name parent))]
+(defn- get-db-keys [parent child]
+  (let [fk-key (default-fk-name parent)]
     {:pk (raw (eng/prefix parent (:pk parent)))
      :fk (raw (eng/prefix child fk-key))
      :fk-key fk-key}))
@@ -557,8 +557,8 @@
 (defn- db-keys-and-foreign-ent [type ent sub-ent opts]
   (case type
     :many-to-many        [(many-to-many-keys ent sub-ent opts) sub-ent]
-    (:has-one :has-many) [(get-db-keys ent sub-ent opts) sub-ent]
-    :belongs-to          [(get-db-keys sub-ent ent opts) ent]))
+    (:has-one :has-many) [(get-db-keys ent sub-ent) sub-ent]
+    :belongs-to          [(get-db-keys sub-ent ent) ent]))
 
 (defn create-relation [ent sub-ent type opts]
   (let [[db-keys foreign-ent] (db-keys-and-foreign-ent type ent sub-ent opts)
