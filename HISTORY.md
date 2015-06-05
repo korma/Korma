@@ -1,3 +1,9 @@
+0.4.2
+-----
+* Fix regression in 0.4.1 causing global config changes not to take affect if defdb is called first
+    * This fix reverts "Honor db specific options when using `with-db`" which will be reimplemented in future release
+* Bump clojure/java.jdbc version to 0.3.7 (danielsoro)
+
 0.4.1
 -----
 * Fix warnings when using Clojure 1.7 (glittershark)
