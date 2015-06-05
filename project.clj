@@ -1,4 +1,4 @@
-(defproject korma "0.4.2"
+(defproject korma "0.5.0-SNAPSHOT"
   :description "Tasty SQL for Clojure"
   :url "http://github.com/korma/Korma"
   :mailing-list {:name "Korma Google Group"
@@ -6,7 +6,7 @@
   :codox {:exclude [korma.sql.engine
                     korma.sql.fns
                     korma.sql.utils]
-          :src-dir-uri "https://github.com/korma/Korma/blob/v0.4.2/"
+          :src-dir-uri "https://github.com/korma/Korma/blob/master/"
           :src-linenum-anchor-prefix "L"}
 
   :dependencies [[org.clojure/clojure "1.6.0"]
