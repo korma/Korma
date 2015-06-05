@@ -732,7 +732,7 @@
   (reduce (fn [m [k v]] (assoc m (make-key-unique ->key m k 1) v)) m1 m2))
 
 (defn- get-key-naming-strategy [query]
-  (get-in (or (:options query) (:options db/*current-db*)  @conf/options) [:naming :keys]))
+  (get-in (or (:options query) @conf/options) [:naming :keys]))
 
 (defn- get-join-keys [rel ent sub-ent]
   (case (:rel-type rel)
