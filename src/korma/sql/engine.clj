@@ -147,7 +147,7 @@
                              (table-alias ~query)
                              (:table ~query))
              *bound-aliases* (or (:aliases ~query) #{})
-             *bound-options* (or (:options ~query) (:options korma.db/*current-db*) @conf/options)]
+             *bound-options* (or (:options ~query) @conf/options)]
      ~@body))
 
 ;;*****************************************************
