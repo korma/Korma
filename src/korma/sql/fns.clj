@@ -30,9 +30,9 @@
 
 (def pred-= eng/pred-=)
 (defn pred-not= [k v] (cond
-                       (and k v) (infix k "<>" v)
-                       k         (infix k "IS NOT" v)
-                       v         (infix v "IS NOT" k)))
+                        (and k v) (infix k "<>" v)
+                        k         (infix k "IS NOT" v)
+                        v         (infix v "IS NOT" k)))
 
 ;;*****************************************************
 ;; Aggregates

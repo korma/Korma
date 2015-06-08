@@ -34,5 +34,5 @@
 (deftest use-database-from-parent-when-fetching-children
   (is (= [{:id 1 :name "Chris" :email [{:id 1 :user_id 1 :email_address "chris@email.com"}]}]
          (select user
-           (database mem-db)
-           (with email)))))
+                 (database mem-db)
+                 (with email)))))

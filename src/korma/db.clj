@@ -253,7 +253,7 @@
   []
   (jdbc/db-is-rollback-only *current-conn*))
 
-(defn- exec-sql [{:keys [results sql-str params options]}]  
+(defn- exec-sql [{:keys [results sql-str params options]}]
   (let [{:keys [keys]} (:naming (or options @conf/options))]
     (case results
       :results (jdbc/query *current-conn*
