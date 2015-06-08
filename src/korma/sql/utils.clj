@@ -49,9 +49,9 @@
 (defn left-assoc [vs]
   (loop [ret "" [v & vs] vs]
     (cond
-     (nil? v) ret
-     (nil? vs) (str ret v)
-     :else (recur (wrap (str ret v)) vs))))
+      (nil? v) ret
+      (nil? vs) (str ret v)
+      :else (recur (wrap (str ret v)) vs))))
 
 ;;*****************************************************
 ;; collection-utils

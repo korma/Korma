@@ -67,32 +67,32 @@
 
 (deftest simple-selects
   (sql-only
-    (are [query result] (= query result)
-         (select users)
-         "SELECT \"users\".* FROM \"users\""
-         (select users-alias)
-         "SELECT \"u\".* FROM \"users\" AS \"u\""
-         (select users-with-entity-fields)
-         "SELECT \"users\".\"id\", \"users\".\"username\" FROM \"users\""
-         (select users-with-friend (with f/friend))
-         "SELECT \"users\".*, \"friend\".* FROM \"users\" LEFT JOIN \"friend\" ON \"friend\".\"users_id\" = \"users\".\"id\""
-         (select users
-                 (fields :id :username))
-         "SELECT \"users\".\"id\", \"users\".\"username\" FROM \"users\""
-         (select users
-                 (where {:username "chris"
-                         :email "hey@hey.com"}))
-         "SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"email\" = ? AND \"users\".\"username\" = ?)"
-         (select users
-                 (where {:username "chris"})
-                 (order :created))
-         "SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"username\" = ?) ORDER BY \"users\".\"created\" ASC"
-         (select users
-                 (where {:active true})
-                 (order :created)
-                 (limit 5)
-                 (offset 3))
-         "SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"active\" = ?) ORDER BY \"users\".\"created\" ASC LIMIT 5 OFFSET 3")))
+   (are [query result] (= query result)
+        (select users)
+        "SELECT \"users\".* FROM \"users\""
+        (select users-alias)
+        "SELECT \"u\".* FROM \"users\" AS \"u\""
+        (select users-with-entity-fields)
+        "SELECT \"users\".\"id\", \"users\".\"username\" FROM \"users\""
+        (select users-with-friend (with f/friend))
+        "SELECT \"users\".*, \"friend\".* FROM \"users\" LEFT JOIN \"friend\" ON \"friend\".\"users_id\" = \"users\".\"id\""
+        (select users
+                (fields :id :username))
+        "SELECT \"users\".\"id\", \"users\".\"username\" FROM \"users\""
+        (select users
+                (where {:username "chris"
+                        :email "hey@hey.com"}))
+        "SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"email\" = ? AND \"users\".\"username\" = ?)"
+        (select users
+                (where {:username "chris"})
+                (order :created))
+        "SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"username\" = ?) ORDER BY \"users\".\"created\" ASC"
+        (select users
+                (where {:active true})
+                (order :created)
+                (limit 5)
+                (offset 3))
+        "SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"active\" = ?) ORDER BY \"users\".\"created\" ASC LIMIT 5 OFFSET 3")))
 
 (deftest update-function
   (is (= "UPDATE \"users\" SET \"first\" = ?, \"last\" = ? WHERE (\"users\".\"id\" = ?)"
@@ -147,20 +147,20 @@
 
 (deftest insert-queries
   (sql-only
-    (are [result query] (= result query)
-         "INSERT INTO \"users\" (\"first\", \"last\") VALUES (?, ?)"
-         (insert users
-                 (values {:first "chris" :last "granger"}))
-         "INSERT INTO \"users\" (\"first\", \"last\") VALUES (?, ?), (?, ?)"
-         (insert users
-                 (values [{:first "chris" :last "granger"}
-                          {:last "jordan" :first "michael"}]))
-         "DO 0"
-         (insert users (values {}))
-         "DO 0"
-         (insert users (values []))
-         "DO 0"
-         (insert users (values [{} {}])))))
+   (are [result query] (= result query)
+        "INSERT INTO \"users\" (\"first\", \"last\") VALUES (?, ?)"
+        (insert users
+                (values {:first "chris" :last "granger"}))
+        "INSERT INTO \"users\" (\"first\", \"last\") VALUES (?, ?), (?, ?)"
+        (insert users
+                (values [{:first "chris" :last "granger"}
+                         {:last "jordan" :first "michael"}]))
+        "DO 0"
+        (insert users (values {}))
+        "DO 0"
+        (insert users (values []))
+        "DO 0"
+        (insert users (values [{} {}])))))
 
 (deftest complex-where
   (sql-only
@@ -201,9 +201,9 @@
 (deftest with-many
   (with-out-str
     (dry-run
-      (is (= [{:id 1 :email [{:id 1}]}]
-             (select user2
-                     (with email)))))))
+     (is (= [{:id 1 :email [{:id 1}]}]
+            (select user2
+                    (with email)))))))
 
 (deftest with-many-batch
   (is (= "dry run :: SELECT \"users\".* FROM \"users\" :: []\ndry run :: SELECT \"email\".* FROM \"email\" WHERE (\"email\".\"users_id\" IN (?)) :: [1]\n"
@@ -335,8 +335,8 @@
   (let [delimiters (:delimiters @options)]
     (set-delimiters "`")
     (sql-only
-      (is (= "SELECT `users`.* FROM `users`"
-             (select user2))))
+     (is (= "SELECT `users`.* FROM `users`"
+            (select user2))))
     (apply set-delimiters delimiters)))
 
 (deftest naming-delim-options
@@ -358,25 +358,25 @@
 
 (deftest false-set-in-update
   (query-only
-    (are [result query] (= result (select-keys query [:sql-str :params]))
-         {:sql-str "UPDATE \"users\" SET \"blah\" = ?" :params [false]}
-         (update user2 (set-fields {:blah false}))
+   (are [result query] (= result (select-keys query [:sql-str :params]))
+        {:sql-str "UPDATE \"users\" SET \"blah\" = ?" :params [false]}
+        (update user2 (set-fields {:blah false}))
 
-         {:sql-str "UPDATE \"users\" SET \"blah\" = NULL" :params []}
-         (update user2 (set-fields {:blah nil}))
+        {:sql-str "UPDATE \"users\" SET \"blah\" = NULL" :params []}
+        (update user2 (set-fields {:blah nil}))
 
-         {:sql-str "UPDATE \"users\" SET \"blah\" = ?" :params [true]}
-         (update user2 (set-fields {:blah true})))))
+        {:sql-str "UPDATE \"users\" SET \"blah\" = ?" :params [true]}
+        (update user2 (set-fields {:blah true})))))
 
 (deftest raws
   (sql-only
-    (are [result query] (= result query)
-         "SELECT \"users\".* FROM \"users\" WHERE (ROWNUM >= ?)"
-         (select user2 (where {(raw "ROWNUM") [>= 5]}))
+   (are [result query] (= result query)
+        "SELECT \"users\".* FROM \"users\" WHERE (ROWNUM >= ?)"
+        (select user2 (where {(raw "ROWNUM") [>= 5]}))
 
-         "SELECT \"users\".* FROM \"users\" WHERE (MONTH(create_date) = ? AND YEAR(create_date) = ?)"
-         (select user2 (where {(raw "YEAR(create_date)")  2013
-                               (raw "MONTH(create_date)") 12})))))
+        "SELECT \"users\".* FROM \"users\" WHERE (MONTH(create_date) = ? AND YEAR(create_date) = ?)"
+        (select user2 (where {(raw "YEAR(create_date)")  2013
+                              (raw "MONTH(create_date)") 12})))))
 
 (deftest pk-dry-run
   (let [result (with-out-str
@@ -396,24 +396,24 @@
 
        "SELECT \"state\".* FROM \"state\" WHERE EXISTS((SELECT \"address\".* FROM \"address\" WHERE ((\"address\".\"id\" > ?) AND \"address\".\"state_id\" = \"state\".\"id\")))"
        (sql-only
-         (select state
-                 (where (exists (subselect address 
-                                           (where (and {:id [> 5]} (= :state_id :state.id))))))))
+        (select state
+                (where (exists (subselect address
+                                          (where (and {:id [> 5]} (= :state_id :state.id))))))))
 
        "SELECT \"state\".* FROM \"state\" WHERE (EXISTS((SELECT \"address\".* FROM \"address\" WHERE ((\"address\".\"id\" > ?) AND \"address\".\"state_id\" = \"state\".\"id\"))) AND NOT(EXISTS((SELECT \"address\".* FROM \"address\" WHERE ((\"address\".\"id\" < ?) OR \"address\".\"state_id\" <> \"state\".\"id\")))))"
        (sql-only
-         (select state
-                 (where (and (exists (subselect address 
-                                           (where (and {:id [> 5]} (= :state_id :state.id)))))
-                             (not (exists (subselect address
-                                           (where (or  {:id [< 10]} (not= :state_id :state.id))))))))))
+        (select state
+                (where (and (exists (subselect address
+                                               (where (and {:id [> 5]} (= :state_id :state.id)))))
+                            (not (exists (subselect address
+                                                    (where (or  {:id [< 10]} (not= :state_id :state.id))))))))))
 
        "SELECT \"state\".* FROM \"state\" WHERE EXISTS((SELECT \"address\".* FROM \"address\" WHERE ((\"address\".\"id\" > ?) AND NOT(EXISTS((SELECT \"users\".* FROM \"users\" WHERE \"address\".\"user_id\" = \"users\".\"id\"))))))"
        (sql-only
-         (select state
-                 (where (exists (subselect address 
-                                           (where (and {:id [> 5]} 
-                                                       (not (exists (subselect user2 (where (= :address.user_id :id))))))))))))
+        (select state
+                (where (exists (subselect address
+                                          (where (and {:id [> 5]}
+                                                      (not (exists (subselect user2 (where (= :address.user_id :id))))))))))))
 
        "SELECT \"users\".* FROM \"users\", (SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"age\" > ?)) AS \"u2\""
        (sql-only
@@ -485,18 +485,18 @@
         (select subsel))))
 
 (deftest entity-with-belongs-to-subselect
- (defentity subsel
-  (pk :subsel_id)
-  (table  (subselect "test") :subseltest))
+  (defentity subsel
+    (pk :subsel_id)
+    (table  (subselect "test") :subseltest))
   (defentity ent
-   (table :ent)
-   (pk :ent_id)
-   (belongs-to subsel  {:fk :subsel_ent_id}))
+    (table :ent)
+    (pk :ent_id)
+    (belongs-to subsel  {:fk :subsel_ent_id}))
   (are  [result query]  (= result query)
-   "SELECT \"ent\".*, \"subseltest\".* FROM \"ent\" LEFT JOIN (SELECT \"test\".* FROM \"test\") AS \"subseltest\" ON \"subseltest\".\"subsel_id\" = \"ent\".\"subsel_ent_id\""
-   (sql-only
-    (select ent
-     (with subsel)))))
+        "SELECT \"ent\".*, \"subseltest\".* FROM \"ent\" LEFT JOIN (SELECT \"test\".* FROM \"test\") AS \"subseltest\" ON \"subseltest\".\"subsel_id\" = \"ent\".\"subsel_ent_id\""
+        (sql-only
+         (select ent
+                 (with subsel)))))
 
 (deftest multiple-aliases
   (defentity blahblah
