@@ -1,8 +1,8 @@
 (ns korma.sql.engine
   (:require [clojure.string :as string]
             [clojure.walk :as walk]
-            [korma.config :as conf]
-            [korma.sql.utils :as utils]))
+            [korma.sql.utils :as utils]
+            [korma.db :as db]))
 
 ;;*****************************************************
 ;; dynamic vars
@@ -18,7 +18,7 @@
 ;;*****************************************************
 
 (defn delimit-str [s]
-  (let [{:keys [naming delimiters]} (or *bound-options* @conf/options)
+  (let [{:keys [naming delimiters]} *bound-options*
         [begin end] delimiters
         ->field (:fields naming)]
     (str begin (->field s) end)))
@@ -96,7 +96,7 @@
 
 (defn alias-clause [alias]
   (when alias
-    (str (:alias-delimiter (or *bound-options* @conf/options))
+    (str (:alias-delimiter *bound-options*)
          (delimit-str (name alias)))))
 
 (defn field-str [v]
@@ -147,7 +147,7 @@
                              (table-alias ~query)
                              (:table ~query))
              *bound-aliases* (or (:aliases ~query) #{})
-             *bound-options* (or (:options ~query) @conf/options)]
+             *bound-options* (or (:options ~query) (:options db/*current-db*) (:options @db/_default))]
      ~@body))
 
 ;;*****************************************************

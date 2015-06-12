@@ -3,7 +3,6 @@
   (:require [clojure.string :as string]
             [criterium.core :as cr])
   (:use clojure.test
-        korma.config
         korma.core
         korma.db
         korma.test.integration.helpers))

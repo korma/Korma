@@ -3,7 +3,6 @@
   (:require [clojure.java.jdbc :as jdbc]
             [korma.mysql :as mysql])
   (:use clojure.test
-        korma.config
         korma.core
         korma.db))
 

@@ -3,7 +3,6 @@
   (:refer-clojure :exclude [update])
   (:require [clojure.set :as set]
             [clojure.string :as string]
-            [korma.config :as conf]
             [korma.db :as db]
             [korma.sql.engine :as eng]
             [korma.sql.fns :as sfns]
@@ -302,19 +301,21 @@
   ([query ent rel]
    (add-joins query ent rel :left))
   ([query ent rel type]
-   (if-let [join-table (:join-table rel)]
-     (let [{:keys [lpk lfk rpk rfk]} rel]
-       (-> query
-           (join* type join-table
-              (apply sfns/pred-and
-                     (map sfns/pred-= lpk @lfk)))
-           (join* type ent
-              (apply sfns/pred-and
-                     (map sfns/pred-= @rfk rpk)))))
-     (join* query type ent
-       (let [{:keys [pk fk]} rel]
-         (apply sfns/pred-and
-                (map sfns/pred-= pk fk)))))))
+   (bind-query
+     query
+     (if-let [join-table (:join-table rel)]
+       (let [{:keys [lpk lfk rpk rfk]} rel]
+         (-> query
+             (join* type join-table
+                (apply sfns/pred-and
+                       (map sfns/pred-= lpk @lfk)))
+             (join* type ent
+                (apply sfns/pred-and
+                       (map sfns/pred-= @rfk rpk)))))
+       (join* query type ent
+         (let [{:keys [pk fk]} rel]
+           (apply sfns/pred-and
+                  (map sfns/pred-= pk fk))))))))
 
 (defmacro join
   "Add a join clause to a select query, specifying an entity defined by defentity, or the table name to
@@ -712,7 +713,7 @@
 (defn database
   "Set the database connection to be used for this entity."
   [ent db]
-  (assoc ent :db db))
+  (assoc ent :db db :options (:options db)))
 
 (defn transform
   "Add a function to be applied to results coming from the database"
@@ -770,13 +771,15 @@
         table (keyword (eng/table-alias ent))
         ent (assoc-db-to-entity query ent)]
     (post-query query
-                (partial map
-                         #(assoc % table
-                                 (select ent
-                                         (body-fn)
-                                         (where (apply sfns/pred-and
-                                                      (map sfns/pred-= fk-key 
-                                                           (map (fn [k] (get % k)) pk))))))))))
+      (partial map
+        #(assoc % table
+           (bind-query
+             query
+             (select ent
+               (body-fn)
+               (where (apply sfns/pred-and
+                             (map sfns/pred-= fk-key
+                             (map (fn [k] (get % k)) pk)))))))))))
 
 (defn- make-key-unique [->key m k n]
   (let [unique-key (if (= n 1) k (keyword (->key (str (name k) "_" n))))]
@@ -786,9 +789,6 @@
 
 (defn- merge-with-unique-keys [->key m1 m2]
   (reduce (fn [m [k v]] (assoc m (make-key-unique ->key m k 1) v)) m1 m2))
-
-(defn- get-key-naming-strategy [query]
-  (get-in (or (:options query) @conf/options) [:naming :keys]))
 
 (defn- get-join-keys [rel ent sub-ent]
   (case (:rel-type rel)
@@ -801,15 +801,17 @@
     (post-query query
       (partial map
          (fn [ent]
-           (merge-with-unique-keys (get-key-naming-strategy query)
-              ent
-              (first
-                (select sub-ent
-                  (body-fn)
-                  (where
-                    (let [ent-kval (map #(get ent %) ent-key)]
-                      (apply sfns/pred-and
-                             (map sfns/pred-= sub-ent-key ent-kval))))))))))))
+           (bind-query
+             query
+             (merge-with-unique-keys (get-in eng/*bound-options* [:naming :keys])
+               ent
+               (first
+                 (select sub-ent
+                   (body-fn)
+                   (where
+                     (let [ent-kval (map #(get ent %) ent-key)]
+                       (apply sfns/pred-and
+                              (map sfns/pred-= sub-ent-key ent-kval)))))))))))))
 
 (defn- with-one-to-one-now [rel query sub-ent body-fn]
   (let [ent (:ent query)
@@ -832,13 +834,15 @@
     (post-query query
       (partial map
          #(assoc % table
-            (select ent
-              (join :inner join-table
-                    (apply sfns/pred-and
-                           (map sfns/pred-= @rfk rpk)))
-              (body-fn)
-              (where (apply sfns/pred-and
-                            (map sfns/pred-= @lfk (map (fn [k] (get % k)) pk))))))))))
+            (bind-query
+              query
+              (select ent
+                (join :inner join-table
+                      (apply sfns/pred-and
+                             (map sfns/pred-= @rfk rpk)))
+                (body-fn)
+                (where (apply sfns/pred-and
+                              (map sfns/pred-= @lfk (map (fn [k] (get % k)) pk)))))))))))
 
 (defn with* [query sub-ent body-fn]
   (let [{:keys [rel-type] :as rel} (get-rel (:ent query) sub-ent)
