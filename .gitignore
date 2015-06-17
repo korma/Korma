@@ -4,6 +4,9 @@ pom.xml
 /classes/
 .lein-failures
 .lein-deps-sum
+.lein-repl-history
+.nrepl-port
+*.swp
 /target/
 *.iml
 /.idea
