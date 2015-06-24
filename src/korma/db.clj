@@ -1,8 +1,7 @@
 (ns korma.db
   "Functions for creating and managing database specifications."
   (:require [clojure.java.jdbc :as jdbc]
-            [korma.config :as conf])
-  (:import (com.mchange.v2.c3p0 ComboPooledDataSource)))
+            [korma.config :as conf]))
 
 (defonce _default (atom nil))
 
@@ -21,6 +20,16 @@
     (doseq [[k v] m]
       (.setProperty p (name k) (str v)))
     p))
+
+(def c3p0-enabled?
+  (try
+    (import 'com.mchange.v2.c3p0.ComboPooledDataSource)
+    true
+    (catch Throwable _ false)))
+
+(defmacro resolve-new [class]
+  (when-let [resolved (resolve class)]
+    `(new ~resolved)))
 
 (defn connection-pool
   "Create a connection pool for the given database spec."
@@ -41,7 +50,9 @@
          test-connection-on-checkin false
          test-connection-on-checkout false}
     :as spec}]
-  {:datasource (doto (ComboPooledDataSource.)
+  (when-not c3p0-enabled?
+    (throw (Exception. "com.mchange.v2.c3p0.ComboPooledDataSource not found in class path."))) 
+  {:datasource (doto (resolve-new ComboPooledDataSource)
                  (.setDriverClass classname)
                  (.setJdbcUrl (str "jdbc:" subprotocol ":" subname))
                  (.setProperties (as-properties (dissoc spec
