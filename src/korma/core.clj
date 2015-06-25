@@ -20,13 +20,12 @@
   (let [ent (if (keyword? ent)
               (name ent)
               ent)
-        [ent table alias db opts] (if (string? ent)
-                                    [{:table ent} ent nil nil nil]
-                                    [ent (:table ent) (:alias ent) (:db ent) (get-in ent [:db :options])])]
+        [ent table alias db] (if (string? ent)
+                               [{:table ent} ent nil nil]
+                               [ent (:table ent) (:alias ent) (:db ent)])]
     {:ent ent
      :table table
      :db db
-     :options opts
      :alias alias}))
 
 (defmacro ^{:private true} make-query [ent m]
@@ -713,7 +712,7 @@
 (defn database
   "Set the database connection to be used for this entity."
   [ent db]
-  (assoc ent :db db :options (:options db)))
+  (assoc ent :db db ))
 
 (defn transform
   "Add a function to be applied to results coming from the database"
