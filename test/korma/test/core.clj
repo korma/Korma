@@ -2,7 +2,6 @@
   (:refer-clojure :exclude [update])
   (:require [clojure.string :as string])
   (:use clojure.test
-        korma.config
         korma.core
         korma.db))
 
@@ -405,12 +404,17 @@
         (select user2 (modifier "TOP 5")))))
 
 (deftest delimiters
-  (let [delimiters (:delimiters @options)]
-    (set-delimiters "`")
-    (sql-only
-     (is (= "SELECT `users`.* FROM `users`"
-            (select user2))))
-    (apply set-delimiters delimiters)))
+  (defdb delimdb
+    {:delimiters "`"})
+  (defentity delimuser
+    (table :users)
+    (database delimdb)
+    (has-one address)
+    (has-many email))
+  (sql-only
+    (is (= "SELECT `users`.* FROM `users`"
+           (select delimuser))))
+  (default-connection mem-db))
 
 (deftest naming-delim-options
   (sql-only

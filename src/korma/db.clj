@@ -1,18 +1,39 @@
 (ns korma.db
   "Functions for creating and managing database specifications."
-  (:require [clojure.java.jdbc :as jdbc]
-            [korma.config :as conf]))
+  (:require [clojure.java.jdbc :as jdbc]))
 
 (defonce _default (atom nil))
 
 (def ^:dynamic *current-db* nil)
 (def ^:dynamic *current-conn* nil)
 
+(defn- ->delimiters [delimiters]
+  (if delimiters
+    (let [[begin end] delimiters
+          end (or end begin)]
+      [begin end])
+    ["\"" "\""]))
+
+(defn- ->naming [strategy]
+  (merge {:fields identity
+          :keys identity} strategy))
+
+(defn- ->alias-delimiter [alias-delimiter]
+  (or alias-delimiter " AS "))
+
+(defn extract-options [{:keys [naming
+                               delimiters 
+                               alias-delimiter
+                               subprotocol]}]
+  {:naming (->naming naming)
+   :delimiters (->delimiters delimiters)
+   :alias-delimiter (->alias-delimiter alias-delimiter)
+   :subprotocol subprotocol})
+
 (defn default-connection
   "Set the database connection that Korma should use by default when no
   alternative is specified."
   [conn]
-  (conf/merge-defaults (:options conn))
   (reset! _default conn))
 
 (defn- as-properties [m]
@@ -101,7 +122,7 @@
   {:pool (if (:make-pool? spec)
            (delay-pool spec)
            spec)
-   :options (conf/extract-options spec)})
+   :options (extract-options spec)})
 
 (defmacro defdb
   "Define a database specification. The last evaluated defdb will be used by
@@ -250,9 +271,10 @@
                            (map? options))
         {:keys [isolation read-only?]} (when check-options options)
         body (if check-options (rest body) body)]
-    `(jdbc/with-db-transaction [conn# (or *current-conn* (get-connection @_default)) :isolation ~isolation :read-only? ~read-only?]
-       (binding [*current-conn* conn#]
-         ~@body))))
+    `(binding [*current-db* (or *current-db* @_default)]
+      (jdbc/with-db-transaction [conn# (or *current-conn* (get-connection *current-db*)) :isolation ~isolation :read-only? ~read-only?]
+        (binding [*current-conn* conn#]
+          ~@body)))))
 
 (defn rollback
   "Tell this current transaction to rollback."
@@ -264,8 +286,8 @@
   []
   (jdbc/db-is-rollback-only *current-conn*))
 
-(defn- exec-sql [{:keys [results sql-str params options]}]
-  (let [{:keys [keys]} (:naming (or options @conf/options))]
+(defn- exec-sql [{:keys [results sql-str params]}]
+  (let [keys (get-in *current-db* [:options :naming :keys])]
     (case results
       :results (jdbc/query *current-conn*
                            (apply vector sql-str params)

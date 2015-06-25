@@ -1,8 +1,9 @@
 (ns korma.test.db
   (:use [clojure.test :only [deftest is testing use-fixtures]]
         [korma.core :only [exec-raw]]
-        [korma.db :only [connection-pool defdb get-connection h2
-                         msaccess mssql mysql odbc oracle postgres sqlite3 vertica firebird default-connection transaction]]))
+        [korma.db :only [connection-pool defdb get-connection h2 extract-options
+                         msaccess mssql mysql odbc oracle postgres sqlite3 vertica
+                         firebird default-connection transaction]]))
 
 (defdb mem-db (h2 {:db "mem:test"}))
 
@@ -31,6 +32,29 @@
    :test-connection-query "SELECT 1"
    :useUnicode true
    :connectTimeout 1000})
+
+(deftest can-extract-options-merging-subprotocol
+  (let [original (extract-options nil)]
+    (is (= (assoc original :subprotocol "anysql") 
+           (extract-options {:subprotocol "anysql"})))))
+
+(deftest can-extract-options-merging-delimiters
+    (let [original (extract-options nil)]
+          (is (= (assoc original :delimiters ["`" "`"]) 
+                 (extract-options {:delimiters ["`" "`"]})))))
+
+(deftest can-extract-options-merging-alias-delimiter
+    (let [original (extract-options nil)]
+          (is (= (assoc original :alias-delimiter " az ") 
+                 (extract-options {:alias-delimiter " az "})))))
+
+(deftest can-extract-options-merging-naming
+    (let [custom-fn (fn [& args] args)
+                  original (extract-options nil)]
+          (is (= (assoc original :naming {:fields custom-fn
+                                          :keys custom-fn}) 
+                 (extract-options {:naming {:fields custom-fn
+                                            :keys custom-fn}})))))
 
 (deftest connection-pooling-default-test
   (let [pool (connection-pool db-config-with-defaults)
