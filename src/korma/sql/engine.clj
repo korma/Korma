@@ -147,7 +147,9 @@
                              (table-alias ~query)
                              (:table ~query))
              *bound-aliases* (or (:aliases ~query) #{})
-             *bound-options* (or (:options ~query) (:options db/*current-db*) (:options @db/_default))]
+             *bound-options* (or (get-in ~query [:db :options])
+                                 (:options db/*current-db*)
+                                 (:options @db/_default))]
      ~@body))
 
 ;;*****************************************************
