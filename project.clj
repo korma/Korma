@@ -9,7 +9,7 @@
           :src-dir-uri "https://github.com/korma/Korma/blob/master/"
           :src-linenum-anchor-prefix "L"}
 
-  :dependencies [[org.clojure/clojure "1.6.0"]
+  :dependencies [[org.clojure/clojure "1.7.0"]
                  [c3p0/c3p0 "0.9.1.2"]
                  [org.clojure/java.jdbc "0.3.7"]]
 
@@ -29,7 +29,7 @@
              :1.4 {:dependencies [[org.clojure/clojure "1.4.0"]]}
              :1.5 {:dependencies [[org.clojure/clojure "1.5.1"]]}
              :1.6 {:dependencies [[org.clojure/clojure "1.6.0"]]}
-             :1.7 {:dependencies [[org.clojure/clojure "1.7.0-beta2"]]}}
+             :1.7 {:dependencies [[org.clojure/clojure "1.7.0"]]}}
   :aliases {"run-tests" ["with-profile" "1.3:1.4:1.5:1.6:1.7" "test"]
             "slamhound" ["run" "-m" "slam.hound"]}
   :jvm-opts ["-Dline.separator=\n"])
