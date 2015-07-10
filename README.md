@@ -83,7 +83,7 @@ And include log4j in your project.clj:
 (select users
   (where {:username [like "chris"]
           :status "active"
-          :location [not= nil]))
+          :location [not= nil]}))
 ;; executes SELECT * FROM users WHERE (users.username LIKE 'chris' AND users.status = 'active' AND users.location IS NOT NULL)
 
 (select users
