@@ -39,8 +39,10 @@
 ;;*****************************************************
 
 (defn- subprotocol [query]
-  (let [default (get-in @db/_default [:options :subprotocol])]
-    (or (get-in query [:db :options :subprotocol]) default)))
+  (let [default (get-in @db/_default [:options :connection-uri])]
+    (second (clojure.string/split
+              (or (get-in query [:db :options :connection-uri]) default)
+              #":"))))
 
 (defn agg-count [query v]
   (if (= "mysql" (subprotocol query))
