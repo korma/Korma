@@ -31,11 +31,6 @@
    :useUnicode true
    :connectTimeout 1000})
 
-(deftest can-extract-options-merging-uri
-  (let [original (extract-options nil)]
-    (is (= (assoc original :connection-uri "anysql")
-           (extract-options {:connection-uri "anysql"})))))
-
 (deftest can-extract-options-merging-delimiters
     (let [original (extract-options nil)]
           (is (= (assoc original :delimiters ["`" "`"]) 

@@ -308,9 +308,9 @@
   (sql-only
    (is (= "SELECT \"users\".* FROM \"users\" GROUP BY \"users\".\"id\", \"users\".\"name\""
           (select users (group :id :name))))
-   (is (= "SELECT COUNT(\"users\".*) AS \"cnt\" FROM \"users\" GROUP BY \"users\".\"id\""
+   (is (= "SELECT COUNT(*) AS \"cnt\" FROM \"users\" GROUP BY \"users\".\"id\""
           (select users (aggregate (count :*) :cnt :id))))
-   (is (= "SELECT COUNT(\"users\".*) AS \"cnt\" FROM \"users\" GROUP BY \"users\".\"id\" HAVING (\"users\".\"id\" = ?)"
+   (is (= "SELECT COUNT(*) AS \"cnt\" FROM \"users\" GROUP BY \"users\".\"id\" HAVING (\"users\".\"id\" = ?)"
           (select users
                   (aggregate (count :*) :cnt :id)
                   (having {:id 5}))))))
@@ -319,6 +319,15 @@
   (sql-only
    (is (= "SELECT STDEV(\"users\".\"age\") AS \"DevAge\" FROM \"users\""
           (select users (aggregate (stdev :age) :DevAge))))))
+
+(deftest aggregate-count
+  (sql-only
+    (testing "asterisk is not prefixed with table when used as count column"
+      (is (= "SELECT COUNT(*) AS \"cnt\" FROM \"users\""
+             (select users (aggregate (count :*) :cnt)))))
+    (testing "column names as prefixed when used as count column"
+      (is (= "SELECT COUNT(\"users\".\"age\") AS \"cnt\" FROM \"users\""
+             (select users (aggregate (count :age) :cnt)))))))
 
 (deftest quoting
   (sql-only

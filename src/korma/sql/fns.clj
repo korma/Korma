@@ -1,7 +1,7 @@
 (ns korma.sql.fns
   (:require [korma.db :as db]
-            [korma.mysql :as mysql]
-            [korma.sql.engine :as eng])
+            [korma.sql.engine :as eng]
+            [korma.sql.utils :as utils])
   (:use [korma.sql.engine :only [infix group-with sql-func trinary wrapper]]))
 
 ;;*****************************************************
@@ -38,15 +38,9 @@
 ;; Aggregates
 ;;*****************************************************
 
-(defn- subprotocol [query]
-  (let [default (get-in @db/_default [:options :connection-uri])]
-    (second (clojure.string/split
-              (or (get-in query [:db :options :connection-uri]) default)
-              #":"))))
-
-(defn agg-count [query v]
-  (if (= "mysql" (subprotocol query))
-    (mysql/count query v)
+(defn agg-count [_query_ v]
+  (if (= "*" (name v))
+    (sql-func "COUNT" (utils/generated "*"))
     (sql-func "COUNT" v)))
 
 (defn agg-sum [_query_ v]   (sql-func "SUM" v))
