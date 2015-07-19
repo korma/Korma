@@ -53,7 +53,7 @@
 
 (defn connection-pool
   "Create a connection pool for the given database spec."
-  [{:keys [subprotocol subname classname
+  [{:keys [connection-uri subprotocol subname classname
            excess-timeout idle-timeout
            initial-pool-size minimum-pool-size maximum-pool-size
            test-connection-query
@@ -71,12 +71,12 @@
          test-connection-on-checkout false}
     :as spec}]
   (when-not c3p0-enabled?
-    (throw (Exception. "com.mchange.v2.c3p0.ComboPooledDataSource not found in class path."))) 
+    (throw (Exception. "com.mchange.v2.c3p0.ComboPooledDataSource not found in class path.")))
   {:datasource (doto (resolve-new ComboPooledDataSource)
                  (.setDriverClass classname)
-                 (.setJdbcUrl (str "jdbc:" subprotocol ":" subname))
+                 (.setJdbcUrl (or connection-uri (str "jdbc:" subprotocol ":" subname)))
                  (.setProperties (as-properties (dissoc spec
-                                                        :make-pool? :classname :subprotocol :subname
+                                                        :make-pool? :classname :subprotocol :subname :connection-uri
                                                         :naming :delimiters :alias-delimiter
                                                         :excess-timeout :idle-timeout
                                                         :initial-pool-size :minimum-pool-size :maximum-pool-size
@@ -121,9 +121,9 @@
 
 (def ^:private subprotocol->options {"mysql" {:delimiters "`"}})
 
-(defn- complete-spec [{:keys [subprotocol] :as spec}]
-  (if subprotocol
-    (let [lookup-key (first (clojure.string/split subprotocol #":"))]
+(defn- complete-spec [{:keys [connection-uri subprotocol] :as spec}]
+  (if-let [uri-or-subprotocol (or connection-uri subprotocol)]
+    (let [lookup-key (first (drop-while #{"jdbc"} (clojure.string/split uri-or-subprotocol #":")))]
       (merge
         {:classname  (subprotocol->classname lookup-key)
          :make-pool? true}

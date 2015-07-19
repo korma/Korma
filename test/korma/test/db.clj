@@ -83,6 +83,19 @@
   (defdb valid {:datasource :from-app-server})
   (is (= {:datasource :from-app-server} (get-connection valid))))
 
+(deftest configuration-using-connection-uri
+  (let [db (create-db {:connection-uri "jdbc:mysql://localhost:3306/db"
+                       :minimum-pool-size 66})]
+    (testing "jdbc url is set correctly"
+      (is (= "jdbc:mysql://localhost:3306/db"
+             (-> db :pool deref :datasource .getJdbcUrl))))
+    (testing "driver class is set correctly"
+      (is (= "com.mysql.jdbc.Driver"
+             (-> db :pool deref :datasource .getDriverClass))))
+    (testing "connection pool options are set"
+      (is (= 66 (-> db :pool deref :datasource .getMinPoolSize))))
+    (testing "options are set based on subprotocol from uri"
+      (is (= [\` \`] (-> db :options :delimiters))))))
 
 ;;; DB spec creation fns
 
