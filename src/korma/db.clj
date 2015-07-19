@@ -52,7 +52,7 @@
 
 (defn connection-pool
   "Create a connection pool for the given database spec."
-  [{:keys [connection-uri classname
+  [{:keys [subprotocol subname classname
            excess-timeout idle-timeout
            initial-pool-size minimum-pool-size maximum-pool-size
            test-connection-query
@@ -73,9 +73,9 @@
     (throw (Exception. "com.mchange.v2.c3p0.ComboPooledDataSource not found in class path."))) 
   {:datasource (doto (resolve-new ComboPooledDataSource)
                  (.setDriverClass classname)
-                 (.setJdbcUrl connection-uri)
+                 (.setJdbcUrl (str "jdbc:" subprotocol ":" subname))
                  (.setProperties (as-properties (dissoc spec
-                                                        :make-pool? :classname :connection-uri
+                                                        :make-pool? :classname :subprotocol :subname
                                                         :naming :delimiters :alias-delimiter
                                                         :excess-timeout :idle-timeout
                                                         :initial-pool-size :minimum-pool-size :maximum-pool-size
@@ -137,7 +137,8 @@
     :or {host "localhost", port 3050, db "", make-pool? true}
     :as opts}]
   (merge {:classname "org.firebirdsql.jdbc.FBDriver" ; must be in classpath
-          :connection-uri (str "jdbc:firebirdsql:" host "/" port ":" db)
+          :subprotocol "firebirdsql"
+          :subname (str host "/" port ":" db)
           :make-pool? make-pool?
           :encoding "UTF8"}
          (dissoc opts :host :port :db)))
@@ -150,7 +151,8 @@
     :or {host "localhost", port 5432, db "", make-pool? true}
     :as opts}]
   (merge {:classname "org.postgresql.Driver" ; must be in classpath
-          :connection-uri (str "jdbc:postgresql://" host ":" port "/" db)
+          :subprotocol "postgresql"
+          :subname (str "//" host ":" port "/" db)
           :make-pool? make-pool?}
          (dissoc opts :host :port :db)))
 
@@ -161,7 +163,8 @@
     :or {host "localhost", port 1521, make-pool? true}
     :as opts}]
   (merge {:classname "oracle.jdbc.driver.OracleDriver" ; must be in classpath
-          :connection-uri (str "jdbc:oracle:thin:@" host ":" port)
+          :subprotocol "oracle:thin"
+          :subname (str "@" host ":" port)
           :make-pool? make-pool?}
          (dissoc opts :host :port)))
 
@@ -173,7 +176,8 @@
     :or {host "localhost", port 3306, db "", make-pool? true}
     :as opts}]
   (merge {:classname "com.mysql.jdbc.Driver" ; must be in classpath
-          :connection-uri (str "jdbc:mysql://" host ":" port "/" db)
+          :subprotocol "mysql"
+          :subname (str "//" host ":" port "/" db)
           :delimiters "`"
           :make-pool? make-pool?}
          (dissoc opts :host :port :db)))
@@ -186,7 +190,8 @@
     :or {host "localhost", port 5433, db "", make-pool? true}
     :as opts}]
   (merge {:classname "com.vertica.jdbc.Driver" ; must be in classpath
-          :connection-uri (str "jdbc:vertica://" host ":" port "/" db)
+          :subprotocol "vertica"
+          :subname (str "//" host ":" port "/" db)
           :delimiters "\""
           :make-pool? make-pool?}
          (dissoc opts :host :port :db)))
@@ -199,7 +204,8 @@
     :or {user "dbuser", password "dbpassword", db "", host "localhost", port 1433, make-pool? true}
     :as opts}]
   (merge {:classname "com.microsoft.sqlserver.jdbc.SQLServerDriver" ; must be in classpath
-          :connection-uri (str "jdbc:sqlserver://" host ":" port ";database=" db ";user=" user ";password=" password)
+          :subprotocol "sqlserver"
+          :subname (str "//" host ":" port ";database=" db ";user=" user ";password=" password)
           :make-pool? make-pool?}
          (dissoc opts :host :port :db)))
 
@@ -210,9 +216,10 @@
     :or {db "", make-pool? false}
     :as opts}]
   (merge {:classname "sun.jdbc.odbc.JdbcOdbcDriver" ; must be in classpath
-          :connection-uri (str "jdbc:odbc:" (str "Driver={Microsoft Access Driver (*.mdb"
-                                      (when (.endsWith db ".accdb") ", *.accdb")
-                                      ")};Dbq=" db))
+          :subprotocol "odbc"
+          :subname (str "Driver={Microsoft Access Driver (*.mdb"
+                        (when (.endsWith db ".accdb") ", *.accdb")
+                        ")};Dbq=" db)
           :make-pool? make-pool?}
          (dissoc opts :db)))
 
@@ -223,7 +230,8 @@
     :or {dsn "", make-pool? true}
     :as opts}]
   (merge {:classname "sun.jdbc.odbc.JdbcOdbcDriver" ; must be in classpath
-          :connection-uri (str "jdbc:odbc:" dsn)
+          :subprotocol "odbc"
+          :subname dsn
           :make-pool? make-pool?}
          (dissoc opts :dsn)))
 
@@ -234,7 +242,8 @@
     :or {db "sqlite.db", make-pool? true}
     :as opts}]
   (merge {:classname "org.sqlite.JDBC" ; must be in classpath
-          :connection-uri (str "jdbc:sqlite:" db)
+          :subprotocol "sqlite"
+          :subname db
           :make-pool? make-pool?}
          (dissoc opts :db)))
 
@@ -245,7 +254,8 @@
     :or {db "h2.db", make-pool? true}
     :as opts}]
   (merge {:classname "org.h2.Driver" ; must be in classpath
-          :connection-uri (str "jdbc:h2:" db)
+          :subprotocol "h2"
+          :subname db
           :make-pool? make-pool?}
          (dissoc opts :db)))
 
