@@ -141,8 +141,7 @@
                                        "sqlite"      "org.sqlite.JDBC"
                                        "h2"          "org.h2.Driver"})
 
-(def ^:private subprotocol->options {"mysql"   {:delimiters "`"}
-                                     "vertica" {:delimiters "\""}})
+(def ^:private subprotocol->options {"mysql" {:delimiters "`"}})
 
 (defn- complete-spec [{:keys [subprotocol] :as spec}]
   (let [lookup-key (first (clojure.string/split subprotocol #":"))]

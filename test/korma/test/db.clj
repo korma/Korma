@@ -163,14 +163,12 @@
     (is (= {:classname "com.vertica.jdbc.Driver"
             :subprotocol "vertica"
             :subname "//localhost:5433/"
-            :delimiters "\""
             :make-pool? true}
            (vertica {}))))
   (testing "vertica - options selected"
     (is (= {:classname "com.vertica.jdbc.Driver"
             :subprotocol "vertica"
             :subname "//host:port/db"
-            :delimiters "\""
             :make-pool? false}
            (vertica {:host "host"
                      :port "port"
