@@ -141,11 +141,16 @@
                                        "sqlite"      "org.sqlite.JDBC"
                                        "h2"          "org.h2.Driver"})
 
+(def ^:private subprotocol->options {"mysql"   {:delimiters "`"}
+                                     "vertica" {:delimiters "\""}})
+
 (defn- complete-spec [{:keys [subprotocol] :as spec}]
-  (merge
-    {:classname   (subprotocol->classname (first (clojure.string/split subprotocol #":")))
-     :make-pool?  true}
-    spec))
+  (let [lookup-key (first (clojure.string/split subprotocol #":"))]
+    (merge
+      {:classname  (subprotocol->classname lookup-key)
+       :make-pool? true}
+      (subprotocol->options lookup-key)
+      spec)))
 
 (defn firebird
   "Create a database specification for a FirebirdSQL database. Opts should include
@@ -187,8 +192,7 @@
     :or {host "localhost", port 3306, db ""}
     :as opts}]
   (complete-spec (merge {:subprotocol "mysql"
-                         :subname     (str "//" host ":" port "/" db)
-                         :delimiters  "`"}
+                         :subname     (str "//" host ":" port "/" db)}
                         (dissoc opts :host :port :db))))
 
 (defn vertica
@@ -199,8 +203,7 @@
     :or {host "localhost", port 5433, db ""}
     :as opts}]
   (complete-spec (merge {:subprotocol "vertica"
-                         :subname     (str "//" host ":" port "/" db)
-                         :delimiters  "\""}
+                         :subname     (str "//" host ":" port "/" db)}
                         (dissoc opts :host :port :db))))
 
 (defn mssql
