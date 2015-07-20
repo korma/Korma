@@ -109,28 +109,6 @@
         @db
         db))))
 
-(defn create-db
-  "Create a db connection object manually instead of using defdb. This is often
-   useful for creating connections dynamically, and probably should be followed
-   up with:
-
-   (default-connection my-new-conn)
-
-   If the spec includes `:make-pool? true` makes a connection pool from the spec."
-  [spec]
-  {:pool (if (:make-pool? spec)
-           (delay-pool spec)
-           spec)
-   :options (extract-options spec)})
-
-(defmacro defdb
-  "Define a database specification. The last evaluated defdb will be used by
-  default for all queries where no database is specified by the entity."
-  [db-name spec]
-  `(let [spec# ~spec]
-     (defonce ~db-name (create-db spec#))
-     (default-connection ~db-name)))
-
 (def ^:private subprotocol->classname {"firebirdsql" "org.firebirdsql.jdbc.FBDriver"
                                        "postgresql"  "org.postgresql.Driver"
                                        "oracle"      "oracle.jdbc.driver.OracleDriver"
@@ -144,12 +122,37 @@
 (def ^:private subprotocol->options {"mysql" {:delimiters "`"}})
 
 (defn- complete-spec [{:keys [subprotocol] :as spec}]
-  (let [lookup-key (first (clojure.string/split subprotocol #":"))]
-    (merge
-      {:classname  (subprotocol->classname lookup-key)
-       :make-pool? true}
-      (subprotocol->options lookup-key)
-      spec)))
+  (if subprotocol
+    (let [lookup-key (first (clojure.string/split subprotocol #":"))]
+      (merge
+        {:classname  (subprotocol->classname lookup-key)
+         :make-pool? true}
+        (subprotocol->options lookup-key)
+        spec))
+    spec))
+
+(defn create-db
+  "Create a db connection object manually instead of using defdb. This is often
+   useful for creating connections dynamically, and probably should be followed
+   up with:
+
+   (default-connection my-new-conn)
+
+   If the spec includes `:make-pool? true` makes a connection pool from the spec."
+  [spec]
+  (let [spec (complete-spec spec)]
+    {:pool    (if (:make-pool? spec)
+                (delay-pool spec)
+                spec)
+     :options (extract-options spec)}))
+
+(defmacro defdb
+  "Define a database specification. The last evaluated defdb will be used by
+  default for all queries where no database is specified by the entity."
+  [db-name spec]
+  `(let [spec# ~spec]
+     (defonce ~db-name (create-db spec#))
+     (default-connection ~db-name)))
 
 (defn firebird
   "Create a database specification for a FirebirdSQL database. Opts should include
@@ -157,10 +160,10 @@
   [{:keys [host port db]
     :or {host "localhost", port 3050, db ""}
     :as opts}]
-  (complete-spec (merge {:subprotocol "firebirdsql"
-                         :subname     (str host "/" port ":" db)
-                         :encoding    "UTF8"}
-                        (dissoc opts :host :port :db))))
+  (merge {:subprotocol "firebirdsql"
+          :subname     (str host "/" port ":" db)
+          :encoding    "UTF8"}
+         (dissoc opts :host :port :db)))
 
 (defn postgres
   "Create a database specification for a postgres database. Opts should include
@@ -169,9 +172,9 @@
   [{:keys [host port db]
     :or {host "localhost", port 5432, db ""}
     :as opts}]
-  (complete-spec (merge {:subprotocol "postgresql"
-                         :subname     (str "//" host ":" port "/" db)}
-                        (dissoc opts :host :port :db))))
+  (merge {:subprotocol "postgresql"
+          :subname     (str "//" host ":" port "/" db)}
+         (dissoc opts :host :port :db)))
 
 (defn oracle
   "Create a database specification for an Oracle database. Opts should include keys
@@ -179,9 +182,9 @@
   [{:keys [host port]
     :or {host "localhost", port 1521}
     :as opts}]
-  (complete-spec (merge {:subprotocol "oracle:thin"
-                         :subname     (str "@" host ":" port)}
-                        (dissoc opts :host :port))))
+  (merge {:subprotocol "oracle:thin"
+          :subname     (str "@" host ":" port)}
+         (dissoc opts :host :port)))
 
 (defn mysql
   "Create a database specification for a mysql database. Opts should include keys
@@ -190,9 +193,9 @@
   [{:keys [host port db]
     :or {host "localhost", port 3306, db ""}
     :as opts}]
-  (complete-spec (merge {:subprotocol "mysql"
-                         :subname     (str "//" host ":" port "/" db)}
-                        (dissoc opts :host :port :db))))
+  (merge {:subprotocol "mysql"
+          :subname     (str "//" host ":" port "/" db)}
+         (dissoc opts :host :port :db)))
 
 (defn vertica
   "Create a database specification for a vertica database. Opts should include keys
@@ -201,9 +204,9 @@
   [{:keys [host port db]
     :or {host "localhost", port 5433, db ""}
     :as opts}]
-  (complete-spec (merge {:subprotocol "vertica"
-                         :subname     (str "//" host ":" port "/" db)}
-                        (dissoc opts :host :port :db))))
+  (merge {:subprotocol "vertica"
+          :subname     (str "//" host ":" port "/" db)}
+         (dissoc opts :host :port :db)))
 
 (defn mssql
   "Create a database specification for a mssql database. Opts should include keys
@@ -211,9 +214,9 @@
   [{:keys [user password db host port]
     :or {user "dbuser", password "dbpassword", db "", host "localhost", port 1433}
     :as opts}]
-  (complete-spec (merge {:subprotocol "sqlserver"
-                         :subname     (str "//" host ":" port ";database=" db ";user=" user ";password=" password)}
-                        (dissoc opts :host :port :db))))
+  (merge {:subprotocol "sqlserver"
+          :subname     (str "//" host ":" port ";database=" db ";user=" user ";password=" password)}
+         (dissoc opts :host :port :db)))
 
 (defn msaccess
   "Create a database specification for a Microsoft Access database. Opts
@@ -221,12 +224,12 @@
   [{:keys [db]
     :or {db ""}
     :as opts}]
-  (complete-spec (merge {:subprotocol "odbc"
-                         :subname     (str "Driver={Microsoft Access Driver (*.mdb"
-                                           (when (.endsWith db ".accdb") ", *.accdb")
-                                           ")};Dbq=" db)
-                         :make-pool?  false}
-                        (dissoc opts :db))))
+  (merge {:subprotocol "odbc"
+          :subname     (str "Driver={Microsoft Access Driver (*.mdb"
+                            (when (.endsWith db ".accdb") ", *.accdb")
+                            ")};Dbq=" db)
+          :make-pool?  false}
+         (dissoc opts :db)))
 
 (defn odbc
   "Create a database specification for an ODBC DSN. Opts
@@ -234,9 +237,9 @@
   [{:keys [dsn]
     :or {dsn ""}
     :as opts}]
-  (complete-spec (merge {:subprotocol "odbc"
-                         :subname     dsn}
-                        (dissoc opts :dsn))))
+  (merge {:subprotocol "odbc"
+          :subname     dsn}
+         (dissoc opts :dsn)))
 
 (defn sqlite3
   "Create a database specification for a SQLite3 database. Opts should include a
@@ -244,9 +247,9 @@
   [{:keys [db]
     :or {db "sqlite.db"}
     :as opts}]
-  (complete-spec (merge {:subprotocol "sqlite"
-                         :subname     db}
-                        (dissoc opts :db))))
+  (merge {:subprotocol "sqlite"
+          :subname     db}
+         (dissoc opts :db)))
 
 (defn h2
   "Create a database specification for a h2 database. Opts should include a key
@@ -254,9 +257,9 @@
   [{:keys [db]
     :or {db "h2.db"}
     :as opts}]
-  (complete-spec (merge {:subprotocol "h2"
-                         :subname     db}
-                        (dissoc opts :db))))
+  (merge {:subprotocol "h2"
+          :subname     db}
+         (dissoc opts :db)))
 
 (defmacro transaction
   "Execute all queries within the body in a single transaction.
