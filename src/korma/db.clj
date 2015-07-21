@@ -111,6 +111,7 @@
 
 (def ^:private subprotocol->classname {"firebirdsql" "org.firebirdsql.jdbc.FBDriver"
                                        "postgresql"  "org.postgresql.Driver"
+                                       "postgres"    "org.postgresql.Driver"
                                        "oracle"      "oracle.jdbc.driver.OracleDriver"
                                        "mysql"       "com.mysql.jdbc.Driver"
                                        "vertica"     "com.vertica.jdbc.Driver"
