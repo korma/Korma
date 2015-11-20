@@ -106,8 +106,9 @@
 ;;*****************************************************
 
 (defn- make-query-then-exec [query-fn-var body & args]
-  `(let [query# (-> (~query-fn-var ~@args)
-                    ~@body)]
+  `(let [query# (binding [*exec-mode* :query]
+                  (-> (~query-fn-var ~@args)
+                      ~@body))]
      (exec query#)))
 
 (defmacro select
