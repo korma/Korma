@@ -147,20 +147,24 @@
 
 (deftest insert-queries
   (sql-only
-    (are [result query] (= result query)
-         "INSERT INTO \"users\" (\"first\", \"last\") VALUES (?, ?)"
-         (insert users
-                 (values {:first "chris" :last "granger"}))
-         "INSERT INTO \"users\" (\"first\", \"last\") VALUES (?, ?), (?, ?)"
-         (insert users
-                 (values [{:first "chris" :last "granger"}
-                          {:last "jordan" :first "michael"}]))
-         "DO 0"
-         (insert users (values {}))
-         "DO 0"
-         (insert users (values []))
-         "DO 0"
-         (insert users (values [{} {}])))))
+   (are [result query] (= result query)
+        "INSERT INTO \"users\" (\"first\", \"last\") VALUES (?, ?)"
+        (insert users
+                (values {:first "chris" :last "granger"}))
+        "INSERT INTO \"users\" (\"first\", \"last\") VALUES (?, ?), (?, ?)"
+        (insert users
+                (values [{:first "chris" :last "granger"}
+                         {:last "jordan" :first "michael"}]))
+        "INSERT INTO \"users\" (\"first\", \"last\") VALUES (?, NULL), (?, ?)"
+        (insert users
+                (values [{:first "icarus"}
+                         {:first "chris" :last "granger"}]))
+        "DO 0"
+        (insert users (values {}))
+        "DO 0"
+        (insert users (values []))
+        "DO 0"
+        (insert users (values [{} {}])))))
 
 (deftest complex-where
   (sql-only
@@ -397,13 +401,13 @@
        "SELECT \"state\".* FROM \"state\" WHERE EXISTS((SELECT \"address\".* FROM \"address\" WHERE ((\"address\".\"id\" > ?) AND \"address\".\"state_id\" = \"state\".\"id\")))"
        (sql-only
          (select state
-                 (where (exists (subselect address 
+                 (where (exists (subselect address
                                            (where (and {:id [> 5]} (= :state_id :state.id))))))))
 
        "SELECT \"state\".* FROM \"state\" WHERE (EXISTS((SELECT \"address\".* FROM \"address\" WHERE ((\"address\".\"id\" > ?) AND \"address\".\"state_id\" = \"state\".\"id\"))) AND NOT(EXISTS((SELECT \"address\".* FROM \"address\" WHERE ((\"address\".\"id\" < ?) OR \"address\".\"state_id\" <> \"state\".\"id\")))))"
        (sql-only
          (select state
-                 (where (and (exists (subselect address 
+                 (where (and (exists (subselect address
                                            (where (and {:id [> 5]} (= :state_id :state.id)))))
                              (not (exists (subselect address
                                            (where (or  {:id [< 10]} (not= :state_id :state.id))))))))))
@@ -411,8 +415,8 @@
        "SELECT \"state\".* FROM \"state\" WHERE EXISTS((SELECT \"address\".* FROM \"address\" WHERE ((\"address\".\"id\" > ?) AND NOT(EXISTS((SELECT \"users\".* FROM \"users\" WHERE \"address\".\"user_id\" = \"users\".\"id\"))))))"
        (sql-only
          (select state
-                 (where (exists (subselect address 
-                                           (where (and {:id [> 5]} 
+                 (where (exists (subselect address
+                                           (where (and {:id [> 5]}
                                                        (not (exists (subselect user2 (where (= :address.user_id :id))))))))))))
 
        "SELECT \"users\".* FROM \"users\", (SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"age\" > ?)) AS \"u2\""

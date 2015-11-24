@@ -296,7 +296,7 @@
 (def noop-query "DO 0")
 
 (defn sql-insert [query]
-  (let [ins-keys (sort (keys (first (:values query))))
+  (let [ins-keys (sort (distinct (mapcat keys (:values query))))
         keys-clause (utils/comma-separated (map field-identifier ins-keys))
         ins-values (insert-values-clause ins-keys (:values query))
         values-clause (utils/comma-separated ins-values)
