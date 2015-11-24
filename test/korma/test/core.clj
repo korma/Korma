@@ -154,6 +154,10 @@
         (insert users
                 (values [{:first "chris" :last "granger"}
                          {:last "jordan" :first "michael"}]))
+        "INSERT INTO \"users\" (\"first\", \"last\") VALUES (?, NULL), (?, ?)"
+        (insert users
+                (values [{:first "icarus"}
+                         {:first "chris" :last "granger"}]))
         "DO 0"
         (insert users (values {}))
         "DO 0"
