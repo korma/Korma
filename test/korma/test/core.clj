@@ -190,6 +190,9 @@
         "SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"name\" LIKE ?)"
         (select users
                 (where {:name [like "chris"]}))
+        "SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"name\" ILIKE ?)"
+        (select users
+                (where {:name [ilike "chris"]}))
         "SELECT \"users\".* FROM \"users\" WHERE ((\"users\".\"name\" LIKE ?) OR \"users\".\"name\" LIKE ?)"
         (select users
                 (where (or {:name [like "chris"]}

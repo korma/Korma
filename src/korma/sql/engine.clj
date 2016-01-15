@@ -157,6 +157,7 @@
 ;;*****************************************************
 
 (def predicates {'like 'korma.sql.fns/pred-like
+                 'ilike 'korma.sql.fns/pred-ilike
                  'and 'korma.sql.fns/pred-and
                  'or 'korma.sql.fns/pred-or
                  'not 'korma.sql.fns/pred-not
