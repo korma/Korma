@@ -928,17 +928,3 @@
                              (with address-with-db
                                    (where {:status 1}))
                              (order :id)))))))
-
-
-;;*****************************************************
-;; Composable query execute
-;;****************************************************
-
-(deftest test-execute-query-comp
-  (letfn [(all-users []
-            (select users))]
-    (is (= "SELECT \"users\".* FROM \"users\""
-           (sql-only (all-users))))
-    (is (= "SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"username\" = ?)"
-           (sql-only (select (all-users)
-                             (where {:username "chris"})))))))
