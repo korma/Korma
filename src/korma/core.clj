@@ -630,7 +630,7 @@
   `(many-to-many-fn ~ent (var ~sub-ent) ~join-table ~opts))
 
 (defn entity-fields
-  "Set the fields to be retrieved by default in select queries for the
+  "Set the fields to be retrieved in all select queries for the
   entity."
   [ent & fields]
   (update-in ent [:fields] utils/vconcat fields))
