@@ -154,22 +154,24 @@
 ;; Predicates
 ;;*****************************************************
 
-(def predicates {'like 'korma.sql.fns/pred-like
-                 'ilike 'korma.sql.fns/pred-ilike
-                 'and 'korma.sql.fns/pred-and
-                 'or 'korma.sql.fns/pred-or
-                 'not 'korma.sql.fns/pred-not
-                 'in 'korma.sql.fns/pred-in
-                 'exists 'korma.sql.fns/pred-exists
-                 'not-in 'korma.sql.fns/pred-not-in
-                 'between 'korma.sql.fns/pred-between
-                 '> 'korma.sql.fns/pred->
-                 '< 'korma.sql.fns/pred-<
-                 '>= 'korma.sql.fns/pred->=
-                 '<= 'korma.sql.fns/pred-<=
-                 'not= 'korma.sql.fns/pred-not=
-                 '= 'korma.sql.fns/pred-=})
-
+(def predicates
+  (let [predicates-s {'like    'korma.sql.fns/pred-like
+                      'ilike   'korma.sql.fns/pred-ilike
+                      'and     'korma.sql.fns/pred-and
+                      'or      'korma.sql.fns/pred-or
+                      'not     'korma.sql.fns/pred-not
+                      'in      'korma.sql.fns/pred-in
+                      'exists  'korma.sql.fns/pred-exists
+                      'not-in  'korma.sql.fns/pred-not-in
+                      'between 'korma.sql.fns/pred-between
+                      '>       'korma.sql.fns/pred->
+                      '<       'korma.sql.fns/pred-<
+                      '>=      'korma.sql.fns/pred->=
+                      '<=      'korma.sql.fns/pred-<=
+                      'not=    'korma.sql.fns/pred-not=
+                      '=       'korma.sql.fns/pred-=}
+        predicates-k (into {} (map (fn [[k v]] {(keyword k) v}) predicates-s))]
+    (merge predicates-s predicates-k)))
 
 (defn do-infix [k op v]
   (string/join " " [(str-value k) op (str-value v)]))
