@@ -624,24 +624,31 @@
 
 (deftest predicates-used-with-brackets
   (sql-only
-   (are [result query] (= result query)
+   (are [result query queryk] (= result query queryk)
         "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"id\" = ?)"
         (select :test (where {:id [= 1]}))
+        (select :test (where {:id [:= 1]}))
         "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"id\" < ?)"
         (select :test (where {:id [< 10]}))
+        (select :test (where {:id [:< 10]}))
         "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"id\" <= ?)"
         (select :test (where {:id [<= 10]}))
+        (select :test (where {:id [:<= 10]}))
         "SELECT \"test\".* FROM \"test\" WHERE ((\"test\".\"id\" BETWEEN ? AND ?))"
         (select :test (where {:id [between [1 10]]}))
+        (select :test (where {:id [:between [1 10]]}))
 
         ;; clearly this is not an intended use of 'or'!
         "SELECT \"test\".* FROM \"test\" WHERE ((\"test\".\"id\" OR (?, ?, ?)))"
         (select :test (where {:id [or [1 2 3]]}))
+        (select :test (where {:id [:or [1 2 3]]}))
 
         "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"id\" NOT IN (?, ?, ?))"
         (select :test (where {:id [not-in [1 2 3]]}))
+        (select :test (where {:id [:not-in [1 2 3]]}))
         "SELECT \"test\".* FROM \"test\" WHERE (\"test\".\"id\" <> ?)"
-        (select :test (where {:id [not= 1]})))))
+        (select :test (where {:id [not= 1]}))
+        (select :test (where {:id [:not= 1]})))))
 
 
 ;;*****************************************************
