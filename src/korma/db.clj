@@ -222,7 +222,7 @@
 (defn msaccess
   "Create a database specification for a Microsoft Access database. Opts
   should include keys for :db and optionally :make-pool?."
-  [{:keys [db]
+  [{:keys [^String db]
     :or {db ""}
     :as opts}]
   (merge {:subprotocol "odbc"
