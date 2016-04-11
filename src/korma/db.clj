@@ -51,7 +51,7 @@
          test-connection-on-checkout false}
     :as spec}]
   (when-not c3p0-enabled?
-    (throw (Exception. "com.mchange.v2.c3p0.ComboPooledDataSource not found in class path."))) 
+    (throw (Exception. "com.mchange.v2.c3p0.ComboPooledDataSource not found in class path.")))
   {:datasource (doto (resolve-new ComboPooledDataSource)
                  (.setDriverClass classname)
                  (.setJdbcUrl (str "jdbc:" subprotocol ":" subname))
@@ -193,7 +193,7 @@
 (defn msaccess
   "Create a database specification for a Microsoft Access database. Opts
   should include keys for :db and optionally :make-pool?."
-  [{:keys [db make-pool?]
+  [{:keys [^String db make-pool?]
     :or {db "", make-pool? false}
     :as opts}]
   (merge {:classname "sun.jdbc.odbc.JdbcOdbcDriver" ; must be in classpath
@@ -264,7 +264,7 @@
   []
   (jdbc/db-is-rollback-only *current-conn*))
 
-(defn- exec-sql [{:keys [results sql-str params options]}]  
+(defn- exec-sql [{:keys [results sql-str params options]}]
   (let [{:keys [keys]} (:naming (or options @conf/options))]
     (case results
       :results (jdbc/query *current-conn*

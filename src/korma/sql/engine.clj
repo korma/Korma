@@ -65,7 +65,7 @@
       (string/join "." (map delimit-str parts))
       (delimit-str table-name))))
 
-(defn field-identifier [field]
+(defn ^String field-identifier [field]
   (cond
    (map? field) (map-val field)
    (string? field) field
