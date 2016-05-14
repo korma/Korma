@@ -12,9 +12,10 @@
   {:connection-uri "jdbc:mysql://localhost/?user=root"})
 
 (defn- setup-korma-db []
-  (jdbc/db-do-commands mysql-uri "CREATE DATABASE IF NOT EXISTS korma;"
-                       "USE korma;"
-                       "CREATE TABLE IF NOT EXISTS `users-live-mysql` (name varchar(200));"))
+  (jdbc/db-do-commands mysql-uri
+                       ["CREATE DATABASE IF NOT EXISTS korma;"
+                        "USE korma;"
+                        "CREATE TABLE IF NOT EXISTS `users-live-mysql` (name varchar(200));"]))
 
 (defn- clean-korma-db []
   (jdbc/db-do-commands mysql-uri "DROP DATABASE korma;"))
