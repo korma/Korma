@@ -250,9 +250,9 @@
                            (map? options))
         {:keys [isolation read-only?]} (when check-options options)
         body (if check-options (rest body) body)]
-    `(jdbc/with-db-transaction [conn# (or *current-conn* (get-connection @_default)) :isolation ~isolation :read-only? ~read-only?]
-       (binding [*current-conn* conn#]
-         ~@body))))
+    `(jdbc/with-db-transaction [conn# (or *current-conn* (get-connection @_default)) {:isolation ~isolation :read-only? ~read-only?}]
+        (binding [*current-conn* conn#]
+          ~@body))))
 
 (defn rollback
   "Tell this current transaction to rollback."
@@ -265,13 +265,12 @@
   (jdbc/db-is-rollback-only *current-conn*))
 
 (defn- exec-sql [{:keys [results sql-str params options]}]
-  (let [{:keys [keys]} (:naming (or options @conf/options))]
+  (let [{:keys [keys]} (:naming (or options @conf/options))
+        sql-params (apply vector sql-str params)]
     (case results
-      :results (jdbc/query *current-conn*
-                           (apply vector sql-str params)
-                           :identifiers keys)
-      :keys (jdbc/db-do-prepared-return-keys *current-conn* sql-str params)
-      (jdbc/db-do-prepared *current-conn* sql-str params))))
+      :results (jdbc/query *current-conn* sql-params {:identifiers keys})
+      :keys (jdbc/db-do-prepared-return-keys *current-conn* sql-params)
+      (jdbc/db-do-prepared *current-conn* sql-params))))
 
 (defmacro with-db
   "Execute all queries within the body using the given db spec"
