@@ -318,7 +318,7 @@
   (join query :right addresses)
   (join query addresses (= :addres.users_id :users.id))
   (join query :right addresses (= :address.users_id :users.id))"
-  {:arglists '([query ent] [query type ent] [query table clause] [query type table clause])}
+  {:arglists '([query ent] [query type-or-table ent-or-clause] [query type table clause])}
   ([query ent]
      `(join ~query :left ~ent))
   ([query type-or-table ent-or-clause]
