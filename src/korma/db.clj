@@ -273,7 +273,7 @@
         {:keys [isolation read-only?]} (when check-options options)
         body (if check-options (rest body) body)]
     `(binding [*current-db* (or *current-db* @_default)]
-      (jdbc/with-db-transaction [conn# (or *current-conn* (get-connection *current-db*)) :isolation ~isolation :read-only? ~read-only?]
+      (jdbc/with-db-transaction [conn# (or *current-conn* (get-connection *current-db*)) {:isolation ~isolation :read-only? ~read-only?}]
         (binding [*current-conn* conn#]
           ~@body)))))
 
@@ -288,13 +288,12 @@
   (jdbc/db-is-rollback-only *current-conn*))
 
 (defn- exec-sql [{:keys [results sql-str params]}]
-  (let [keys (get-in *current-db* [:options :naming :keys])]
+  (let [keys (get-in *current-db* [:options :naming :keys])
+        sql-params (apply vector sql-str params)]
     (case results
-      :results (jdbc/query *current-conn*
-                           (apply vector sql-str params)
-                           :identifiers keys)
-      :keys (jdbc/db-do-prepared-return-keys *current-conn* sql-str params)
-      (jdbc/db-do-prepared *current-conn* sql-str params))))
+      :results (jdbc/query *current-conn* sql-params {:identifiers keys})
+      :keys (jdbc/db-do-prepared-return-keys *current-conn* sql-params)
+      (jdbc/db-do-prepared *current-conn* sql-params))))
 
 (defmacro with-db
   "Execute all queries within the body using the given db spec"

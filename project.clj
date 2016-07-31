@@ -11,7 +11,7 @@
 
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [com.mchange/c3p0 "0.9.5.2"]
-                 [org.clojure/java.jdbc "0.3.7"]]
+                 [org.clojure/java.jdbc "0.6.1"]]
 
   :min-lein-version "2.0.0"
 
@@ -25,7 +25,6 @@
              :test {:dependencies [[mysql/mysql-connector-java "5.1.35"]
                                    [com.h2database/h2 "1.4.187"]
                                    [criterium "0.4.3"]]}
-             :1.3 {:dependencies [[org.clojure/clojure "1.3.0"]]}
              :1.4 {:dependencies [[org.clojure/clojure "1.4.0"]]}
              :1.5 {:dependencies [[org.clojure/clojure "1.5.1"]]}
              :1.6 {:dependencies [[org.clojure/clojure "1.6.0"]]}
