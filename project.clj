@@ -6,7 +6,7 @@
   :codox {:exclude [korma.sql.engine
                     korma.sql.fns
                     korma.sql.utils]
-          :src-dir-uri "https://github.com/korma/Korma/blob/v0.4.2/"
+          :src-dir-uri "https://github.com/korma/Korma/blob/v0.4.3/"
           :src-linenum-anchor-prefix "L"}
 
   :dependencies [[org.clojure/clojure "1.8.0"]
