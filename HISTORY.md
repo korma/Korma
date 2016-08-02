@@ -1,3 +1,18 @@
+0.4.3
+-----
+* Upgrade clojure.java.jdbc to 0.6.1 (venantius)
+* Upgrade c3p0 to 0.9.5.2 (gfZeng)
+* Add support for excluding c3p0 (k13gomez)
+* Add support for foreign key name option for parent table in relation (k13gomez)
+* Make order of rows for insert queries not matter (tie-rack)
+* Add support for ILIKE predicate (arttuka)
+* Add support for predicate keywords (zjhmale)
+* Fix reflection warnings (divs1210)
+* Fix arglist metadata for `join` (venantius)
+* Fix syntax error in README (zjhsdtc)
+* Update entity-fields documentation (jdpopkin)
+
+
 0.4.2
 -----
 * Fix regression in 0.4.1 causing global config changes not to take affect if defdb is called first
