@@ -1,6 +1,8 @@
 (defproject korma "0.5.0-SNAPSHOT"
   :description "Tasty SQL for Clojure"
   :url "http://github.com/korma/Korma"
+  :license {:name "Eclipse Public License"
+            :url "http://www.eclipse.org/legal/epl-v10.html"}
   :mailing-list {:name "Korma Google Group"
                  :subscribe "https://groups.google.com/group/sqlkorma"}
   :codox {:exclude [korma.sql.engine
