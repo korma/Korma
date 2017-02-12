@@ -146,8 +146,9 @@
   and then executes it. `ent` is either a string or an entity created by
   defentity. The return value is the last inserted item, but its
   representation is dependent on the database driver used
-  (e.g. postgresql returns the full row as a hash while MySQL and MSSQL
-  both return a {:generated_key <ID>} hash)
+  (e.g. postgresql returns the full row as a hash,
+  MySQL returns a {:generated_key <ID>} hash,
+  and MSSQL returns a {:generated_keys <ID>} hash).
 
   ex: (insert user
         (values [{:name \"chris\"} {:name \"john\"}]))"
@@ -910,7 +911,7 @@
                               (map #(get row %) pk))
                         child-rows (select ent
                                            (body-fn)
-                                           (where 
+                                           (where
                                              (if in-batch
                                                {(first fk-key) [in (vec (flatten fks))]}
                                                (apply sfns/pred-or
