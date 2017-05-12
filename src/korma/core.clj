@@ -362,6 +362,11 @@
   [query & fields]
   (update-in query [:group] utils/vconcat fields))
 
+(defn add-comment
+  "Add a comment clause to a select query"
+  [query comment-str]
+  (update-in query [:comments] utils/vconcat [comment-str]))
+
 (defmacro aggregate
   "Use a SQL aggregator function, aliasing the results, and optionally grouping by
   a field:

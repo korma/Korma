@@ -1,8 +1,8 @@
 (ns korma.sql.engine
   (:require [clojure.string :as string]
             [clojure.walk :as walk]
-            [korma.sql.utils :as utils]
-            [korma.db :as db]))
+            [korma.db :as db]
+            [korma.sql.utils :as utils]))
 
 ;;*****************************************************
 ;; dynamic vars
@@ -282,20 +282,37 @@
 ;; Query types
 ;;*****************************************************
 
+(defn- make-comment [query]
+  (if (seq (:comments query))
+    (->> query
+         :comments
+         (map (fn [cmt]
+                (str "-- "
+                     (string/join "\n-- " (string/split cmt #"\n"))
+                     "\n")))
+         (apply str))
+    ""))
+
 (defn sql-select [query]
   (let [clauses (map field-str (:fields query))
         modifiers-clause (when (seq (:modifiers query))
                            (str (reduce str (:modifiers query)) " "))
         clauses-str (utils/comma-separated clauses)
-        neue-sql (str "SELECT " modifiers-clause clauses-str)]
+        neue-sql (str
+                  (make-comment query)
+                  "SELECT " modifiers-clause clauses-str)]
     (assoc query :sql-str neue-sql)))
 
 (defn sql-update [query]
-  (let [neue-sql (str "UPDATE " (table-str query))]
+  (let [neue-sql (str
+                  (make-comment query)
+                  "UPDATE " (table-str query))]
     (assoc query :sql-str neue-sql)))
 
 (defn sql-delete [query]
-  (let [neue-sql (str "DELETE FROM " (table-str query))]
+  (let [neue-sql (str
+                  (make-comment query)
+                  "DELETE FROM " (table-str query))]
     (assoc query :sql-str neue-sql)))
 
 (def noop-query "DO 0")
@@ -308,7 +325,9 @@
         neue-sql (if-not (empty? ins-keys)
                    (str "INSERT INTO " (table-str query) " " (utils/wrap keys-clause) " VALUES " values-clause)
                    noop-query)]
-    (assoc query :sql-str neue-sql)))
+    (assoc query :sql-str (str
+                           (make-comment query)
+                           neue-sql))))
 
 ;;*****************************************************
 ;; Sql parts
@@ -374,7 +393,9 @@
 
 (defn- sql-combination-query [type query]
   (let [sub-query-sqls (map map-val (:queries query))
-        neue-sql (string/join (str " " type " ") sub-query-sqls)]
+        neue-sql (str
+                  (make-comment query)
+                  (string/join (str " " type " ") sub-query-sqls))]
     (assoc query :sql-str neue-sql)))
 
 (def sql-union     (partial sql-combination-query "UNION"))

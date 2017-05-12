@@ -810,6 +810,19 @@
               "ON (\"mtm1_mtm2\".\"mtm2_id\" = \"mtm2\".\"id\") :: []\n")
          (with-out-str (dry-run (select mtm1 (join mtm2)))))))
 
+(deftest test-sql-comments
+  (is (= "-- COMMENT_STRING\nSELECT \"mtm1\".* FROM \"mtm1\""
+         (sql-only (-> (select* mtm1)
+                       (add-comment "COMMENT_STRING")
+                       exec))))
+
+  (is (= "-- COMMENT_STRING_1\n-- COMMENT_STRING_2\n-- COMMENT_\n-- STRING_3\nSELECT \"mtm1\".* FROM \"mtm1\""
+         (sql-only (-> (select* mtm1)
+                       (add-comment "COMMENT_STRING_1")
+                       (add-comment "COMMENT_STRING_2")
+                       (add-comment "COMMENT_
+STRING_3")
+                       exec)))))
 
 ;;*****************************************************
 ;; Union, Union All, Intersect & Except support
