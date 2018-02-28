@@ -1,3 +1,14 @@
+0.5.0-RC1
+---------
+* BREAKING CHANGE: remove global options (immoh)
+* Support :connection-uri for db configuration (immoh)
+* Fix: do not prefix asterisk when used as count column (immoh)
+* Add support for for composite primary and foreign keys (k13gomez)
+* Add license to project definition (paipa4)
+* Update `insert` docstring to more accurately reflect hash created by MSSQL (rpazyaquian)
+* Add function for adding SQL comments to queries (AlexBaranosky)
+
+
 0.4.3
 -----
 * Upgrade clojure.java.jdbc to 0.6.1 (venantius)

@@ -1,4 +1,4 @@
-(defproject korma "0.5.0-SNAPSHOT"
+(defproject korma "0.5.0-RC1"
   :description "Tasty SQL for Clojure"
   :url "http://github.com/korma/Korma"
   :license {:name "Eclipse Public License"
