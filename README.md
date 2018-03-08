@@ -14,6 +14,12 @@ Simply add Korma as a dependency to your lein project:
 [korma "0.4.3"]
 ```
 
+## Stable and Edge releases
+
+The most recent stable release is Korma 0.4.3, as noted above.
+
+The current edge release is Korma 0.5.0-RC1 (released Feb 28, 2018). It is not guaranteed to be bug free, and we'd welcome help from the community in identifying any bugs or regressions. The plan is to either release a second release candidate in May or, if no bugs have surfaced, for Korma 0.5.0 to be released at that time.
+
 ## Docs and Real Usage
 
 *   [http://sqlkorma.com](http://sqlkorma.com)
